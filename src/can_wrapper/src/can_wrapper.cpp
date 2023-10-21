@@ -24,15 +24,15 @@ int main(int argc, char *argv[])
 
 	ros::Rate loop_rate(1);
 
-	CanMessage cm;
+	cm::CanMessage cm;
+
+	memset(&cm,NULL,sizeof(cm));
+
 	alignTest(cm);
 	alignTest(cm.address);
 	alignTest(cm.dataLength);
 	alignTest(cm.data);
 	alignTest(cm.data.raw);
-
-	std::cout << "Jadac" << std::endl;
-
 
 	while (ros::ok)
 	{

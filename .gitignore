@@ -51,8 +51,8 @@ qtcreator-*
 CATKIN_IGNORE
 .catkin_tools/*
 
-.vscode/*
-!.vscode/c_cpp_properties.json
+.vscode/
+# !.vscode/c_cpp_properties.json
 # !.vscode/settings.json
 !.vscode/tasks.json
 # !.vscode/launch.json
