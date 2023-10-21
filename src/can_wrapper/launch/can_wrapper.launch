@@ -1,0 +1,3 @@
+<launch>
+<node name="can_wrapper" pkg="can_wrapper" type="can_wrapper_node" output="screen" />
+</launch>
