@@ -6,7 +6,7 @@
 #include <linux/can.h>
 #include "can_wrapper/CanMessage.hpp"
 
-#define alignTest(x) ROS_INFO(#x" address: 0x%X sizeof: %u align: %u", &x , sizeof(x), alignof(x))
+#define alignTest(x) ROS_INFO(#x" address: 0x%p sizeof: %u align: %u", (void*)&x , (uint32_t)sizeof(x), (uint32_t)alignof(x))
 
 // void rx_er(boost::shared_ptr<const int32_t> smth)
 // {
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
 	cm::CanMessage cm;
 
-	memset(&cm,NULL,sizeof(cm));
+	memset(&cm,0,sizeof(cm));
 
 	alignTest(cm);
 	alignTest(cm.address);
