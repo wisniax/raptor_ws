@@ -5,10 +5,7 @@
 
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
-
-// Example of Ros Callback. to be deleted
-
-
+#include "can_wrapper/raw_can_message.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,29 +14,25 @@ int main(int argc, char *argv[])
 
 	static CanSocket cSocket("can0");
 
-	std::string errStr = cSocket.translateInitError();
-	//ROS_DEBUG(errStr);
-
 	ros::Publisher chatter_pub = n.advertise<std_msgs::String>("/CAN/RX/raw", 256);
-	ros::Subscriber sub = n.subscribe
-	(
+	ros::Subscriber sub = n.subscribe(
 		"/CAN/TX/raw",
 		256,
-		((void(*)(const std_msgs::String::ConstPtr&))[] (const std_msgs::String::ConstPtr& msg)
-		{ 
+		((void (*)(const std_msgs::String::ConstPtr &))[](const std_msgs::String::ConstPtr &msg) {
 			cSocket.handleRosCallback(msg);
-		})
-	);
+		}));
 
 	ros::Rate loop_rate(1);
-	
+	std_msgs::String canErrStr;
+	canErrStr.data = "CAN: " + cSocket.translateInitError();
+	ROS_INFO_STREAM(canErrStr);
 
 	while (ros::ok)
 	{
-		ROS_WARN("JD");
-		std_msgs::String yyy;
-		yyy.data = "HAH";
-		chatter_pub.publish(yyy);
+		std_msgs::String msg;
+		msg.data = "HAH";
+		chatter_pub.publish(msg);
+
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
