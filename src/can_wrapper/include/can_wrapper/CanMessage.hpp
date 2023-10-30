@@ -5,6 +5,8 @@
 
 #include <linux/can.h>
 #include <stdint.h>
+#include <can_msgs/Frame.h>
+#include <string>
 
 namespace cm
 {
@@ -31,6 +33,29 @@ namespace cm
 
 	struct CanMessage
 	{
+		CanMessage()
+		{
+			address = (uint32_t)Address::Invalid;
+			dataLength = 0;
+			memset(&data,0,CAN_MAX_DLEN);
+		}
+
+		CanMessage(can_msgs::FrameConstPtr frame)
+		{
+			address = frame->id;
+			dataLength = frame->dlc;
+			memcpy(&data,frame->data.data(),CAN_MAX_DLEN);
+		}
+
+		explicit operator can_msgs::Frame() const
+		{
+			can_msgs::Frame ret;
+			ret.id = address;
+			ret.dlc = dataLength;
+			memcpy(ret.data.begin(),&data,CAN_MAX_DLEN);
+			return ret;
+		}
+
 		canid_t address;
 		uint8_t dataLength;
 		union data_t
