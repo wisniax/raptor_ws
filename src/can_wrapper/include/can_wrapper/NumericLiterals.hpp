@@ -1,5 +1,3 @@
-//Last modified by: Marcin Walczyk/12.10.2023 
-
 #ifndef NUMERICLITERALS_H
 #define NUMERICLITERALS_H
 

@@ -1,4 +1,3 @@
-
 #include <ros/ros.h>
 #include <memory>
 #include <linux/can.h>

@@ -1,5 +1,3 @@
-//Last modified by: Marcin Walczyk/12.10.2023 
-
 #ifndef CANMESSAGE_H
 #define CANMESSAGE_H
 

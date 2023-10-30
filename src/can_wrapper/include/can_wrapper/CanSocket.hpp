@@ -1,4 +1,3 @@
-
 #ifndef CANSOCKET_H
 #define CANSOCKET_H
 
