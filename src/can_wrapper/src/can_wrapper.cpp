@@ -2,10 +2,11 @@
 #include <ros/ros.h>
 #include <memory>
 #include <linux/can.h>
+#include <can_msgs/Frame.h>
+#include <std_msgs/String.h>
 
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
-#include "can_wrapper/raw_can_message.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,11 +15,11 @@ int main(int argc, char *argv[])
 
 	static CanSocket cSocket("can0");
 
-	ros::Publisher chatter_pub = n.advertise<std_msgs::String>("/CAN/RX/raw", 256);
-	ros::Subscriber sub = n.subscribe(
+	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>("/CAN/RX/raw", 256);
+	ros::Subscriber canRawSub = n.subscribe(
 		"/CAN/TX/raw",
 		256,
-		((void (*)(const std_msgs::String::ConstPtr &))[](const std_msgs::String::ConstPtr &msg) {
+		((void (*)(const can_msgs::Frame::ConstPtr &))[](const can_msgs::Frame::ConstPtr &msg) {
 			cSocket.handleRosCallback(msg);
 		}));
 
@@ -29,9 +30,9 @@ int main(int argc, char *argv[])
 
 	while (ros::ok)
 	{
-		std_msgs::String msg;
-		msg.data = "HAH";
-		chatter_pub.publish(msg);
+		can_msgs::Frame msg;
+		msg.data = {6,9};
+		canRawPub.publish(msg);
 
 		ros::spinOnce();
 		loop_rate.sleep();

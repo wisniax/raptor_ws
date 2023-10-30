@@ -101,14 +101,19 @@ ssize_t CanSocket::awaitMessage(cm::CanMessage &frame)
 	return nbytes;
 }
 
-void CanSocket::handleRosCallback(const std_msgs::String::ConstPtr &msg)
+void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
 	if (CanSocket::mInitErrCode != 0)
 		return;
+	
+	cm::CanMessage cMsg;
+	cMsg.address = msg->id;
+	cMsg.dataLength = msg->dlc;
 
-	uint8_t bytom[2] = {0x5, 0xF};
+	for (size_t i = 0; i < CAN_MAX_DLEN; ++i) 
+        cMsg.data.raw[i] = msg->data[i];
 
-	CanSocket::sendMessage(0x10, 2, bytom);
+	CanSocket::sendMessage(cMsg);
 }
 
 std::string CanSocket::translateInitError()

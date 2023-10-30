@@ -11,7 +11,7 @@
 #include <ros/ros.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <std_msgs/String.h>
+#include <can_msgs/Frame.h>
 
 #include "can_wrapper/CanMessage.hpp"
 
@@ -32,7 +32,7 @@ public:
 	int sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_MAX_DLEN]);
 	int sendMessage(const cm::CanMessage& frame);
 	ssize_t awaitMessage(cm::CanMessage& frame );
-	void handleRosCallback(const std_msgs::String::ConstPtr& msg);
+	void handleRosCallback(const can_msgs::Frame::ConstPtr& msg);
 	std::string translateInitError();
 private:
 	int mSocket;
