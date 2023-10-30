@@ -40,7 +40,7 @@ namespace cm
 			memset(&data,0,CAN_MAX_DLEN);
 		}
 
-		CanMessage(can_msgs::FrameConstPtr frame)
+		CanMessage(const can_msgs::Frame* frame)
 		{
 			address = frame->id;
 			dataLength = frame->dlc;
