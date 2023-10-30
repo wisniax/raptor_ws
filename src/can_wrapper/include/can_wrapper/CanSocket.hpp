@@ -29,8 +29,8 @@ public:
 	/// @param raw Payload
 	/// @return The number written, or -1 on error
 	int sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_MAX_DLEN]);
-	int sendMessage(const cm::CanMessage& frame);
-	ssize_t awaitMessage(cm::CanMessage& frame );
+	int sendMessage(const CanMessage& frame);
+	ssize_t awaitMessage(CanMessage& frame );
 	void handleRosCallback(const can_msgs::Frame::ConstPtr& msg);
 	std::string translateInitError();
 private:
