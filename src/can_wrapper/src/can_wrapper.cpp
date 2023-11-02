@@ -6,6 +6,7 @@
 
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
+#include "can_wrapper/Can2Ros.hpp"
 
 int main(int argc, char *argv[])
 {
