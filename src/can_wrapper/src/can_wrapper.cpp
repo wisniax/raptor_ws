@@ -30,11 +30,16 @@ int main(int argc, char *argv[])
 
 	while (ros::ok)
 	{
-		can_msgs::Frame msg;
-		msg.data = {6,9};
-		canRawPub.publish(msg);
+		// can_msgs::Frame msg;
+		// msg.data = {6,9};
+		// canRawPub.publish(msg);
+		CanMessage cm;
+		cSocket.awaitMessage(cm);
+
+
+
 
 		ros::spinOnce();
-		loop_rate.sleep();
+		//loop_rate.sleep();
 	}
 }
