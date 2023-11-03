@@ -21,14 +21,14 @@ CanSocket::CanSocket(std::string interfaceName, canid_t mask)
 	addr.can_family = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
 
-	can_filter rfilter;
-	rfilter.can_id = 0x0;
-	rfilter.can_mask = CAN_EFF_MASK & mask;
-	if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter)) < 0)
-	{
-		CanSocket::mInitErrCode = -3;
-		return;
-	}
+	// can_filter rfilter;
+	// rfilter.can_id = 0x0;
+	// rfilter.can_mask = CAN_EFF_MASK & mask;
+	// if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter)) < 0)
+	// {
+	// 	CanSocket::mInitErrCode = -3;
+	// 	return;
+	// }
 
 	can_err_mask_t err_mask = (CAN_ERR_MASK);
 

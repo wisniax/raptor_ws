@@ -3,6 +3,8 @@
 #include <linux/can.h>
 #include <can_msgs/Frame.h>
 #include <std_msgs/String.h>
+#include <iostream>
+#include <fstream>
 
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
@@ -28,6 +30,13 @@ int main(int argc, char *argv[])
 	canErrStr.data = "CAN: " + cSocket.translateInitError();
 	ROS_INFO_STREAM(canErrStr);
 
+	CanMessage arr[100];
+	uint64_t i = 0;
+	int32_t j = 0;
+	uint32_t errCnt = 0;
+	std::ofstream MyFile("/home/raptors/CanTests/raptor_ws/canErrors.csv");
+	MyFile << "time,id,number" << std::endl;
+
 	while (ros::ok)
 	{
 		// can_msgs::Frame msg;
@@ -36,10 +45,33 @@ int main(int argc, char *argv[])
 		CanMessage cm;
 		cSocket.awaitMessage(cm);
 
+		if ((cm.address & CAN_ERR_FLAG) > 0) 
+		{
+			errCnt++;
+			continue;
+		}
 
+		uint64_t erMarche;
+		std::memcpy(&erMarche, cm.data.raw, sizeof(erMarche));
 
+		if (i == 0)
+			i = erMarche;
+		else if ((i + 1) == erMarche)
+			i = erMarche;
+		else
+		{
+			arr[j++] = cm;
+			i = 0;
+			if (j >= 30)
+			{
+				for (int x = 30 - 1; x >= 0; x--)
+					MyFile << ros::Time::now().toSec() << ',' << arr[x].address << ',' << *reinterpret_cast<uint64_t*>(arr[x].data.raw) << std::endl;
+				// std::cout << arr[x] << std::endl;
+				throw("Out Of Range");
+			}
+		}
 
 		ros::spinOnce();
-		//loop_rate.sleep();
+		// loop_rate.sleep();
 	}
 }
