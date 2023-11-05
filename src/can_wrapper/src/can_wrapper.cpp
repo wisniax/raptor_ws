@@ -36,10 +36,7 @@ int main(int argc, char *argv[])
 		CanMessage cm;
 		cSocket.awaitMessage(cm);
 
-
-
-
 		ros::spinOnce();
-		//loop_rate.sleep();
+		// loop_rate.sleep();
 	}
 }

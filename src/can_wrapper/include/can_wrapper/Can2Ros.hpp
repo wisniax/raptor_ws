@@ -11,27 +11,27 @@
 class Can2Ros
 {
 private:
-    ros::NodeHandle nh;
-    float mRPM_scale;
-    static std::unique_ptr<Can2Ros> instance;
-    void handleFrame(CanMessage cm);
-    geometry_msgs::Point32 decodeMotorVel(CanMessage cm);
+	ros::NodeHandle nh;
+	float mRPM_scale;
+	static std::unique_ptr<Can2Ros> instance;
+	void handleFrame(CanMessage cm);
+	geometry_msgs::Point32 decodeMotorVel(CanMessage cm);
+	static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
 
-    ros::Subscriber mRawCanSub;
-    ros::Publisher mDriversLeft;
-    ros::Publisher mDriversRight;
-    ros::Publisher mArm123;
-    ros::Publisher mArm456;
+	ros::Subscriber mRawCanSub;
+	ros::Publisher mDriversLeft;
+	ros::Publisher mDriversRight;
+	ros::Publisher mArm123;
+	ros::Publisher mArm456;
 
 public:
-    Can2Ros() = default;
-    Can2Ros(Can2Ros &) = delete;
-    void operator=(const Can2Ros &) = delete;
+	Can2Ros() = default;
+	Can2Ros(Can2Ros &) = delete;
+	void operator=(const Can2Ros &) = delete;
 
-    static Can2Ros *getSingleton();
-    void init(std::string can_RX_topic = "/CAN/RX/", float rpm_scale = 1);
+	static Can2Ros *getSingleton();
+	void init(std::string can_RX_topic = "/CAN/RX/", float rpm_scale = 1);
 
-    static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
 };
 
 #endif // CAN2ROS_H
