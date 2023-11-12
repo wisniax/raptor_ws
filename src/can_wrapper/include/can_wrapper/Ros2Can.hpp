@@ -4,78 +4,54 @@
 #include <ros/ros.h>
 #include <string>
 #include <can_msgs/Frame.h>
-#include <geometry_msgs/Vector3Stamped.h>
 #include <memory>
 #include "can_wrapper/CanMessage.hpp"
+#include "can_wrapper/RosCanConstants.hpp"
+#include "can_wrapper/Wheels.h"
 
 /**
- * @brief Class for interfacing ROS2 with CAN bus.
+ * @brief Class for interfacing ROS with CAN bus.
  */
-class Ros2Can {
+class Ros2Can
+{
 private:
-	ros::NodeHandle nh; /**< ROS2 node handle. */
-	float mRPM_scale; /**< Scale factor for motor RPM. */
+	ros::NodeHandle nh;						  /**< ROS node handle. */
+	float mRPM_scale;						  /**< Scale factor for motor RPM. */
 	static std::unique_ptr<Ros2Can> instance; /**< Singleton instance. */
-	
-	/**
-	 * @brief Callback function for handling incoming CAN messages.
-	 * @param cm The received CAN message.
-	 */
-	void handleFrame(CanMessage cm);
-	
+	uint32_t mSetMotorVelSeq;				  /**< Sequence number for motor velocity messages. */
+
+	CanMessage::set_motor_vel_t::mode_cont_mode mControlMode; /**< The mode to use when setting motor velocity. */
+
+	ros::Publisher mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
+	ros::Subscriber mSetMotorVelSub;  /**< ROS subscriber for motor velocity messages. */
+
 	/**
 	 * @brief Encodes motor velocity message into a CAN frame.
 	 * @param msg The motor velocity message.
 	 * @param adr The CAN address of the motor.
 	 * @return The encoded CAN frame.
 	 */
-	can_msgs::Frame encodeMotorVel(const geometry_msgs::Vector3Stamped msg, const CanMessage::Address adr);
-	void sendMotorVel(const geometry_msgs::Vector3Stamped msg, const CanMessage::Address adr);
+	can_msgs::Frame encodeMotorVel(const float msg[], const CanMessage::Address adr);
+
+	void sendMotorVel(const can_wrapper::Wheels msg);
 
 	/**
 	 * @brief Callback function for handling left driver velocity messages.
 	 * @param msg The left driver velocity message.
 	 */
-	static void handleSetLeftDriverVel(const geometry_msgs::Vector3Stamped &msg);
-	
-	/**
-	 * @brief Callback function for handling right driver velocity messages.
-	 * @param msg The right driver velocity message.
-	 */
-	static void handleSetRightDriverVel(const geometry_msgs::Vector3Stamped &msg);
-	
-	/**
-	 * @brief Callback function for handling arm 1-2-3 velocity messages.
-	 * @param msg The arm 1-2-3 velocity message.
-	 */
-	static void handleSetArm123Vel(const geometry_msgs::Vector3Stamped &msg);
-	
-	/**
-	 * @brief Callback function for handling arm 4-5-6 velocity messages.
-	 * @param msg The arm 4-5-6 velocity message.
-	 */
-	static void handleSetArm456Vel(const geometry_msgs::Vector3Stamped &msg);
-
-	can_msgs::Frame canMessage2Frame(CanMessage cm);
-
-
-	ros::Publisher mRawCanPub; /**< ROS2 publisher for raw CAN messages. */
-	ros::Subscriber mDriversLeft; /**< ROS2 subscriber for left driver velocity messages. */
-	ros::Subscriber mDriversRight; /**< ROS2 subscriber for right driver velocity messages. */
-	ros::Subscriber mArm123; /**< ROS2 subscriber for arm 1-2-3 velocity messages. */
-	ros::Subscriber mArm456; /**< ROS2 subscriber for arm 4-5-6 velocity messages. */
+	static void handleSetMotorVel(const can_wrapper::Wheels &msg);
 
 public:
 	/**
 	 * @brief Default constructor.
 	 */
 	Ros2Can() = default;
-	
+
 	/**
 	 * @brief Copy constructor (deleted).
 	 */
 	Ros2Can(Ros2Can &) = delete;
-	
+
 	/**
 	 * @brief Assignment operator (deleted).
 	 */
@@ -86,24 +62,24 @@ public:
 	 * @return The singleton instance.
 	 */
 	static Ros2Can *getSingleton();
-	
+
 	/**
 	 * @brief Initializes the Ros2Can object.
-	 * @param can_RX_topic The ROS2 topic for receiving CAN messages.
-	 * @param rpm_scale The scale factor for motor RPM.
+	 * @param rpmScale The scale factor for motor RPM.
 	 */
-	void init(std::string can_RX_topic = "/CAN/TX/", float rpm_scale = 1);
-
+	void init(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
 
 	/**
-	 * @brief Sets the PWM value on a motor.
-	 * 
-	 * @param msg The PWM value in range -1:1 to set, as a Vector3Stamped message.
-	 * @param adr The address of the side to set the PWM value on.
-	 * @return uint16_t The status code of the operation.
+	 * @brief Sets the scale factor for motor RPM.
+	 * @param rpmScale The scale factor for motor RPM.
 	 */
-	uint16_t setPwmOnMotor(const geometry_msgs::Vector3Stamped msg, const CanMessage::Address adr);
-
+	void setRPMscale(float rpmScale);
+	
+	/**
+	 * @brief Sets the control mode for the motors.
+	 * @param mode The control mode.
+	 */
+	void setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode);
 };
 
 #endif // ROS2CAN_H

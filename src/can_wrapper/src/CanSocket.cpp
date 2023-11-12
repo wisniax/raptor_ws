@@ -1,60 +1,75 @@
 #include "can_wrapper/CanSocket.hpp"
 
-CanSocket::CanSocket(std::string interfaceName, canid_t mask)
+CanSocket::CanSocket(std::string interfaceName)
+{
+	mInterfaceName = interfaceName;
+	createSocket();
+	ROS_INFO_STREAM_COND(mInitErrCode == 0, "CAN: " << translateInitError());
+	ROS_ERROR_STREAM_COND(mInitErrCode != 0, "CAN: " << translateInitError());
+}
+
+CanSocket::~CanSocket()
+{
+	if (mInitErrCode != 0)
+		return;
+	close(mSocket);
+}
+
+int CanSocket::createSocket()
 {
 	mSocket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	if (mSocket < 0)
 	{
-		CanSocket::mInitErrCode = -1;
-		return;
+		mInitErrCode = -1;
+		return mInitErrCode;
 	}
 
 	ifreq ifr;
-	strcpy(ifr.ifr_name, "can0");
+	strcpy(ifr.ifr_name, mInterfaceName.c_str());
 	if (ioctl(mSocket, SIOCGIFINDEX, &ifr) < 0)
 	{
-		CanSocket::mInitErrCode = -2;
-		return;
+		mInitErrCode = -2;
+		return mInitErrCode;
 	}
 
 	sockaddr_can addr;
 	addr.can_family = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
 
-	can_filter rfilter;
-	rfilter.can_id = 0x0;
-	rfilter.can_mask = CAN_EFF_MASK & mask;
-	if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter)) < 0)
-	{
-		CanSocket::mInitErrCode = -3;
-		return;
-	}
-
 	can_err_mask_t err_mask = (CAN_ERR_MASK);
 
 	if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask)) < 0)
 	{
-		CanSocket::mInitErrCode = -4;
-		return;
+		mInitErrCode = -4;
+		return mInitErrCode;
 	}
 
 	if (bind(mSocket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	{
-		CanSocket::mInitErrCode = -5;
+		mInitErrCode = -5;
+		return mInitErrCode;
+	}
+	mInitErrCode = 0;
+	return mInitErrCode;
+}
+
+void CanSocket::setFilter(canid_t id, canid_t mask)
+{
+	if (mInitErrCode != 0)
+		return;
+	can_filter rfilter;
+	rfilter.can_id = id;
+	rfilter.can_mask = CAN_EFF_MASK & mask;
+	if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter)) < 0)
+	{
+		mInitErrCode = -3;
 		return;
 	}
 }
 
-CanSocket::~CanSocket()
-{
-	if (CanSocket::mInitErrCode != 0)
-		return;
-	close(mSocket);
-}
-
 int CanSocket::sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_MAX_DLEN])
 {
-	if (CanSocket::mInitErrCode != 0)
+	if (mInitErrCode != 0)
 		return -2;
 
 	CanMessage frame;
@@ -62,12 +77,12 @@ int CanSocket::sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_
 	frame.dataLen = frame_len;
 	memcpy(frame.data.raw, raw, frame_len);
 
-	return CanSocket::sendMessage(frame);
+	return sendMessage(frame);
 }
 
 int CanSocket::sendMessage(const CanMessage &frame)
 {
-	if (CanSocket::mInitErrCode != 0)
+	if (mInitErrCode != 0)
 		return -2;
 
 	ssize_t nbytes = write(mSocket, &frame, sizeof(struct CanMessage));
@@ -82,7 +97,7 @@ int CanSocket::sendMessage(const CanMessage &frame)
 
 ssize_t CanSocket::awaitMessage(CanMessage &frame)
 {
-	if (CanSocket::mInitErrCode != 0)
+	if (mInitErrCode != 0)
 		return -2;
 	ssize_t nbytes = read(mSocket, &frame, sizeof(struct can_frame));
 
@@ -103,25 +118,41 @@ ssize_t CanSocket::awaitMessage(CanMessage &frame)
 
 void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
-	if (CanSocket::mInitErrCode != 0)
+	if (mInitErrCode != 0)
 		return;
-	
+
 	CanMessage cMsg(msg.get());
 	cMsg.address = msg->id;
 	cMsg.dataLen = msg->dlc;
 
-	for (size_t i = 0; i < CAN_MAX_DLEN; ++i) 
-        cMsg.data.raw[i] = msg->data[i];
+	for (size_t i = 0; i < CAN_MAX_DLEN; ++i)
+		cMsg.data.raw[i] = msg->data[i];
 
-	CanSocket::sendMessage(cMsg);
+	sendMessage(cMsg);
+}
+
+int CanSocket::tryHandleError()
+{
+	if (mInitErrCode == 0)
+		return 0;
+	createSocket();
+	ROS_INFO_STREAM_COND(mInitErrCode == 0, "CAN: " << translateInitError());
+	ROS_ERROR_STREAM_COND(mInitErrCode != 0, "CAN: " << translateInitError());
+	ros::Duration(5).sleep();
+	return mInitErrCode;
+}
+
+int CanSocket::getErrorCode()
+{
+	return mInitErrCode;
 }
 
 std::string CanSocket::translateInitError()
 {
-	switch (CanSocket::mInitErrCode)
+	switch (mInitErrCode)
 	{
 	case 0:
-		return "Everything's fineee";
+		return "Everything's fineee. Can was properly initialized";
 	case -1:
 		return "Socket creation failed";
 	case -2:

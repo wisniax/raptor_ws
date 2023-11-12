@@ -7,6 +7,8 @@
 #include <geometry_msgs/Point32.h>
 #include <memory>
 #include "can_wrapper/CanMessage.hpp"
+#include "can_wrapper/Wheels.h"
+#include "can_wrapper/RosCanConstants.hpp"
 
 class Can2Ros
 {
@@ -14,15 +16,16 @@ private:
 	ros::NodeHandle nh;
 	float mRPM_scale;
 	static std::unique_ptr<Can2Ros> instance;
-	void handleFrame(CanMessage cm);
-	geometry_msgs::Point32 decodeMotorVel(CanMessage cm);
-	static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
+	can_wrapper::Wheels mWheelsVel;
+	bool mWasMotorVelPublishedSinceWheelsVelStampChange;
 
 	ros::Subscriber mRawCanSub;
-	ros::Publisher mDriversLeft;
-	ros::Publisher mDriversRight;
-	ros::Publisher mArm123;
-	ros::Publisher mArm456;
+	ros::Publisher mRealMotorVelPub;
+
+	void handleFrame(CanMessage cm);
+	geometry_msgs::Point32 decodeMotorVel(CanMessage cm);
+	void tryPublishWheelsVel();
+	static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
 
 public:
 	Can2Ros() = default;
@@ -30,7 +33,7 @@ public:
 	void operator=(const Can2Ros &) = delete;
 
 	static Can2Ros *getSingleton();
-	void init(std::string can_RX_topic = "/CAN/RX/", float rpm_scale = 1);
+	void init(float rpm_scale);
 
 };
 

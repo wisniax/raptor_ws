@@ -4,6 +4,7 @@
 #include <linux/can.h>
 #include <stdint.h>
 #include <can_msgs/Frame.h>
+#include <ros/time.h>
 #include <string>
 
 /**
@@ -287,7 +288,8 @@ struct CanMessage
 	explicit operator can_msgs::Frame() const
 	{
 		can_msgs::Frame ret;
-		ret.id = (uint8_t)address;
+		ret.id = (uint32_t)address;
+		ret.header.stamp = ros::Time::now();
 		ret.dlc = dataLen;
 		memcpy(ret.data.begin(), &data, CAN_MAX_DLEN);
 		return ret;

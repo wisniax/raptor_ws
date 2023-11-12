@@ -7,6 +7,8 @@
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
 #include "can_wrapper/Can2Ros.hpp"
+#include "can_wrapper/Ros2Can.hpp"
+#include "can_wrapper/RosCanConstants.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -15,28 +17,35 @@ int main(int argc, char *argv[])
 
 	static CanSocket cSocket("can0");
 
-	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>("/CAN/RX/raw", 256);
+	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_RX, 256);
 	ros::Subscriber canRawSub = n.subscribe(
-		"/CAN/TX/raw",
+		RosCanConstants::RosTopics::can_raw_TX,
 		256,
 		((void (*)(const can_msgs::Frame::ConstPtr &))[](const can_msgs::Frame::ConstPtr &msg) {
 			cSocket.handleRosCallback(msg);
 		}));
 
-	ros::Rate loop_rate(1);
-	std_msgs::String canErrStr;
-	canErrStr.data = "CAN: " + cSocket.translateInitError();
-	ROS_INFO_STREAM(canErrStr);
+	Can2Ros c2r;
+	c2r.init(1);
 
+	Ros2Can r2c;
+	r2c.init(1, CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
+
+	uint32_t seq = 0;
 	while (ros::ok)
 	{
-		// can_msgs::Frame msg;
-		// msg.data = {6,9};
-		// canRawPub.publish(msg);
 		CanMessage cm;
-		cSocket.awaitMessage(cm);
+		if (cSocket.awaitMessage(cm) < 0)
+		{
+			if (cSocket.tryHandleError() != 0)
+				continue;
 
+			ros::Duration(0.0005).sleep();
+			continue;
+		}
+		can_msgs::Frame fr = (can_msgs::Frame)cm;
+		fr.header.seq = seq++;
+		canRawPub.publish(fr);
 		ros::spinOnce();
-		// loop_rate.sleep();
 	}
 }
