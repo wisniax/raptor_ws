@@ -19,28 +19,34 @@ struct CanMessage
 	{
 		Invalid = 0x7FF,
 
+		// RX ERRORS (ROS <-- CAN)
+
+		Error_StmLeft = 0x15,
+		Error_StmRight = 0x16,
+		Error_StmArmAxis123 = 0x17,
+		Error_StmArmAxis456 = 0x18,
+
 		// Init (ROS --> CAN)
 		
 		Init_StmLeft = 0x25,
 		Init_StmRight = 0x26,
-		Init_StmArm = 0x27,
+		Init_StmArmAxis123 = 0x27,
+		Init_StmArmAxis456 = 0x28,
 
 		// TX (ROS --> CAN)
 		
-		TX_DriversLeft = 0x50,
-		TX_DriversRight = 0x51,
-		TX_ArmAxis123 = 0x52,
-		TX_ArmAxis456 = 0x53,
+		TX_DriversLeft = 0x45,
+		TX_DriversRight = 0x46,
+		TX_ArmAxis123 = 0x47,
+		TX_ArmAxis456 = 0x48,
 
 		// RX (ROS <-- CAN)
 
-		RX_DriversLeft = 0x60,
-		RX_DriversRight = 0x61,
-		RX_ArmAxis123 = 0x62,
-		RX_ArmAxis456 = 0x63,
+		RX_DriversLeft = 0x55,
+		RX_DriversRight = 0x56,
+		RX_ArmAxis123 = 0x57,
+		RX_ArmAxis456 = 0x58,
 
-		//dunno, wip documentation (TODO CORRECT)
-		XX_PeriphCore = 0x40
 	};
 
 	struct mode_t
