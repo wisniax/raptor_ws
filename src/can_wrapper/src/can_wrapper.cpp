@@ -4,11 +4,13 @@
 #include <can_msgs/Frame.h>
 #include <std_msgs/String.h>
 
+#include "can_wrapper/CanNodeSettingsProvider.hpp"
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanSocket.hpp"
 #include "can_wrapper/Can2Ros.hpp"
 #include "can_wrapper/Ros2Can.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
+#include "can_wrapper/CanNodeErrorHandler.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -25,11 +27,14 @@ int main(int argc, char *argv[])
 			cSocket.handleRosCallback(msg);
 		}));
 
-	Can2Ros c2r;
-	c2r.init(1);
+	CanNodeSettingsProvider::init();
 
-	Ros2Can r2c;
-	r2c.init(1, CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
+	Can2Ros::init(CanNodeSettingsProvider::getSetting(0x0, CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
+
+	Ros2Can::init(CanNodeSettingsProvider::getSetting(0x0, CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
+				  CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
+
+	CanNodeErrorHandler::init();
 
 	uint32_t seq = 0;
 	while (ros::ok)

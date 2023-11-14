@@ -11,7 +11,26 @@
  * @brief CAN Frame with human readable data format
  */
 struct CanMessage
-{	
+{
+	/**
+	 * @brief Masks for CanMessage
+	 */
+	enum Masks : canid_t
+	{
+		Stm_Left_Mask = 0x5,
+		Stm_Right_Mask = 0x6,
+		Stm_Arm_Axis_123_Mask = 0x7,
+		Stm_Arm_Axis_456_Mask = 0x8,
+		All_Nodes_Mask = 0xF,
+
+		Error_Mask = 0x10,
+		Init_Mask = 0x20,
+		Status_Mask = 0x30,
+		Motor_Control_Mask = 0x40,
+		Encoder_Velocity_Feedback_Mask = 0x50,
+		Encoder_Distance_Traveled_Mask = 0x60,
+	};
+
 	/**
 	 * @brief CAN Address for CanMessage
 	 */
@@ -27,14 +46,14 @@ struct CanMessage
 		Error_StmArmAxis456 = 0x18,
 
 		// Init (ROS --> CAN)
-		
+
 		Init_StmLeft = 0x25,
 		Init_StmRight = 0x26,
 		Init_StmArmAxis123 = 0x27,
 		Init_StmArmAxis456 = 0x28,
 
 		// TX (ROS --> CAN)
-		
+
 		TX_DriversLeft = 0x45,
 		TX_DriversRight = 0x46,
 		TX_ArmAxis123 = 0x47,
@@ -63,22 +82,24 @@ struct CanMessage
 	struct stm_init_t
 	{
 		uint8_t type_id;
-		union 
-		{
-			struct 
-			{
-				float var;
-			} frame_a;
-			struct 
-			{
-				uint16_t x;
-				uint16_t y;
-			} frame_b;
-		} ;
+		float var;
 	};
 
 	/**
-	 * @brief Message Format format for commanding motors. 
+	 * @brief Struct representing error codes for various components of the motor controller.
+	 */
+	struct node_errors_t
+	{
+		uint8_t unique_err : 4;
+		uint8_t select_err : 4;
+		uint8_t rpm_scale_err : 4;
+		uint8_t motor_a_reg_err : 4;
+		uint8_t motor_b_reg_err : 4;
+		uint8_t motor_c_reg_err : 4;
+	};
+
+	/**
+	 * @brief Message Format format for commanding motors.
 	 * motor_*_vel meaning is dependant on init settings (Target RPM or Target PWM)
 	 * Initializable (see @ref stm_init_type_id)
 	 */
@@ -91,8 +112,8 @@ struct CanMessage
 		{
 			/**
 			 * motor_*_vel is wrap unsigned value (0-2047) into scale (0 - max_rpm) used to set RPM Target for motor.
-			 * ( max_rpm = (2^11-1) / rpm_scale ) 
-			*/
+			 * ( max_rpm = (2^11-1) / rpm_scale )
+			 */
 			TargetModeRpm = 0b00,
 			/**
 			 * (dunno, wip documentation TODO CORRECT)
@@ -114,16 +135,16 @@ struct CanMessage
 		enum stm_init_type_id : uint8_t
 		{
 			/**
-			 * @brief Setup frequency for Update and Upkeep. 
+			 * @brief Setup frequency for Update and Upkeep.
 			 * Parameters in @ref stm_init_t::frame_a
-			 * @param x update frequency (x * 1/100 Hz) 
-			 * @param y upkeep frequency (y * 1/100 s) 
+			 * @param x update frequency (x * 1/100 Hz)
+			 * @param y upkeep frequency (y * 1/100 s)
 			 */
 			Freq = 0x10,
 			/**
-			 * @brief Setup rpm_scale. 
+			 * @brief Setup rpm_scale.
 			 * When sending RPM target, this is used to wrap unsigned value (0-2047) into scale (0 - max_rpm)
-			 * ( max_rpm = (2^11-1) / rpm_scale ) 
+			 * ( max_rpm = (2^11-1) / rpm_scale )
 			 * Parameters in @ref stm_init_t::frame_b
 			 * @param var rpm_scale value
 			 */
@@ -149,13 +170,13 @@ struct CanMessage
 		};
 
 		/**
-		 * @brief use @c get_mode() method or see @c CanMessage.data.mode . 
+		 * @brief use @c get_mode() method or see @c CanMessage.data.mode .
 		 */
 		uint8_t __mode : 4;
 
 		/**
 		 * @brief Get the @c mode_t struct
-		 * @return mode_t* 
+		 * @return mode_t*
 		 */
 		mode_t *get_mode() { return (mode_t *)this; }
 
@@ -167,13 +188,10 @@ struct CanMessage
 
 		uint16_t motor_C_vel : 11;
 		uint8_t motor_C_dir : 1;
-
-
-
 	};
 
 	/**
-	 * @brief Message Format format for motors feedback. 
+	 * @brief Message Format format for motors feedback.
 	 * motor_*_vel meaning is dependant on init settings (Target RPM or Target RPM (new version))
 	 * Initializable (see @ref stm_init_type_id)
 	 */
@@ -188,13 +206,13 @@ struct CanMessage
 			 * @brief motor_*_vel is RPM Feed from motor.
 			 * wraped unsigned value (0-32767) into scale (0 - max_rpm)
 			 * where max_rpm = (2^11-1) / rpm_scale .
-			*/
+			 */
 			FeedModeRpm = 0b00,
 			/**
 			 * @brief motor_*_vel is RPM Feed (new version) from motor.
 			 * wraped unsigned value (0-32767) into scale (0 - max_rpm)
 			 * where max_rpm = (dunno, bad documentation TODO CORRECT)
-			*/
+			 */
 			FeedModeRpmNew = 0b01,
 			/**
 			 * unused.
@@ -212,30 +230,30 @@ struct CanMessage
 		enum stm_init_type_id : uint8_t
 		{
 			/**
-			 * @brief Setup frequency for Update and Upkeep. 
+			 * @brief Setup frequency for Update and Upkeep.
 			 * Parameters in @ref stm_init_t::frame_a
-			 * @param x update frequency (x * 1/100 Hz) 
-			 * @param y upkeep frequency (y * 1/100 s) 
+			 * @param x update frequency (x * 1/100 Hz)
+			 * @param y upkeep frequency (y * 1/100 s)
 			 */
 			Freq = 0x10,
 			/**
-			 * @brief Setup rpm_scale. 
-			 * When reciving RPM feed, this is used to wrap unsigned value (0-32767) into scale (0 - max_rpm)  
+			 * @brief Setup rpm_scale.
+			 * When reciving RPM feed, this is used to wrap unsigned value (0-32767) into scale (0 - max_rpm)
 			 * max_rpm is dependant on FeedMode. see @ref mode_cont_mode .
 			 * Parameters in @ref stm_init_t::frame_b
 			 * @param var rpm_scale value
 			 */
 			RpmScale = 0x11
 		};
-		
+
 		/**
-		 * @brief use @c get_mode() method or see @c CanMessage.data.mode . 
+		 * @brief use @c get_mode() method or see @c CanMessage.data.mode .
 		 */
 		uint8_t __mode : 4;
 
 		/**
 		 * @brief Get the @c mode_t struct
-		 * @return mode_t* 
+		 * @return mode_t*
 		 */
 		mode_t *get_mode() { return (mode_t *)this; }
 
@@ -258,16 +276,16 @@ struct CanMessage
 	struct periph_t
 	{
 		/**
-		 * @brief use @c get_mode() method or see @c CanMessage.data.mode . 
+		 * @brief use @c get_mode() method or see @c CanMessage.data.mode .
 		 */
 		uint8_t __mode : 4;
 
 		/**
 		 * @brief Get the @c mode_t struct
-		 * @return mode_t* 
+		 * @return mode_t*
 		 */
 		mode_t *get_mode() { return (mode_t *)this; }
-		
+
 		uint16_t periph : 12;
 	};
 
@@ -313,6 +331,8 @@ struct CanMessage
 		mode_t mode;
 
 		stm_init_t stm_init;
+
+		node_errors_t node_errors;
 
 		set_motor_vel_t set_motor_vel;
 
