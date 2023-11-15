@@ -17,24 +17,29 @@ int main(int argc, char *argv[])
 	ros::init(argc, argv, "can_wrapper");
 	ros::NodeHandle n;
 
-	static CanSocket cSocket("can0");
+	CanSocket cSocket("can0");
 
 	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_RX, 256);
-	ros::Subscriber canRawSub = n.subscribe(
-		RosCanConstants::RosTopics::can_raw_TX,
-		256,
-		((void (*)(const can_msgs::Frame::ConstPtr &))[](const can_msgs::Frame::ConstPtr &msg) {
-			cSocket.handleRosCallback(msg);
-		}));
+	ros::Subscriber canRawSub = n.subscribe(RosCanConstants::RosTopics::can_raw_TX,	256, &CanSocket::handleRosCallback, &cSocket);
 
-	CanNodeSettingsProvider::init();
+	std::shared_ptr<CanNodeSettingsProvider> canSettingsPtr = std::make_shared<CanNodeSettingsProvider>();
 
-	Can2Ros::init(CanNodeSettingsProvider::getSetting(0x0, CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
+	Can2Ros can2ros(
+		canSettingsPtr->getSetting(
+			0x0, 
+			CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback
+		)
+	);
 
-	Ros2Can::init(CanNodeSettingsProvider::getSetting(0x0, CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
-				  CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
+	Ros2Can ros2can(
+		canSettingsPtr->getSetting(
+			0x0, 
+			CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control
+		),
+		CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm
+	);
 
-	CanNodeErrorHandler::init();
+	CanNodeErrorHandler canErrorHandler(canSettingsPtr);
 
 	uint32_t seq = 0;
 	while (ros::ok)

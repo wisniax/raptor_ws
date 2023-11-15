@@ -27,10 +27,7 @@ public:
 		Encoder_Feedback = 0x11
 	};
 
-	/**
-	 * @brief Initializes the settings provider.
-	 */
-	static void init();
+	CanNodeSettingsProvider();
 
 	/**
 	 * @brief Gets a setting value for a specific frame ID and type group.
@@ -39,7 +36,7 @@ public:
 	 * @param setting_id The setting ID.
 	 * @return The setting value.
 	 */
-	static float getSetting(canid_t frame_id, TypeGroups typeGroup, uint8_t setting_id);
+	float getSetting(canid_t frame_id, TypeGroups typeGroup, uint8_t setting_id) const;
 
 	/**
 	 * @brief Gets a setting value for a specific type ID and setting ID.
@@ -47,7 +44,7 @@ public:
 	 * @param setting_id The setting ID.
 	 * @return The setting value.
 	 */
-	static float getSetting(uint8_t type_id, uint8_t setting_id);
+	float getSetting(uint8_t type_id, uint8_t setting_id) const;
 
 	/**
 	 * @brief Sets a setting value for a specific type ID and setting ID.
@@ -56,7 +53,7 @@ public:
 	 * @param value The value to set.
 	 * @return 0 if successful, -1 otherwise.
 	 */
-	static int8_t setSetting(uint8_t type_id, uint8_t setting_id, float value);
+	int8_t setSetting(uint8_t type_id, uint8_t setting_id, float value);
 
 	/**
 	 * @brief Sets a setting value for all devices for a specific setting ID.
@@ -64,16 +61,14 @@ public:
 	 * @param value The value to set.
 	 * @return 0 if successful, -1 otherwise.
 	 */
-	static int8_t setSettingForAllDevices(uint8_t setting_id, float value);
+	int8_t setSettingForAllDevices(uint8_t setting_id, float value);
 
 private:
-	static bool sIsInitialized;
 	/**
 	 * @brief The node settings array.
 	 */
-	static float mNodeSettings[0xF][INIT_MAX_TYPE_ID];
+	float mNodeSettings[0xF][INIT_MAX_TYPE_ID];
 
-	CanNodeSettingsProvider() = delete; // Prevent instantiation
 };
 
 #endif // CAN_WRAPPER_CAN_NODE_SETTINGS_PROVIDER_HPP

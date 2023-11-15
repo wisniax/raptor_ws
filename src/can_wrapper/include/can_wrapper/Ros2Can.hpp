@@ -14,56 +14,50 @@
  */
 class Ros2Can
 {
+public:
+	/**
+	 * @brief Initializes the Ros2Can object.
+	 * @param rpmScale The scale factor for motor RPM.
+	 */
+	Ros2Can(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
+
+	/**
+	 * @brief Sets the scale factor for motor RPM.
+	 * @param rpmScale The scale factor for motor RPM.
+	 */
+	void setRPMscale(float rpmScale);
+
+	/**
+	 * @brief Sets the control mode for the motors.
+	 * @param mode The control mode.
+	 */
+	void setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode);
+
 private:
-	static bool sIsInitialized;	
-	static ros::NodeHandle sNh;	
-	static float sRPM_scale;		 /**< Scale factor for motor RPM. */
-	static uint32_t sSetMotorVelSeq; /**< Sequence number for motor velocity messages. */
-
-	static CanMessage::set_motor_vel_t::mode_cont_mode sControlMode; /**< The mode to use when setting motor velocity. */
-
-	static ros::Publisher sRawCanPub;		/**< ROS publisher for raw CAN messages. */
-	static ros::Subscriber sSetMotorVelSub; /**< ROS subscriber for motor velocity messages. */
-
 	/**
 	 * @brief Encodes motor velocity message into a CAN frame.
 	 * @param msg The motor velocity message.
 	 * @param adr The CAN address of the motor.
 	 * @return The encoded CAN frame.
 	 */
-	static can_msgs::Frame encodeMotorVel(const float msg[], const CanMessage::Address adr);
+	can_msgs::Frame encodeMotorVel(const float msg[], const CanMessage::Address adr);
 
-	static void sendMotorVel(const can_wrapper::Wheels msg);
+	void sendMotorVel(const can_wrapper::Wheels msg);
 
 	/**
 	 * @brief Callback function for handling left driver velocity messages.
 	 * @param msg The left driver velocity message.
 	 */
-	static void handleSetMotorVel(const can_wrapper::Wheels &msg);
+	void handleSetMotorVel(const can_wrapper::Wheels &msg);
 
-public:
-	/**
-	 * @brief This is static class, so yeet
-	 */
-	Ros2Can() = delete;
+	ros::NodeHandle mNh;	
+	float mRPM_scale;		 /**< Scale factor for motor RPM. */
+	uint32_t mSetMotorVelSeq; /**< Sequence number for motor velocity messages. */
 
-	/**
-	 * @brief Initializes the Ros2Can object.
-	 * @param rpmScale The scale factor for motor RPM.
-	 */
-	static void init(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
+	CanMessage::set_motor_vel_t::mode_cont_mode mControlMode; /**< The mode to use when setting motor velocity. */
 
-	/**
-	 * @brief Sets the scale factor for motor RPM.
-	 * @param rpmScale The scale factor for motor RPM.
-	 */
-	static void setRPMscale(float rpmScale);
-
-	/**
-	 * @brief Sets the control mode for the motors.
-	 * @param mode The control mode.
-	 */
-	static void setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode);
+	ros::Publisher mRawCanPub;		/**< ROS publisher for raw CAN messages. */
+	ros::Subscriber mSetMotorVelSub; /**< ROS subscriber for motor velocity messages. */
 };
 
 #endif // ROS2CAN_H
