@@ -2,7 +2,7 @@
 
 // static members init
 bool Ros2Can::sIsInitialized = false;
-ros::NodeHandle Ros2Can::sNh;
+// ros::NodeHandle Ros2Can::sNh;
 float Ros2Can::sRPM_scale = 0;
 uint32_t Ros2Can::sSetMotorVelSeq = 0;
 
@@ -11,16 +11,17 @@ CanMessage::set_motor_vel_t::mode_cont_mode Ros2Can::sControlMode;
 ros::Publisher Ros2Can::sRawCanPub;
 ros::Subscriber Ros2Can::sSetMotorVelSub;
 
-void Ros2Can::init(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode)
+void Ros2Can::init(float rpmScale, ros::NodeHandle nh, CanMessage::set_motor_vel_t::mode_cont_mode mode)
 {
 	if (sIsInitialized)
 		return;
+	// sNh = nh;
 	sIsInitialized = true;
 	setRPMscale(rpmScale);
 	setControlMode(mode);
 
-	sRawCanPub = sNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
-	sSetMotorVelSub = sNh.subscribe(RosCanConstants::RosTopics::can_set_motor_vel, 256, handleSetMotorVel);
+	sRawCanPub = nh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
+	sSetMotorVelSub = nh.subscribe(RosCanConstants::RosTopics::can_set_motor_vel, 256, handleSetMotorVel);
 }
 
 void Ros2Can::setRPMscale(float rpmScale)

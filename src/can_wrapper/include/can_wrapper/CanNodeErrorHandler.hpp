@@ -17,13 +17,16 @@ public:
 		Motor_Reg_Params = 0,
 	};
 
-	static void init();
+	static void init(ros::NodeHandle nh);
+	static void initializeDevices();
 
 private:
 	static bool sIsInitialized;
-	static ros::NodeHandle sNh;
+	// static ros::NodeHandle sNh;
 	static ros::Subscriber sRawCanSub;
 	static ros::Publisher sCanRawPub;
+	static bool sWereDevicesInitialized;
+	static bool sDeviceInitRequested;
 
 	CanNodeErrorHandler() = delete; // Prevent instantiation
 

@@ -79,11 +79,12 @@ struct CanMessage
 	 * @brief Message Format for initialization and setup.
 	 * For usage see other Message Formats with init settings (containing stm_init_type_id enum) eg. @ref set_motor_vel_t .
 	 */
+
 	struct stm_init_t
 	{
-		uint8_t type_id;
+		uint8_t type_id : 8;
 		float var;
-	};
+	} __attribute__((packed));;
 
 	/**
 	 * @brief Struct representing error codes for various components of the motor controller.

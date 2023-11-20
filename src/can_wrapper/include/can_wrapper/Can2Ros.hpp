@@ -14,7 +14,7 @@ class Can2Ros
 {
 private:
 	static bool sIsInitialized;
-	static ros::NodeHandle sNh;
+	// static ros::NodeHandle sNh;
 	static float sRPM_scale;
 	static can_wrapper::Wheels sWheelsVel;
 	static bool sWasMotorVelPublishedSinceWheelsVelStampChange;
@@ -30,7 +30,7 @@ private:
 public:
 	Can2Ros() = delete;
 
-	static void init(float rpm_scale);
+	static void init(float rpm_scale, ros::NodeHandle nh);
 };
 
 #endif // CAN2ROS_H

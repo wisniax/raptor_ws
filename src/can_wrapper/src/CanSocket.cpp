@@ -32,6 +32,8 @@ int CanSocket::createSocket()
 		return mInitErrCode;
 	}
 
+	fcntl(mSocket, F_SETFL, O_NONBLOCK) < 0;
+
 	sockaddr_can addr;
 	addr.can_family = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
@@ -103,8 +105,8 @@ ssize_t CanSocket::awaitMessage(CanMessage &frame)
 
 	if (nbytes < 0)
 	{
-		ROS_ERROR("Can raw socket read failed");
-		return -1;
+		// ROS_ERROR("Can raw socket read failed");
+		return 0;
 	}
 
 	/* paranoid check ... */

@@ -16,7 +16,7 @@ class Ros2Can
 {
 private:
 	static bool sIsInitialized;	
-	static ros::NodeHandle sNh;	
+	// static ros::NodeHandle sNh;	
 	static float sRPM_scale;		 /**< Scale factor for motor RPM. */
 	static uint32_t sSetMotorVelSeq; /**< Sequence number for motor velocity messages. */
 
@@ -51,7 +51,7 @@ public:
 	 * @brief Initializes the Ros2Can object.
 	 * @param rpmScale The scale factor for motor RPM.
 	 */
-	static void init(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
+	static void init(float rpmScale, ros::NodeHandle nh, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
 
 	/**
 	 * @brief Sets the scale factor for motor RPM.

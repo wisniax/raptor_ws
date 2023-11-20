@@ -1,22 +1,38 @@
 #include "can_wrapper/CanNodeErrorHandler.hpp"
 
 bool CanNodeErrorHandler::sIsInitialized = false;
-ros::NodeHandle CanNodeErrorHandler::sNh;
+bool CanNodeErrorHandler::sWereDevicesInitialized = false;
+bool CanNodeErrorHandler::sDeviceInitRequested = false;
+// ros::NodeHandle CanNodeErrorHandler::sNh;
 ros::Subscriber CanNodeErrorHandler::sRawCanSub;
 ros::Publisher CanNodeErrorHandler::sCanRawPub;
 
-void CanNodeErrorHandler::init()
+void CanNodeErrorHandler::init(ros::NodeHandle nh)
 {
 	if (sIsInitialized)
 		return;
+	// sNh = nh;
 	sIsInitialized = true;
-	sRawCanSub = sNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &CanNodeErrorHandler::handleRosCallback);
-	sCanRawPub = sNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
+	sRawCanSub = nh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &CanNodeErrorHandler::handleRosCallback);
+	sCanRawPub = nh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
+}
+
+void CanNodeErrorHandler::initializeDevices()
+{
+	if (sWereDevicesInitialized || sDeviceInitRequested)
+		return;
+	CanMessage cm;
+	cm.address = CanMessage::Address::Error_StmRight | CAN_RTR_FLAG;
+	cm.dataLen = 0;
+	sCanRawPub.publish((can_msgs::Frame)cm);
+	sDeviceInitRequested = true;
+	// ros::Duration(1).sleep();
+	// ros::spinOnce();
 }
 
 void CanNodeErrorHandler::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
-	if ((msg->id & CanMessage::Masks::Error_Mask) != CanMessage::Masks::Error_Mask)
+	if ((msg->id & 0xF0) != CanMessage::Masks::Error_Mask) // CanMessage::Masks::Error_Mask
 		return;
 	CanMessage cm(msg.get());
 	handleErrorFrame(cm);
@@ -51,6 +67,9 @@ void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
 			cmErr.data.node_errors.motor_c_reg_err,
 			CanNodeSettingsProvider::TypeGroups::Motor_C_Reg_Group,
 			MaxNumberOfParams::Motor_Reg_Params);
+	if (cmErr.data.node_errors.select_err == 0 && cmErr.data.node_errors.unique_err == 0)
+		sWereDevicesInitialized = true;
+	sDeviceInitRequested = false;
 }
 
 void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count)
@@ -73,7 +92,8 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id)
 {
 	CanMessage cm;
-	cm.address = dev_id | CanMessage::Masks::Error_Mask;
+	cm.address = dev_id | CanMessage::Masks::Init_Mask;
+	cm.dataLen = 5;
 	cm.data.stm_init.type_id = type_id;
 	cm.data.stm_init.var = CanNodeSettingsProvider::getSetting(dev_id, cm.data.stm_init.type_id);
 	return (can_msgs::Frame)cm;

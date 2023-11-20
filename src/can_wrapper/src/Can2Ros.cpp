@@ -1,7 +1,7 @@
 #include "can_wrapper/Can2Ros.hpp"
 
 bool Can2Ros::sIsInitialized = false;
-ros::NodeHandle Can2Ros::sNh;
+// ros::NodeHandle Can2Ros::sNh;
 float Can2Ros::sRPM_scale = 0;
 can_wrapper::Wheels Can2Ros::sWheelsVel;
 bool Can2Ros::sWasMotorVelPublishedSinceWheelsVelStampChange = false;
@@ -9,14 +9,15 @@ bool Can2Ros::sWasMotorVelPublishedSinceWheelsVelStampChange = false;
 ros::Subscriber Can2Ros::sRawCanSub;
 ros::Publisher Can2Ros::sRealMotorVelPub;
 
-void Can2Ros::init(float rpm_scale)
+void Can2Ros::init(float rpm_scale, ros::NodeHandle nh)
 {
 	if (sIsInitialized)
 		return;
+	// sNh = nh;
 	sIsInitialized = true;
 	sRPM_scale = rpm_scale;
-	sRawCanSub = sNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, handleRosCallback);
-	sRealMotorVelPub = sNh.advertise<can_wrapper::Wheels>(RosCanConstants::RosTopics::can_get_motor_vel, 128);
+	sRawCanSub = nh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, handleRosCallback);
+	sRealMotorVelPub = nh.advertise<can_wrapper::Wheels>(RosCanConstants::RosTopics::can_get_motor_vel, 128);
 }
 
 void Can2Ros::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
