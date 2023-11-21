@@ -1,25 +1,17 @@
 #include "can_wrapper/CanNodeErrorHandler.hpp"
 
-bool CanNodeErrorHandler::sIsInitialized = false;
-ros::NodeHandle CanNodeErrorHandler::sNh;
-ros::Subscriber CanNodeErrorHandler::sRawCanSub;
-ros::Publisher CanNodeErrorHandler::sCanRawPub;
-
-void CanNodeErrorHandler::init()
+CanNodeErrorHandler::CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider>& canSettingsCPtr)
 {
-	if (sIsInitialized)
-		return;
-	sIsInitialized = true;
-	sRawCanSub = sNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &CanNodeErrorHandler::handleRosCallback);
-	sCanRawPub = sNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
+	mCanSettings = canSettingsCPtr;
+	mRawCanSub = mNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &CanNodeErrorHandler::handleRosCallback, this);
+	mCanRawPub = mNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
 }
 
 void CanNodeErrorHandler::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
 	if ((msg->id & CanMessage::Masks::Error_Mask) != CanMessage::Masks::Error_Mask)
 		return;
-	CanMessage cm(msg.get());
-	handleErrorFrame(cm);
+	handleErrorFrame(CanMessage(msg.get()));
 }
 
 void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
@@ -57,24 +49,24 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 {
 	if (err != 0xF)
 	{
-		sCanRawPub.publish(createResponseFrame(dev_id, err | err_group));
+		mCanRawPub.publish(createResponseFrame(dev_id, err | err_group));
 		ros::spinOnce();
 		return;
 	}
 
 	for (uint8_t i = 0; i < iter_count; i++)
 	{
-		sCanRawPub.publish(createResponseFrame(dev_id, i | err_group));
+		mCanRawPub.publish(createResponseFrame(dev_id, i | err_group));
 	}
 
 	ros::spinOnce();
 }
 
-can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id)
+can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id) const
 {
 	CanMessage cm;
 	cm.address = dev_id | CanMessage::Masks::Error_Mask;
 	cm.data.stm_init.type_id = type_id;
-	cm.data.stm_init.var = CanNodeSettingsProvider::getSetting(dev_id, cm.data.stm_init.type_id);
+	cm.data.stm_init.var = mCanSettings->getSetting(dev_id, cm.data.stm_init.type_id);
 	return (can_msgs::Frame)cm;
 }

@@ -17,21 +17,20 @@ public:
 		Motor_Reg_Params = 0,
 	};
 
-	static void init();
+	CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider>& canSettingsCPtr);
 
 private:
-	static bool sIsInitialized;
-	static ros::NodeHandle sNh;
-	static ros::Subscriber sRawCanSub;
-	static ros::Publisher sCanRawPub;
+	void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
+	void handleErrorFrame(CanMessage cmErr);
+	void handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count);
 
-	CanNodeErrorHandler() = delete; // Prevent instantiation
+	can_msgs::Frame createResponseFrame(uint8_t dev_id, uint8_t rpm_scale_err) const;
 
-	static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
-	static void handleErrorFrame(CanMessage cmErr);
-	static void handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count);
-
-	static can_msgs::Frame createResponseFrame(uint8_t dev_id, uint8_t rpm_scale_err);
+private:
+	ros::NodeHandle mNh;
+	ros::Subscriber mRawCanSub;
+	ros::Publisher mCanRawPub;
+	std::shared_ptr<const CanNodeSettingsProvider>mCanSettings;
 };
 
 #endif // CAN_NODE_ERROR_HANDLER_HPP

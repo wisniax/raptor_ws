@@ -12,25 +12,23 @@
 
 class Can2Ros
 {
-private:
-	static bool sIsInitialized;
-	static ros::NodeHandle sNh;
-	static float sRPM_scale;
-	static can_wrapper::Wheels sWheelsVel;
-	static bool sWasMotorVelPublishedSinceWheelsVelStampChange;
-
-	static ros::Subscriber sRawCanSub;
-	static ros::Publisher sRealMotorVelPub;
-
-	static void handleFrame(CanMessage cm);
-	static geometry_msgs::Point32 decodeMotorVel(CanMessage cm);
-	static void tryPublishWheelsVel();
-	static void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
-
 public:
-	Can2Ros() = delete;
+	Can2Ros(float rpm_scale);
 
-	static void init(float rpm_scale);
+private:
+	void handleFrame(CanMessage cm);
+	geometry_msgs::Point32 decodeMotorVel(CanMessage cm) const;
+	void tryPublishWheelsVel();
+	void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
+
+private:
+	ros::NodeHandle mNh;
+	float mRPM_scale;
+	can_wrapper::Wheels mWheelsVel;
+	bool mWasMotorVelPublishedSinceWheelsVelStampChange;
+
+	ros::Subscriber mRawCanSub;
+	ros::Publisher mRealMotorVelPub;
 };
 
 #endif // CAN2ROS_H
