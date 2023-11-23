@@ -29,9 +29,9 @@ void Ros2Can::sendMotorVel(const can_wrapper::Wheels msg)
 	float leftMotors[] = {msg.frontLeft, msg.midLeft, msg.rearLeft};
 	float rightMotors[] = {msg.frontRight, msg.midRight, msg.rearRight};
 
-	can_msgs::Frame can_msg = encodeMotorVel(leftMotors, CanMessage::Address::TX_DriversLeft);
+	can_msgs::Frame can_msg = encodeMotorVel(leftMotors, CanMessage::Address::Stm_Left);
 	mRawCanPub.publish(can_msg);
-	can_msgs::Frame can_msg2 = encodeMotorVel(rightMotors, CanMessage::Address::TX_DriversRight);
+	can_msgs::Frame can_msg2 = encodeMotorVel(rightMotors, CanMessage::Address::Stm_Right);
 	mRawCanPub.publish(can_msg2);
 	ros::spinOnce();
 }
@@ -39,7 +39,7 @@ void Ros2Can::sendMotorVel(const can_wrapper::Wheels msg)
 can_msgs::Frame Ros2Can::encodeMotorVel(const float msg[], const CanMessage::Address adr)
 {
 	CanMessage cm;
-	cm.address = adr;
+	cm.address = CanMessage::Address::Motor_Control | adr;
 	cm.dataLen = 5;
 	cm.data.mode.cont_mode = mControlMode;
 	cm.data.mode.reason = 0;

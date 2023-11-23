@@ -17,18 +17,8 @@ struct CanMessage
 	 */
 	enum Masks : canid_t
 	{
-		Stm_Left_Mask = 0x5,
-		Stm_Right_Mask = 0x6,
-		Stm_Arm_Axis_123_Mask = 0x7,
-		Stm_Arm_Axis_456_Mask = 0x8,
-		All_Nodes_Mask = 0xF,
-
-		Error_Mask = 0x10,
-		Init_Mask = 0x20,
-		Status_Mask = 0x30,
-		Motor_Control_Mask = 0x40,
-		Encoder_Velocity_Feedback_Mask = 0x50,
-		Encoder_Distance_Traveled_Mask = 0x60,
+		All_Nodes = 0x60F,
+		Adress_Families = 0x7F0,
 	};
 
 	/**
@@ -36,36 +26,21 @@ struct CanMessage
 	 */
 	enum Address : canid_t
 	{
+		Stm_Left = 0x5,
+		Stm_Right = 0x6,
+		Stm_Arm_Axis_123 = 0x7,
+		Stm_Arm_Axis_456 = 0x8,
+
+		// Adress_Families
+
+		Error = 0x1 << 4,					  // RX ERRORS (ROS <-- CAN)
+		Init = 0x2 << 4,					  // TX Init (ROS --> CAN)
+		Status = 0x3 << 4,					  // RX (ROS <-- CAN)
+		Motor_Control = 0x4 << 4,			  // TX (ROS --> CAN)
+		Encoder_Velocity_Feedback = 0x5 << 4, // RX (ROS <-- CAN)
+		Encoder_Distance_Traveled = 0x6 << 4, // RX (ROS <-- CAN)
+
 		Invalid = 0x7FF,
-
-		// RX ERRORS (ROS <-- CAN)
-
-		Error_StmLeft = 0x15,
-		Error_StmRight = 0x16,
-		Error_StmArmAxis123 = 0x17,
-		Error_StmArmAxis456 = 0x18,
-
-		// Init (ROS --> CAN)
-
-		Init_StmLeft = 0x25,
-		Init_StmRight = 0x26,
-		Init_StmArmAxis123 = 0x27,
-		Init_StmArmAxis456 = 0x28,
-
-		// TX (ROS --> CAN)
-
-		TX_DriversLeft = 0x45,
-		TX_DriversRight = 0x46,
-		TX_ArmAxis123 = 0x47,
-		TX_ArmAxis456 = 0x48,
-
-		// RX (ROS <-- CAN)
-
-		RX_DriversLeft = 0x55,
-		RX_DriversRight = 0x56,
-		RX_ArmAxis123 = 0x57,
-		RX_ArmAxis456 = 0x58,
-
 	};
 
 	struct mode_t

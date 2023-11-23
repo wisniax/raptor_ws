@@ -42,6 +42,10 @@ int main(int argc, char *argv[])
 	CanNodeErrorHandler canErrorHandler(canSettingsPtr);
 
 	uint32_t seq = 0;
+	
+	ros::spin();
+
+
 	while (ros::ok)
 	{
 		CanMessage cm;

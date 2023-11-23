@@ -9,7 +9,7 @@ CanNodeSettingsProvider::CanNodeSettingsProvider()
 
 float CanNodeSettingsProvider::getSetting(canid_t frame_id, TypeGroups typeGroup, uint8_t setting_id) const
 {
-	return getSetting(frame_id & CanMessage::Masks::All_Nodes_Mask, typeGroup | setting_id);
+	return getSetting(frame_id & CanMessage::Masks::All_Nodes, typeGroup | setting_id);
 }
 
 float CanNodeSettingsProvider::getSetting(uint8_t type_id, uint8_t setting_id) const
