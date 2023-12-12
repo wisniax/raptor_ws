@@ -1,4 +1,4 @@
-#include "can_wrapper/CanSocket.hpp"
+#include "ros_can_integration/CanSocket.hpp"
 
 CanSocket::CanSocket(std::string interfaceName)
 {
@@ -31,6 +31,11 @@ int CanSocket::createSocket()
 		mInitErrCode = -2;
 		return mInitErrCode;
 	}
+
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	setsockopt(mSocket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
 
 	sockaddr_can addr;
 	addr.can_family = AF_CAN;
@@ -72,20 +77,20 @@ int CanSocket::sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_
 	if (mInitErrCode != 0)
 		return -2;
 
-	CanMessage frame;
-	frame.address = frame_id;
-	frame.dataLen = frame_len;
-	memcpy(frame.data.raw, raw, frame_len);
+	can_frame frame;
+	frame.can_id = frame_id;
+	frame.can_dlc = frame_len;
+	memcpy(frame.data, raw, frame_len);
 
 	return sendMessage(frame);
 }
 
-int CanSocket::sendMessage(const CanMessage &frame)
+int CanSocket::sendMessage(const can_frame &frame)
 {
 	if (mInitErrCode != 0)
 		return -2;
 
-	ssize_t nbytes = write(mSocket, &frame, sizeof(struct CanMessage));
+	ssize_t nbytes = write(mSocket, &frame, sizeof(struct can_frame));
 	if (nbytes < 0)
 	{
 		ROS_ERROR("Can raw socket write failed");
@@ -95,7 +100,7 @@ int CanSocket::sendMessage(const CanMessage &frame)
 	return nbytes;
 }
 
-ssize_t CanSocket::awaitMessage(CanMessage &frame)
+ssize_t CanSocket::awaitMessage(can_frame &frame)
 {
 	if (mInitErrCode != 0)
 		return -2;
@@ -121,12 +126,10 @@ void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 	if (mInitErrCode != 0)
 		return;
 
-	CanMessage cMsg(msg.get());
-	cMsg.address = msg->id;
-	cMsg.dataLen = msg->dlc;
-
-	for (size_t i = 0; i < CAN_MAX_DLEN; ++i)
-		cMsg.data.raw[i] = msg->data[i];
+	can_frame cMsg;
+	cMsg.can_id = msg->id;
+	cMsg.can_dlc = msg->dlc;
+	memcpy(&cMsg.data, msg->data.data(), CAN_MAX_DLEN);
 
 	sendMessage(cMsg);
 }

@@ -12,8 +12,6 @@
 #include <sys/fcntl.h>
 #include <can_msgs/Frame.h>
 
-#include "can_wrapper/CanMessage.hpp"
-
 class CanSocket
 {
 public:
@@ -31,8 +29,8 @@ public:
 	/// @param raw Payload
 	/// @return The number written, or -1 on error
 	int sendMessage(canid_t frame_id, uint8_t frame_len, uint8_t raw[CAN_MAX_DLEN]);
-	int sendMessage(const CanMessage &frame);
-	ssize_t awaitMessage(CanMessage &frame);
+	int sendMessage(const can_frame &frame);
+	ssize_t awaitMessage(can_frame &frame);
 	void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
 	int tryHandleError();
 	int getErrorCode();
