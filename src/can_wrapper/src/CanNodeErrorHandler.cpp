@@ -14,6 +14,22 @@ void CanNodeErrorHandler::handleRosCallback(const can_msgs::Frame::ConstPtr &msg
 	handleErrorFrame(CanMessage(msg.get()));
 }
 
+void CanNodeErrorHandler::initializeDevices()
+{
+	if (mNodeOneInitialized || mDeviceInitRequested)
+		return;
+	CanMessage cm;
+	cm.address = CanMessage::Address::Stm_Right | CanMessage::Address::Error | CAN_RTR_FLAG;
+	cm.dataLen = 0;
+	mCanRawPub.publish((can_msgs::Frame)cm);
+	mDeviceInitRequested = true;
+}
+
+bool CanNodeErrorHandler::GetCanNodesStatus()
+{
+	return mNodeOneInitialized;
+}
+
 void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
 {
 	if (cmErr.data.node_errors.select_err & 0b0001)
@@ -43,6 +59,10 @@ void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
 			cmErr.data.node_errors.motor_c_reg_err,
 			CanNodeSettingsProvider::TypeGroups::Motor_C_Reg_Group,
 			MaxNumberOfParams::Motor_Reg_Params);
+
+	if (cmErr.data.node_errors.select_err == 0 & cmErr.data.node_errors.unique_err == 0) {
+		mNodeOneInitialized = true;
+	}
 }
 
 void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count)
@@ -50,7 +70,6 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 	if (err != 0xF)
 	{
 		mCanRawPub.publish(createResponseFrame(dev_id, err | err_group));
-		ros::spinOnce();
 		return;
 	}
 
@@ -59,7 +78,6 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 		mCanRawPub.publish(createResponseFrame(dev_id, i | err_group));
 	}
 
-	ros::spinOnce();
 }
 
 can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id) const

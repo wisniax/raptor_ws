@@ -45,10 +45,11 @@ int main(int argc, char *argv[])
 	CanNodeErrorHandler canErrorHandler(canSettingsPtr);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
-	ros::Rate rate(5000);
+	ros::Rate rate(1000);
 
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
+	float vel[3] = {0};
 
 	while (ros::ok())
 	{
@@ -81,12 +82,18 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opening:
-			
-			canNodeMode = CanNodeMode::Opened;
+			canErrorHandler.initializeDevices();
+			ros::Duration(0.1).sleep();
+			if (canErrorHandler.GetCanNodesStatus())
+				canNodeMode = CanNodeMode::Opened;
 			break;
-		case CanNodeMode::Opened:
 
+		case CanNodeMode::Opened:
+			vel[0] = 0.5f;
+			ros::Duration(0.1).sleep();
+			ros2can.setMotorVel(vel, CanMessage::Address::Stm_Right);
 			break;
+
 		case CanNodeMode::Closing:
 			ROS_INFO("CanNodeMode::Closing");
 

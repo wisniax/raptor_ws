@@ -27,6 +27,8 @@ public:
 	 */
 	void setRPMscale(float rpmScale);
 
+	void setMotorVel(const float msg[], const CanMessage::Address adr);
+
 	/**
 	 * @brief Sets the control mode for the motors.
 	 * @param mode The control mode.

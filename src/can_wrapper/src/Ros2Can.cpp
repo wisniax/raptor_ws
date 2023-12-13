@@ -14,6 +14,10 @@ void Ros2Can::setRPMscale(float rpmScale)
 	mRPM_scale = rpmScale;
 }
 
+void Ros2Can::setMotorVel(const float msg[], const CanMessage::Address adr){
+	mRawCanPub.publish(encodeMotorVel(msg, adr));
+}
+
 void Ros2Can::setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode)
 {
 	mControlMode = mode;

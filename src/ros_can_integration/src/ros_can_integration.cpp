@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	ros::ServiceServer service = n.advertiseService("/CAN/ros_can_integration/check_status", getErrorCodeCallback);
 
 	uint32_t seq = 0;
-	ros::Rate rate(5000);
+	ros::Rate rate(1000);
 
 	while (ros::ok)
 	{
