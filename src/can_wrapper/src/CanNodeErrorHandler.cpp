@@ -59,7 +59,8 @@ void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
 			cmErr.data.node_errors.motor_c_reg_err,
 			CanNodeSettingsProvider::TypeGroups::Motor_C_Reg_Group,
 			MaxNumberOfParams::Motor_Reg_Params);
-
+	
+	mDeviceInitRequested = false;
 	if (cmErr.data.node_errors.select_err == 0 & cmErr.data.node_errors.unique_err == 0) {
 		mNodeOneInitialized = true;
 	}
@@ -83,7 +84,8 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id) const
 {
 	CanMessage cm;
-	cm.address = dev_id | CanMessage::Address::Error;
+	cm.address = dev_id | CanMessage::Address::Init;
+	cm.dataLen = 5;
 	cm.data.stm_init.type_id = type_id;
 	cm.data.stm_init.var = mCanSettings->getSetting(dev_id, cm.data.stm_init.type_id);
 	return (can_msgs::Frame)cm;

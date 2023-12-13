@@ -56,9 +56,9 @@ struct CanMessage
 	 */
 	struct stm_init_t
 	{
-		uint8_t type_id;
+		uint8_t type_id : 8;
 		float var;
-	};
+	} __attribute__((packed));;
 
 	/**
 	 * @brief Struct representing error codes for various components of the motor controller.
@@ -156,14 +156,14 @@ struct CanMessage
 		mode_t *get_mode() { return (mode_t *)this; }
 
 		uint16_t motor_A_vel : 11;
-		uint8_t motor_A_dir : 1;
+		bool motor_A_dir : 1;
 
 		uint16_t motor_B_vel : 11;
-		uint8_t motor_B_dir : 1;
+		bool motor_B_dir : 1;
 
 		uint16_t motor_C_vel : 11;
-		uint8_t motor_C_dir : 1;
-	};
+		bool motor_C_dir : 1;
+	} __attribute__((packed));;
 
 	/**
 	 * @brief Message Format format for motors feedback.
@@ -224,7 +224,7 @@ struct CanMessage
 		/**
 		 * @brief use @c get_mode() method or see @c CanMessage.data.mode .
 		 */
-		uint8_t __mode : 4;
+		uint16_t __mode : 4;
 
 		/**
 		 * @brief Get the @c mode_t struct
@@ -232,17 +232,17 @@ struct CanMessage
 		 */
 		mode_t *get_mode() { return (mode_t *)this; }
 
-		uint8_t err_code : 4;
+		uint16_t err_code : 4;
 
 		uint16_t motor_A_vel : 15;
-		uint8_t motor_A_dir : 1;
+		uint16_t motor_A_dir : 1;
 
 		uint16_t motor_B_vel : 15;
 		uint8_t motor_B_dir : 1;
 
 		uint16_t motor_C_vel : 15;
 		uint8_t motor_C_dir : 1;
-	};
+	} __attribute__((packed));;
 
 	/**
 	 * Message Format for checkup/reading data from peripherals

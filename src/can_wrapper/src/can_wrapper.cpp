@@ -89,7 +89,9 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			vel[0] = 0.5f;
+			vel[0] = 0.69f;
+			vel[1] = 0.420f;
+			vel[2] = 0.2137f;
 			ros::Duration(0.1).sleep();
 			ros2can.setMotorVel(vel, CanMessage::Address::Stm_Right);
 			break;
