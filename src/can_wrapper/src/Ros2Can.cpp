@@ -50,11 +50,12 @@ can_msgs::Frame Ros2Can::encodeMotorVel(const float msg[], const CanMessage::Add
 	float rpmScale = (mControlMode == CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm) ? 2047 : mRPM_scale;
 
 	cm.data.set_motor_vel.motor_A_vel = static_cast<uint16_t>(std::abs(msg[0]) * rpmScale);
-	cm.data.get_motor_vel.motor_A_dir = msg[0] >= 0 ? 0 : 1;
+	cm.data.set_motor_vel.motor_A_dir = msg[0] >= 0 ? 0 : 1;
 	cm.data.set_motor_vel.motor_B_vel = static_cast<uint16_t>(std::abs(msg[1]) * rpmScale);
-	cm.data.get_motor_vel.motor_B_dir = msg[1] >= 0 ? 0 : 1;
+	cm.data.set_motor_vel.motor_B_dir = msg[1] >= 0 ? 0 : 1;
 	cm.data.set_motor_vel.motor_C_vel = static_cast<uint16_t>(std::abs(msg[2]) * rpmScale);
-	cm.data.get_motor_vel.motor_C_dir = msg[2] >= 0 ? 0 : 1;
+	cm.data.set_motor_vel.motor_C_dir = msg[2] >= 0 ? 0 : 1;
+
 	can_msgs::Frame fr = (can_msgs::Frame)cm;
 	fr.header.seq = mSetMotorVelSeq++;
 	return fr;
