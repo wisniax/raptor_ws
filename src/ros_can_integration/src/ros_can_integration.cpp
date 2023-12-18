@@ -43,8 +43,8 @@ int main(int argc, char *argv[])
 	ros::init(argc, argv, "ros_can_integration");
 	ros::NodeHandle n;
 
-	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>("/CAN/RX/raw", 256);
-	ros::Subscriber canRawSub = n.subscribe("/CAN/TX/raw", 256, &CanSocket::handleRosCallback, &cSocket);
+	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>("/CAN/RX/raw", 1024);
+	ros::Subscriber canRawSub = n.subscribe("/CAN/TX/raw", 1024, &CanSocket::handleRosCallback, &cSocket);
 
 	ros::ServiceServer service = n.advertiseService("/CAN/ros_can_integration/check_status", getErrorCodeCallback);
 

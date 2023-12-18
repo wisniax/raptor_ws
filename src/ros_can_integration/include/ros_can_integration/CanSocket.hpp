@@ -37,6 +37,7 @@ public:
 	std::string translateInitError();
 
 private:
+	size_t mMaxIterCount = 10;
 	std::string mInterfaceName;
 	int mSocket;
 	int mInitErrCode;
