@@ -108,7 +108,7 @@ ssize_t CanSocket::awaitMessage(can_frame &frame)
 
 	if (nbytes < 0)
 	{
-		ROS_ERROR("Can raw socket read failed");
+		ROS_INFO("Can raw socket read failed/timeout");
 		return -1;
 	}
 
