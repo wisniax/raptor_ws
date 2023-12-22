@@ -15,6 +15,7 @@ struct RosCanConstants
 		static const std::string can_raw_TX;		/**< Topic for all sent CAN messages. */
 		static const std::string can_set_motor_vel; /**< Topic used for setting the motor velocity. */
 		static const std::string can_get_motor_vel; /**< Topic used for getting the real motor velocity. */
+		static const std::string can_get_motor_current; /**< Topic used for getting the real motor velocity. */
 		static const std::string can_stm_errors;	/**< Topic used for reporting STM32 errors. */
 		static const std::string can_stm_init;		/**< Topic used for initializing the STM32. */
 	};
