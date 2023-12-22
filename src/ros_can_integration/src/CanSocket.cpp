@@ -1,11 +1,13 @@
 #include "ros_can_integration/CanSocket.hpp"
 
-CanSocket::CanSocket(std::string interfaceName)
+CanSocket::CanSocket(std::string interfaceName, uint32_t awaitMessageTimeout)
 {
 	mInterfaceName = interfaceName;
+	mAwaitMessageTimeout = awaitMessageTimeout;
+	mMaxIterCount = 10;
+	mSocketMinimumLifetime = ros::Duration(5.0);
+	mSocketCreatedTimestamp = ros::Time(0);
 	createSocket();
-	ROS_INFO_STREAM_COND(mInitErrCode == 0, "CAN: " << translateInitError());
-	ROS_ERROR_STREAM_COND(mInitErrCode != 0, "CAN: " << translateInitError());
 }
 
 CanSocket::~CanSocket()
@@ -15,27 +17,25 @@ CanSocket::~CanSocket()
 	close(mSocket);
 }
 
-int CanSocket::createSocket()
+int CanSocket::tryCreateSocket()
 {
+	if (mSocketCreatedTimestamp + mSocketMinimumLifetime > ros::Time::now())
+		((mSocketCreatedTimestamp + mSocketMinimumLifetime) - ros::Time::now()).sleep();
+
+	mSocketCreatedTimestamp = ros::Time::now();
 	mSocket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	if (mSocket < 0)
-	{
-		mInitErrCode = -1;
-		return mInitErrCode;
-	}
+		return -1;
 
 	ifreq ifr;
 	strcpy(ifr.ifr_name, mInterfaceName.c_str());
 	if (ioctl(mSocket, SIOCGIFINDEX, &ifr) < 0)
-	{
-		mInitErrCode = -2;
-		return mInitErrCode;
-	}
+		return -2;
 
 	struct timeval tv;
-	tv.tv_sec = 1;
+	tv.tv_sec = mAwaitMessageTimeout;
 	tv.tv_usec = 0;
-	setsockopt(mSocket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
+	setsockopt(mSocket, SOL_CAN_RAW, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
 
 	sockaddr_can addr;
 	addr.can_family = AF_CAN;
@@ -44,18 +44,42 @@ int CanSocket::createSocket()
 	can_err_mask_t err_mask = (CAN_ERR_MASK);
 
 	if (setsockopt(mSocket, SOL_CAN_RAW, CAN_RAW_ERR_FILTER, &err_mask, sizeof(err_mask)) < 0)
-	{
-		mInitErrCode = -4;
-		return mInitErrCode;
-	}
+		return -4;
 
 	if (bind(mSocket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+		return -5;
+
+	return 0;
+}
+
+int CanSocket::tryHandleError()
+{
+	if (mInitErrCode != 0)
+		return createSocket();
+		
+	int error_code;
+	socklen_t error_code_size = sizeof(error_code);
+	int getSockErr = getsockopt(mSocket, SOL_CAN_RAW, SO_ERROR, &error_code, &error_code_size);
+
+	if (getSockErr < 0)
 	{
-		mInitErrCode = -5;
-		return mInitErrCode;
+		ROS_ERROR("CAN: Raw socket getsockopt failed. Not sure this should ever happen. Recreating socket...");
+		return createSocket();
 	}
-	mInitErrCode = 0;
-	return mInitErrCode;
+
+	switch (error_code)
+	{
+	case 0:
+	case EAGAIN:
+	case ETIMEDOUT:
+		return 0;
+	case EPIPE:
+		ROS_ERROR("CAN: Socket pipe broken. Recreating socket...");
+		return createSocket();
+	default:
+		ROS_ERROR_STREAM("CAN: Socket error: " << error_code << ". Recreating socket...");
+		return createSocket();
+	}
 }
 
 void CanSocket::setFilter(canid_t id, canid_t mask)
@@ -95,7 +119,6 @@ int CanSocket::sendMessage(const can_frame &frame)
 	ssize_t nbytes = write(mSocket, &frame, sizeof(struct can_frame));
 	if (nbytes < 0)
 	{
-		ROS_INFO("Can raw socket write failed");
 		return -1;
 	}
 	return nbytes;
@@ -109,17 +132,35 @@ ssize_t CanSocket::awaitMessage(can_frame &frame)
 
 	if (nbytes < 0)
 	{
-		ROS_INFO("Can raw socket read failed/timeout");
-		return -1;
+		return tryHandleError();
 	}
 
 	/* paranoid check ... */
 	if (nbytes < sizeof(struct can_frame))
 	{
-		ROS_WARN("Incomplete CAN frame");
+		ROS_WARN("CAN: Incomplete frame");
 		return -1;
 	}
 	return nbytes;
+}
+
+ssize_t CanSocket::awaitAndPublishCanMessage(ros::Publisher &canRawPub)
+{
+	can_frame frame;
+	if (awaitMessage(frame) < 0)
+	{
+		ros::Duration(0.0005).sleep();
+		return tryHandleError();
+	}
+
+	can_msgs::Frame fr;
+	fr.id = frame.can_id;
+	fr.dlc = frame.can_dlc;
+	memcpy(fr.data.data(), frame.data, CAN_MAX_DLEN);
+	fr.header.stamp = ros::Time::now();
+	fr.header.seq = mSeqCnt++;
+	canRawPub.publish(fr);
+	return 0;
 }
 
 void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
@@ -136,18 +177,21 @@ void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 		if (sendMessage(cMsg) >= 0)
 			return;
 		ros::Duration(0.0005).sleep();
+		if (tryHandleError() < 0)
+			break;
 	}
 	ROS_ERROR("CAN: Failed to send message, MaxIterCount exceeded. Aborting...");
 }
 
-int CanSocket::tryHandleError()
+int CanSocket::createSocket()
 {
-	if (mInitErrCode == 0)
-		return 0;
-	createSocket();
+	if (mSocket >= 0)
+		close(mSocket);
+
+	int errCode = tryCreateSocket();
+	mInitErrCode = errCode;
 	ROS_INFO_STREAM_COND(mInitErrCode == 0, "CAN: " << translateInitError());
 	ROS_ERROR_STREAM_COND(mInitErrCode != 0, "CAN: " << translateInitError());
-	ros::Duration(5).sleep();
 	return mInitErrCode;
 }
 
@@ -155,6 +199,14 @@ int CanSocket::getErrorCode()
 {
 	return mInitErrCode;
 }
+
+bool CanSocket::getErrorCodeCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+	res.success = getErrorCode() == 0 ? true : false;
+	if (!res.success)
+		res.message = translateInitError();
+	return true;
+};
 
 std::string CanSocket::translateInitError()
 {
