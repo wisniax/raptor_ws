@@ -18,6 +18,7 @@ public:
 	/**
 	 * @brief Initializes the MotorControl object.
 	 * @param rpmScale The scale factor for motor RPM.
+	 * @param mode The control mode for the motors. Defaults to RPM.
 	 */
 	MotorControl(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
 

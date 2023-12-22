@@ -13,6 +13,10 @@
 class MotorVelocityFeedback
 {
 public:
+	/**
+	 * @brief Initializes the MotorVelocityFeedback object.
+	 * @param rpm_scale The scale factor for motor RPM.
+	 */
 	MotorVelocityFeedback(float rpm_scale);
 
 private:

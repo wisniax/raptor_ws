@@ -23,8 +23,8 @@ public:
 
 	enum RpmScaleAdresses : uint8_t
 	{
-		Motor_Control = 0x10,
-		Encoder_Feedback = 0x11
+		Motor_Control = 0x0,
+		Encoder_Feedback = 0x1
 	};
 
 	CanNodeSettingsProvider();
@@ -40,20 +40,20 @@ public:
 
 	/**
 	 * @brief Gets a setting value for a specific type ID and setting ID.
-	 * @param type_id The type ID.
-	 * @param setting_id The setting ID.
+	 * @param node_id The CAN node ID.
+	 * @param type_id The type_id from documentation.
 	 * @return The setting value.
 	 */
-	float getSetting(uint8_t type_id, uint8_t setting_id) const;
+	float getSetting(uint8_t node_id, uint8_t type_id) const;
 
 	/**
 	 * @brief Sets a setting value for a specific type ID and setting ID.
-	 * @param type_id The type ID.
-	 * @param setting_id The setting ID.
+	 * @param node_id The CAN node ID.
+	 * @param type_id The type_id from documentation.
 	 * @param value The value to set.
 	 * @return 0 if successful, -1 otherwise.
 	 */
-	int8_t setSetting(uint8_t type_id, uint8_t setting_id, float value);
+	int8_t setSetting(uint8_t node_id, uint8_t type_id, float value);
 
 	/**
 	 * @brief Sets a setting value for all devices for a specific setting ID.

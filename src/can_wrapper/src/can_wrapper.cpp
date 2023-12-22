@@ -34,12 +34,12 @@ int main(int argc, char *argv[])
 	MotorVelocityFeedback velFeedback(
 		canSettingsPtr->getSetting(
 			0x0,
-			CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
+			CanNodeSettingsProvider::Rpm_Scale_Group || CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
 
 	MotorControl motorControl(
 		canSettingsPtr->getSetting(
 			0x0,
-			CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
+			CanNodeSettingsProvider::Rpm_Scale_Group || CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
 		CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
 
 	CanNodeErrorHandler canErrorHandler(canSettingsPtr);

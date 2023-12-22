@@ -12,18 +12,18 @@ float CanNodeSettingsProvider::getSetting(canid_t frame_id, TypeGroups typeGroup
 	return getSetting(frame_id & CanMessage::Masks::All_Nodes, typeGroup | setting_id);
 }
 
-float CanNodeSettingsProvider::getSetting(uint8_t type_id, uint8_t setting_id) const
+float CanNodeSettingsProvider::getSetting(uint8_t node_id, uint8_t type_id) const
 {
-	if (type_id > 0xF || setting_id > INIT_MAX_TYPE_ID)
+	if (node_id > 0xF || type_id > INIT_MAX_TYPE_ID)
 		return 0;
-	return mNodeSettings[type_id][setting_id];
+	return mNodeSettings[node_id][type_id];
 }
 
-int8_t CanNodeSettingsProvider::setSetting(uint8_t type_id, uint8_t setting_id, float value)
+int8_t CanNodeSettingsProvider::setSetting(uint8_t node_id, uint8_t type_id, float value)
 {
-	if (type_id > 0xF || setting_id > INIT_MAX_TYPE_ID)
+	if (node_id > 0xF || type_id > INIT_MAX_TYPE_ID)
 		return -1;
-	mNodeSettings[type_id][setting_id] = value;
+	mNodeSettings[node_id][type_id] = value;
 	return 0;
 }
 
