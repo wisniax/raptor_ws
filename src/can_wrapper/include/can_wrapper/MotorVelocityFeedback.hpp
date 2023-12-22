@@ -1,5 +1,5 @@
-#ifndef CAN2ROS_H
-#define CAN2ROS_H
+#ifndef MOTOR_VELOCITY_FEEDBACK_H
+#define MOTOR_VELOCITY_FEEDBACK_H
 
 #include <ros/ros.h>
 #include <string>
@@ -10,10 +10,10 @@
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/RosCanConstants.hpp"
 
-class Can2Ros
+class MotorVelocityFeedback
 {
 public:
-	Can2Ros(float rpm_scale);
+	MotorVelocityFeedback(float rpm_scale);
 
 private:
 	void handleFrame(CanMessage cm);
@@ -31,4 +31,4 @@ private:
 	ros::Publisher mRealMotorVelPub;
 };
 
-#endif // CAN2ROS_H
+#endif // MOTOR_VELOCITY_FEEDBACK_H

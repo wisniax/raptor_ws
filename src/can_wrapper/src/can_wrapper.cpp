@@ -6,7 +6,7 @@
 
 #include "can_wrapper/CanNodeSettingsProvider.hpp"
 #include "can_wrapper/CanMessage.hpp"
-#include "can_wrapper/Can2Ros.hpp"
+#include "can_wrapper/MotorVelocityFeedback.hpp"
 #include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/CanNodeErrorHandler.hpp"
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	std::shared_ptr<CanNodeSettingsProvider> canSettingsPtr = std::make_shared<CanNodeSettingsProvider>();
 
-	Can2Ros can2ros(
+	MotorVelocityFeedback velFeedback(
 		canSettingsPtr->getSetting(
 			0x0,
 			CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));

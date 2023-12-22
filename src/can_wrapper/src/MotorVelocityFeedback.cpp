@@ -1,20 +1,20 @@
-#include "can_wrapper/Can2Ros.hpp"
+#include "can_wrapper/MotorVelocityFeedback.hpp"
 
-Can2Ros::Can2Ros(float rpm_scale)
+MotorVelocityFeedback::MotorVelocityFeedback(float rpm_scale)
 {
 	mRPM_scale = rpm_scale;
-	mRawCanSub = mNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &Can2Ros::handleRosCallback, this);
+	mRawCanSub = mNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &MotorVelocityFeedback::handleRosCallback, this);
 	mRealMotorVelPub = mNh.advertise<can_wrapper::Wheels>(RosCanConstants::RosTopics::can_get_motor_vel, 128);
 }
 
-void Can2Ros::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
+void MotorVelocityFeedback::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
 	if ((msg->id & CanMessage::Masks::Adress_Families) != CanMessage::Address::Encoder_Velocity_Feedback)
 		return;
 	handleFrame(CanMessage(msg.get()));
 }
 
-void Can2Ros::handleFrame(CanMessage cm)
+void MotorVelocityFeedback::handleFrame(CanMessage cm)
 {
 	geometry_msgs::Point32 vec;
 	switch (cm.address & CanMessage::Masks::All_Nodes)
@@ -43,7 +43,7 @@ void Can2Ros::handleFrame(CanMessage cm)
 	}
 }
 
-geometry_msgs::Point32 Can2Ros::decodeMotorVel(CanMessage cm) const
+geometry_msgs::Point32 MotorVelocityFeedback::decodeMotorVel(CanMessage cm) const
 {
 	geometry_msgs::Point32 vec;
 	switch (cm.data.mode.cont_mode)
@@ -65,7 +65,7 @@ geometry_msgs::Point32 Can2Ros::decodeMotorVel(CanMessage cm) const
 	return vec;
 }
 
-void Can2Ros::tryPublishWheelsVel()
+void MotorVelocityFeedback::tryPublishWheelsVel()
 {
 	if (mWheelsVel.header.stamp < ros::Time::now() - RosCanConstants::max_stm_sync_time)
 	{
