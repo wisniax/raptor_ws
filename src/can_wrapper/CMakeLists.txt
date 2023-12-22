@@ -136,7 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/can_wrapper.cpp src/Can2Ros.cpp 
-src/Ros2Can.cpp src/RosCanConstants.cpp src/CanNodeErrorHandler.cpp
+src/MotorControl.cpp src/RosCanConstants.cpp src/CanNodeErrorHandler.cpp
   src/CanNodeSettingsProvider.cpp
 )
 

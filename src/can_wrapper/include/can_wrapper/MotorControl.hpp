@@ -1,5 +1,5 @@
-#ifndef ROS2CAN_H
-#define ROS2CAN_H
+#ifndef MOTOR_CONTROL_H
+#define MOTOR_CONTROL_H
 
 #include <ros/ros.h>
 #include <string>
@@ -12,14 +12,14 @@
 /**
  * @brief Class for interfacing ROS with CAN bus.
  */
-class Ros2Can
+class MotorControl
 {
 public:
 	/**
-	 * @brief Initializes the Ros2Can object.
+	 * @brief Initializes the MotorControl object.
 	 * @param rpmScale The scale factor for motor RPM.
 	 */
-	Ros2Can(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
+	MotorControl(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
 
 	/**
 	 * @brief Sets the scale factor for motor RPM.
@@ -66,4 +66,4 @@ private:
 	ros::Subscriber mSetMotorVelSub; /**< ROS subscriber for motor velocity messages. */
 };
 
-#endif // ROS2CAN_H
+#endif // MOTOR_CONTROL_H

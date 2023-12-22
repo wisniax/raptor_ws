@@ -1,34 +1,34 @@
-#include "can_wrapper/Ros2Can.hpp"
+#include "can_wrapper/MotorControl.hpp"
 
-Ros2Can::Ros2Can(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode)
+MotorControl::MotorControl(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode)
 {
 	setRPMscale(rpmScale);
 	setControlMode(mode);
 
 	mRawCanPub = mNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
-	mSetMotorVelSub = mNh.subscribe(RosCanConstants::RosTopics::can_set_motor_vel, 256, &Ros2Can::handleSetMotorVel, this);
+	mSetMotorVelSub = mNh.subscribe(RosCanConstants::RosTopics::can_set_motor_vel, 256, &MotorControl::handleSetMotorVel, this);
 }
 
-void Ros2Can::setRPMscale(float rpmScale)
+void MotorControl::setRPMscale(float rpmScale)
 {
 	mRPM_scale = rpmScale;
 }
 
-void Ros2Can::setMotorVel(const float msg[], const CanMessage::Address adr){
+void MotorControl::setMotorVel(const float msg[], const CanMessage::Address adr){
 	mRawCanPub.publish(encodeMotorVel(msg, adr));
 }
 
-void Ros2Can::setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode)
+void MotorControl::setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode)
 {
 	mControlMode = mode;
 }
 
-void Ros2Can::handleSetMotorVel(const can_wrapper::Wheels &msg)
+void MotorControl::handleSetMotorVel(const can_wrapper::Wheels &msg)
 {
 	sendMotorVel(msg);
 }
 
-void Ros2Can::sendMotorVel(const can_wrapper::Wheels msg)
+void MotorControl::sendMotorVel(const can_wrapper::Wheels msg)
 {
 	float leftMotors[] = {msg.frontLeft, msg.midLeft, msg.rearLeft};
 	float rightMotors[] = {msg.frontRight, msg.midRight, msg.rearRight};
@@ -39,7 +39,7 @@ void Ros2Can::sendMotorVel(const can_wrapper::Wheels msg)
 	mRawCanPub.publish(can_msg2);
 }
 
-can_msgs::Frame Ros2Can::encodeMotorVel(const float msg[], const CanMessage::Address adr)
+can_msgs::Frame MotorControl::encodeMotorVel(const float msg[], const CanMessage::Address adr)
 {
 	CanMessage cm;
 	cm.address = CanMessage::Address::Motor_Control | adr;

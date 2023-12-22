@@ -7,7 +7,7 @@
 #include "can_wrapper/CanNodeSettingsProvider.hpp"
 #include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/Can2Ros.hpp"
-#include "can_wrapper/Ros2Can.hpp"
+#include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/CanNodeErrorHandler.hpp"
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 			0x0,
 			CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
 
-	Ros2Can ros2can(
+	MotorControl motorControl(
 		canSettingsPtr->getSetting(
 			0x0,
 			CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 			vel.midRight = 0.420f;
 			vel.rearRight = 0.2137f;
 			ros::Duration(0.1).sleep();
-			ros2can.sendMotorVel(vel);
+			motorControl.sendMotorVel(vel);
 			break;
 
 		case CanNodeMode::Closing:
