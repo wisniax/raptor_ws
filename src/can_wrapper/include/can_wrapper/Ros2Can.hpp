@@ -27,7 +27,11 @@ public:
 	 */
 	void setRPMscale(float rpmScale);
 
-	void setMotorVel(const float msg[], const CanMessage::Address adr);
+	/**
+	 * @brief Sends a motor velocity message to the CAN bus.
+	 * @param msg The motor velocity message.
+	 */
+	void sendMotorVel(const can_wrapper::Wheels msg);
 
 	/**
 	 * @brief Sets the control mode for the motors.
@@ -44,7 +48,7 @@ private:
 	 */
 	can_msgs::Frame encodeMotorVel(const float msg[], const CanMessage::Address adr);
 
-	void sendMotorVel(const can_wrapper::Wheels msg);
+	void setMotorVel(const float msg[], const CanMessage::Address adr);
 
 	/**
 	 * @brief Callback function for handling left driver velocity messages.
@@ -52,7 +56,7 @@ private:
 	 */
 	void handleSetMotorVel(const can_wrapper::Wheels &msg);
 
-	ros::NodeHandle mNh;	
+	ros::NodeHandle mNh;
 	float mRPM_scale;		 /**< Scale factor for motor RPM. */
 	uint32_t mSetMotorVelSeq; /**< Sequence number for motor velocity messages. */
 

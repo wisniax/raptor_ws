@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
-	float vel[3] = {0};
+	can_wrapper::Wheels vel;
 
 	while (ros::ok())
 	{
@@ -89,11 +89,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			vel[0] = 0.69f;
-			vel[1] = 0.420f;
-			vel[2] = 0.2137f;
+			vel.frontRight = 0.69f;
+			vel.midRight = 0.420f;
+			vel.rearRight = 0.2137f;
 			ros::Duration(0.1).sleep();
-			ros2can.setMotorVel(vel, CanMessage::Address::Stm_Right);
+			ros2can.sendMotorVel(vel);
 			break;
 
 		case CanNodeMode::Closing:
