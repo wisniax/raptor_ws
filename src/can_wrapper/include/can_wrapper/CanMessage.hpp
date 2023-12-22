@@ -105,46 +105,6 @@ struct CanMessage
 		};
 
 		/**
-		 * Possible stm_init::type_id values with stm_init::frame_a/b params usage
-		 */
-		enum stm_init_type_id : uint8_t
-		{
-			/**
-			 * @brief Setup frequency for Update and Upkeep.
-			 * Parameters in @ref stm_init_t::frame_a
-			 * @param x update frequency (x * 1/100 Hz)
-			 * @param y upkeep frequency (y * 1/100 s)
-			 */
-			Freq = 0x10,
-			/**
-			 * @brief Setup rpm_scale.
-			 * When sending RPM target, this is used to wrap unsigned value (0-2047) into scale (0 - max_rpm)
-			 * ( max_rpm = (2^11-1) / rpm_scale )
-			 * Parameters in @ref stm_init_t::frame_b
-			 * @param var rpm_scale value
-			 */
-			RpmScale = 0x11,
-			/**
-			 * @brief Regulator A param (dunno, wip documentation TODO CORRECT).
-			 * Parameters in @ref stm_init_t::frame_b
-			 * @param var param value
-			 */
-			MotorA_Regulator = 0x20,
-			/**
-			 * @brief Regulator B param (dunno, wip documentation TODO CORRECT).
-			 * Parameters in @ref stm_init_t::frame_b
-			 * @param var param value
-			 */
-			MotorB_Regulator = 0x30,
-			/**
-			 * @brief Regulator C param (dunno, wip documentation TODO CORRECT).
-			 * Parameters in @ref stm_init_t::frame_b
-			 * @param var param value
-			 */
-			MotorC_Regulator = 0x40
-		};
-
-		/**
 		 * @brief use @c get_mode() method or see @c CanMessage.data.mode .
 		 */
 		uint8_t __mode : 4;
@@ -186,9 +146,9 @@ struct CanMessage
 			/**
 			 * @brief motor_*_vel is RPM Feed (new version) from motor.
 			 * wraped unsigned value (0-32767) into scale (0 - max_rpm)
-			 * where max_rpm = (dunno, bad documentation TODO CORRECT)
+			 * where max_rpm = 5 * (2^11-1) / rpm_scale
 			 */
-			FeedModeRpmNew = 0b01,
+			FeedModeRpmExtended = 0b01,
 			/**
 			 * unused.
 			 */
@@ -197,28 +157,6 @@ struct CanMessage
 			 * unused.
 			 */
 			__unused1 = 0b11
-		};
-
-		/**
-		 * Possible stm_init::type_id values with stm_init::frame_a/b params usage
-		 */
-		enum stm_init_type_id : uint8_t
-		{
-			/**
-			 * @brief Setup frequency for Update and Upkeep.
-			 * Parameters in @ref stm_init_t::frame_a
-			 * @param x update frequency (x * 1/100 Hz)
-			 * @param y upkeep frequency (y * 1/100 s)
-			 */
-			Freq = 0x10,
-			/**
-			 * @brief Setup rpm_scale.
-			 * When reciving RPM feed, this is used to wrap unsigned value (0-32767) into scale (0 - max_rpm)
-			 * max_rpm is dependant on FeedMode. see @ref mode_cont_mode .
-			 * Parameters in @ref stm_init_t::frame_b
-			 * @param var rpm_scale value
-			 */
-			RpmScale = 0x11
 		};
 
 		/**

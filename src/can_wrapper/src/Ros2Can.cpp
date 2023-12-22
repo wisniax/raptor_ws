@@ -37,7 +37,6 @@ void Ros2Can::sendMotorVel(const can_wrapper::Wheels msg)
 	mRawCanPub.publish(can_msg);
 	can_msgs::Frame can_msg2 = encodeMotorVel(rightMotors, CanMessage::Address::Stm_Right);
 	mRawCanPub.publish(can_msg2);
-	ros::spinOnce();
 }
 
 can_msgs::Frame Ros2Can::encodeMotorVel(const float msg[], const CanMessage::Address adr)
