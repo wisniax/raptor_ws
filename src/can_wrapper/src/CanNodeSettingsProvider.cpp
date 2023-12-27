@@ -3,8 +3,8 @@
 CanNodeSettingsProvider::CanNodeSettingsProvider()
 {
 	setSettingForAllDevices(0x01, 0);
-	setSettingForAllDevices(0x10, 1);
-	setSettingForAllDevices(0x11, 1);
+	setSettingForAllDevices(Rpm_Scale_Group | Motor_Control, 256);
+	setSettingForAllDevices(Rpm_Scale_Group | Encoder_Feedback, 128);
 }
 
 float CanNodeSettingsProvider::getSetting(canid_t frame_id, TypeGroups typeGroup, uint8_t setting_id) const
