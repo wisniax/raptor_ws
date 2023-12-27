@@ -18,6 +18,7 @@ public:
 	};
 
 	CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider> &canSettingsCPtr);
+	void deinitializeDevices();
 	void initializeDevices();
 	bool GetCanNodesStatus();
 
@@ -34,8 +35,10 @@ private:
 	ros::Subscriber mRawCanSub;
 	ros::Publisher mCanRawPub;
 	std::shared_ptr<const CanNodeSettingsProvider> mCanSettings;
+	uint8_t mNodeInitCounts = 0;
 	bool mNodeOneInitialized = false;
 	bool mDeviceInitRequested = false;
+	bool mDeinitializationRequested = true;
 
 	// std::map<uint8_t, CanNodeMode> mCanNodes;
 };

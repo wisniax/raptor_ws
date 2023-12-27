@@ -1,6 +1,6 @@
 #include "can_wrapper/CanNodeErrorHandler.hpp"
 
-CanNodeErrorHandler::CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider>& canSettingsCPtr)
+CanNodeErrorHandler::CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider> &canSettingsCPtr)
 {
 	mCanSettings = canSettingsCPtr;
 	mRawCanSub = mNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &CanNodeErrorHandler::handleRosCallback, this);
@@ -9,19 +9,48 @@ CanNodeErrorHandler::CanNodeErrorHandler(const std::shared_ptr<const CanNodeSett
 
 void CanNodeErrorHandler::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
-	if (msg->id & CanMessage::Masks::Adress_Families != (canid_t)CanMessage::Address::Error)
-		return;
-	handleErrorFrame(CanMessage(msg.get()));
+	if ((msg->id & CanMessage::Masks::Adress_Families) == (uint32_t)CanMessage::Address::Error)
+		handleErrorFrame(CanMessage(msg.get()));
+}
+
+void CanNodeErrorHandler::deinitializeDevices()
+{
+	mNodeOneInitialized = false;
+	mDeviceInitRequested = false;
+	CanMessage cm;
+	cm.address = CanMessage::Address::Stm_Right | CanMessage::Address::Init;
+	cm.dataLen = 5;
+	cm.data.stm_init.type_id = 0;
+	cm.data.stm_init.var = 0.0f;
+	mCanRawPub.publish((can_msgs::Frame)cm);
 }
 
 void CanNodeErrorHandler::initializeDevices()
 {
+	if (mDeviceInitRequested)
+	{
+		mNodeInitCounts++;
+		if (mNodeInitCounts > 10)
+		{
+			mNodeInitCounts = 0;
+			mDeviceInitRequested = false;
+		}
+		return;
+	}
+
+	if (mDeinitializationRequested)
+	{
+		deinitializeDevices();
+	}
+
 	if (mNodeOneInitialized || mDeviceInitRequested)
 		return;
+
 	CanMessage cm;
 	cm.address = CanMessage::Address::Stm_Right | CanMessage::Address::Error | CAN_RTR_FLAG;
 	cm.dataLen = 0;
 	mCanRawPub.publish((can_msgs::Frame)cm);
+	ros::spinOnce();
 	mDeviceInitRequested = true;
 }
 
@@ -59,11 +88,14 @@ void CanNodeErrorHandler::handleErrorFrame(CanMessage cmErr)
 			cmErr.data.node_errors.motor_c_reg_err,
 			CanNodeSettingsProvider::TypeGroups::Motor_C_Reg_Group,
 			MaxNumberOfParams::Motor_Reg_Params);
-	
+
 	mDeviceInitRequested = false;
-	if (cmErr.data.node_errors.select_err == 0 & cmErr.data.node_errors.unique_err == 0) {
+	if (cmErr.data.node_errors.select_err == 0 & cmErr.data.node_errors.unique_err == 0)
+	{
 		mNodeOneInitialized = true;
 	}
+	else
+		mDeinitializationRequested = false;
 }
 
 void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count)
@@ -78,7 +110,6 @@ void CanNodeErrorHandler::handleError(uint8_t dev_id, uint8_t err, CanNodeSettin
 	{
 		mCanRawPub.publish(createResponseFrame(dev_id, i | err_group));
 	}
-
 }
 
 can_msgs::Frame CanNodeErrorHandler::createResponseFrame(uint8_t dev_id, uint8_t type_id) const
