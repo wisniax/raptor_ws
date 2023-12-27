@@ -13,6 +13,11 @@ void CanNodeErrorHandler::handleRosCallback(const can_msgs::Frame::ConstPtr &msg
 		handleErrorFrame(CanMessage(msg.get()));
 }
 
+void CanNodeErrorHandler::requestDeinitialization()
+{
+	mDeinitializationRequested = true;
+}
+
 void CanNodeErrorHandler::deinitializeDevices()
 {
 	mNodeOneInitialized = false;

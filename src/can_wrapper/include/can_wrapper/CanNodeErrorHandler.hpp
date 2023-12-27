@@ -18,6 +18,7 @@ public:
 	};
 
 	CanNodeErrorHandler(const std::shared_ptr<const CanNodeSettingsProvider> &canSettingsCPtr);
+	void requestDeinitialization();
 	void deinitializeDevices();
 	void initializeDevices();
 	bool GetCanNodesStatus();

@@ -34,12 +34,12 @@ int main(int argc, char *argv[])
 	MotorVelocityFeedback velFeedback(
 		canSettingsPtr->getSetting(
 			0x0,
-			CanNodeSettingsProvider::Rpm_Scale_Group || CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
+			CanNodeSettingsProvider::Rpm_Scale_Group | CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
 
 	MotorControl motorControl(
 		canSettingsPtr->getSetting(
 			0x0,
-			CanNodeSettingsProvider::Rpm_Scale_Group || CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
+			CanNodeSettingsProvider::Rpm_Scale_Group | CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
 		CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
 
 	CanNodeErrorHandler canErrorHandler(canSettingsPtr);
@@ -52,9 +52,6 @@ int main(int argc, char *argv[])
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
 	can_wrapper::Wheels vel;
-	vel.frontRight = 0.0f;
-	vel.midRight = 0.0f;
-	vel.rearRight = 0.2f;
 
 	while (ros::ok())
 	{
@@ -82,18 +79,17 @@ int main(int argc, char *argv[])
 				canNodeMode = CanNodeMode::Faulted;
 				break;
 			}
-
+			canErrorHandler.requestDeinitialization();
 			canNodeMode = CanNodeMode::Opening;
 			break;
 
 		case CanNodeMode::Opening:
 			canErrorHandler.initializeDevices();
 			ros::Duration(0.1).sleep();
+			
 			if (canErrorHandler.GetCanNodesStatus())
-			{
 				canNodeMode = CanNodeMode::Opened;
-				motorControl.sendMotorVel(vel);
-			}
+
 			break;
 
 		case CanNodeMode::Opened:
