@@ -66,9 +66,9 @@ geometry_msgs::Point32 MotorVelocityFeedback::decodeMotorVel(CanMessage cm) cons
 	case 1:
 	{
 		float loc_scale = (cm.data.mode.cont_mode == CanMessage::get_motor_vel_t::mode_cont_mode::FeedModeRpmExtended) ? mRPM_scale * 5 : mRPM_scale;
-		vec.x = (float)(cm.data.get_motor_vel.motor_A_vel) / (cm.data.get_motor_vel.motor_A_dir ? -loc_scale : loc_scale);
-		vec.y = (float)(cm.data.get_motor_vel.motor_B_vel) / (cm.data.get_motor_vel.motor_B_dir ? -loc_scale : loc_scale);
-		vec.z = (float)(cm.data.get_motor_vel.motor_C_vel) / (cm.data.get_motor_vel.motor_C_dir ? -loc_scale : loc_scale);
+		vec.x = ((float)(cm.data.get_motor_vel.motor_A_vel)) / (cm.data.get_motor_vel.motor_A_dir ? -loc_scale : loc_scale);
+		vec.y = ((float)(cm.data.get_motor_vel.motor_B_vel)) / (cm.data.get_motor_vel.motor_B_dir ? -loc_scale : loc_scale);
+		vec.z = ((float)(cm.data.get_motor_vel.motor_C_vel)) / (cm.data.get_motor_vel.motor_C_dir ? -loc_scale : loc_scale);
 		break;
 	}
 	case 2:
@@ -81,10 +81,10 @@ geometry_msgs::Point32 MotorVelocityFeedback::decodeMotorVel(CanMessage cm) cons
 
 void MotorVelocityFeedback::tryPublishWheelsVel()
 {
-	if (mWheelsVel.header.stamp < ros::Time::now() - RosCanConstants::max_stm_sync_time)
+	if (mWheelsVel.header.stamp < ros::Time::now() - RosCanConstants::max_stm_sync_time) // TODO: Sync should not take the same value from one side twice.
 	{
 		mWheelsVel.header.stamp = ros::Time::now();
-		ROS_WARN_COND(!mWasMotorVelPublishedSinceWheelsVelStampChange, "CAN: \"Wheels velocity feedback\" mync time exceeded. Frame dropped.");
+		ROS_WARN_COND(!mWasMotorVelPublishedSinceWheelsVelStampChange, "CAN: \"Wheels velocity feedback\" sync time exceeded. Frame dropped.");
 		mWasMotorVelPublishedSinceWheelsVelStampChange = false;
 		return;
 	}
