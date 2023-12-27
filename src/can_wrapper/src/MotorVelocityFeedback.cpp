@@ -4,7 +4,21 @@ MotorVelocityFeedback::MotorVelocityFeedback(float rpm_scale)
 {
 	mRPM_scale = rpm_scale;
 	mRawCanSub = mNh.subscribe(RosCanConstants::RosTopics::can_raw_RX, 256, &MotorVelocityFeedback::handleRosCallback, this);
+	mFeedbackRequestPub = mNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 128);
 	mRealMotorVelPub = mNh.advertise<can_wrapper::Wheels>(RosCanConstants::RosTopics::can_get_motor_vel, 128);
+}
+
+void MotorVelocityFeedback::handleRequestTimerCallback(const ros::TimerEvent &)
+{
+	sendRequest();
+}
+
+void MotorVelocityFeedback::sendRequest()
+{
+	CanMessage cm;
+	cm.address = CanMessage::Address::Stm_Right | CanMessage::Address::Encoder_Velocity_Feedback | CAN_RTR_FLAG;
+	cm.dataLen = 0;
+	mFeedbackRequestPub.publish((can_msgs::Frame)cm);
 }
 
 void MotorVelocityFeedback::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)

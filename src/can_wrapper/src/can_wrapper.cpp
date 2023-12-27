@@ -47,9 +47,14 @@ int main(int argc, char *argv[])
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(1000);
 
+	ros::Timer timer = n.createTimer(ros::Duration(1.0 / 60.0), &MotorVelocityFeedback::handleRequestTimerCallback, &velFeedback, false, false);
+
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
 	can_wrapper::Wheels vel;
+	vel.frontRight = 0.0f;
+	vel.midRight = 0.0f;
+	vel.rearRight = 0.2f;
 
 	while (ros::ok())
 	{
@@ -85,19 +90,20 @@ int main(int argc, char *argv[])
 			canErrorHandler.initializeDevices();
 			ros::Duration(0.1).sleep();
 			if (canErrorHandler.GetCanNodesStatus())
+			{
 				canNodeMode = CanNodeMode::Opened;
+				motorControl.sendMotorVel(vel);
+			}
 			break;
 
 		case CanNodeMode::Opened:
-			vel.frontRight = 0.69f;
-			vel.midRight = 0.420f;
-			vel.rearRight = 0.2137f;
-			ros::Duration(0.1).sleep();
-			motorControl.sendMotorVel(vel);
+			if (!timer.hasStarted())
+				timer.start();
 			break;
 
 		case CanNodeMode::Closing:
 			ROS_INFO("CanNodeMode::Closing");
+			timer.stop();
 
 			canNodeMode = CanNodeMode::Closed;
 			break;
@@ -106,6 +112,7 @@ int main(int argc, char *argv[])
 			canNodeMode = CanNodeMode::Opening;
 			break;
 		case CanNodeMode::Faulted:
+			timer.stop();
 			ros::Duration(5).sleep();
 			canNodeMode = CanNodeMode::Created;
 			break;

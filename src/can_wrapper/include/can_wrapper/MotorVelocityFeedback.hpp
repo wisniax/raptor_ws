@@ -18,6 +18,8 @@ public:
 	 * @param rpm_scale The scale factor for motor RPM.
 	 */
 	MotorVelocityFeedback(float rpm_scale);
+	void handleRequestTimerCallback(const ros::TimerEvent &);
+	void sendRequest();
 
 private:
 	void handleFrame(CanMessage cm);
@@ -33,6 +35,7 @@ private:
 
 	ros::Subscriber mRawCanSub;
 	ros::Publisher mRealMotorVelPub;
+	ros::Publisher mFeedbackRequestPub;
 };
 
 #endif // MOTOR_VELOCITY_FEEDBACK_H
