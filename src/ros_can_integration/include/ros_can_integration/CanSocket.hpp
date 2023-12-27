@@ -19,7 +19,7 @@ public:
 	/// @brief Creates a managed can socket
 	/// @param interfaceName A CAN (network) interface name.
 	/// @param awaitMessageTimeout A timeout for awaiting for a message in seconds.
-	CanSocket(std::string interfaceName = "can0", uint32_t awaitMessageTimeout = 1);
+	CanSocket(std::string interfaceName, uint32_t awaitMessageTimeoutSec = 0, uint32_t awaitMessageTimeoutUsec = 1000);
 
 	~CanSocket();
 
@@ -56,7 +56,7 @@ public:
 	/**
 	 * @brief Creates a socket
 	 * @return Error code
-	 */	
+	 */
 	int createSocket();
 
 	/**
@@ -64,7 +64,7 @@ public:
 	 * @return Error code
 	 */
 	int getErrorCode();
-	
+
 	bool getErrorCodeCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
 	/**
@@ -80,10 +80,10 @@ private:
 private:
 	size_t mMaxIterCount;
 	std::string mInterfaceName;
-	int mSocket;
-	int mInitErrCode;
+	int mSocket = 0;
+	int mInitErrCode = -69;
 	uint32_t mSeqCnt = 0;
-	uint32_t mAwaitMessageTimeout;
+	timeval mAwaitMessageTimeout;
 	ros::Time mSocketCreatedTimestamp;
 	ros::Duration mSocketMinimumLifetime;
 };

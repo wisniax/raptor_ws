@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "ros_can_integration");
 	ros::NodeHandle n;
-	CanSocket cSocket("can0");
+	CanSocket cSocket("can0", 0, 1000);
 
 	ros::Publisher canRawPub = n.advertise<can_msgs::Frame>("/CAN/RX/raw", 1024);
 	ros::Subscriber canRawSub = n.subscribe("/CAN/TX/raw", 1024, &CanSocket::handleRosCallback, &cSocket);

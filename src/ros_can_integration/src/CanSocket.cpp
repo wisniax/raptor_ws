@@ -1,9 +1,10 @@
 #include "ros_can_integration/CanSocket.hpp"
 
-CanSocket::CanSocket(std::string interfaceName, uint32_t awaitMessageTimeout)
+CanSocket::CanSocket(std::string interfaceName, uint32_t awaitMessageTimeoutSec, uint32_t awaitMessageTimeoutUsec)
 {
 	mInterfaceName = interfaceName;
-	mAwaitMessageTimeout = awaitMessageTimeout;
+	mAwaitMessageTimeout.tv_sec = awaitMessageTimeoutSec;
+	mAwaitMessageTimeout.tv_usec = awaitMessageTimeoutUsec;
 	mMaxIterCount = 10;
 	mSocketMinimumLifetime = ros::Duration(5.0);
 	mSocketCreatedTimestamp = ros::Time(0);
@@ -31,11 +32,7 @@ int CanSocket::tryCreateSocket()
 	strcpy(ifr.ifr_name, mInterfaceName.c_str());
 	if (ioctl(mSocket, SIOCGIFINDEX, &ifr) < 0)
 		return -2;
-
-	struct timeval tv;
-	tv.tv_sec = mAwaitMessageTimeout;
-	tv.tv_usec = 0;
-	setsockopt(mSocket, SOL_CAN_RAW, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
+	setsockopt(mSocket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&mAwaitMessageTimeout, sizeof mAwaitMessageTimeout);
 
 	sockaddr_can addr;
 	addr.can_family = AF_CAN;
@@ -56,7 +53,7 @@ int CanSocket::tryHandleError()
 {
 	if (mInitErrCode != 0)
 		return createSocket();
-		
+
 	int error_code;
 	socklen_t error_code_size = sizeof(error_code);
 	int getSockErr = getsockopt(mSocket, SOL_CAN_RAW, SO_ERROR, &error_code, &error_code_size);
@@ -202,8 +199,8 @@ int CanSocket::getErrorCode()
 
 bool CanSocket::getErrorCodeCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
-	res.success = getErrorCode() == 0 ? true : false;
-	if (!res.success)
+	res.success = getErrorCode() == 0 ? 0 : 1;
+	if (res.success != 0)
 		res.message = translateInitError();
 	return true;
 };
@@ -224,6 +221,8 @@ std::string CanSocket::translateInitError()
 		return "Setting socket's error mask failed";
 	case -5:
 		return "Binding socket failed";
+	case -69:
+		return "Not initialized";
 	default:
 		return "I dunno smth's wrong";
 	}
