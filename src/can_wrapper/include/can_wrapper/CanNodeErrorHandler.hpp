@@ -5,8 +5,8 @@
 #include <queue>
 #include <can_msgs/Frame.h>
 #include "can_wrapper/RosCanConstants.hpp"
-#include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/CanNodeSettingsProvider.hpp"
+#include "CM/CM.h"
 
 class CanNodeErrorHandler
 {
@@ -26,8 +26,8 @@ public:
 private:
 
 	void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
-	void handleErrorFrame(CanMessage cmErr);
-	void handleError(uint8_t dev_id, uint8_t err, CanNodeSettingsProvider::TypeGroups err_group, MaxNumberOfParams iter_count);
+	void handleErrorFrame(CM_CanMessage cmErr);
+	void handleError(uint8_t dev_id, uint8_t err, CM_StmInit_TypeIdFamily err_group, MaxNumberOfParams iter_count);
 
 	can_msgs::Frame createResponseFrame(uint8_t dev_id, uint8_t rpm_scale_err) const;
 

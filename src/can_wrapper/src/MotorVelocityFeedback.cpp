@@ -15,64 +15,58 @@ void MotorVelocityFeedback::handleRequestTimerCallback(const ros::TimerEvent &)
 
 void MotorVelocityFeedback::sendRequest()
 {
-	CanMessage cm;
-	cm.address = CanMessage::Address::Stm_Right | CanMessage::Address::Encoder_Velocity_Feedback | CAN_RTR_FLAG;
+	CM_CanMessage cm;
+	cm.address = CM_ADDRESS_STM_RIGHT | CM_ADDRESS_FAMILY_ENCODER_VELOCITY_FEEDBACK | CAN_RTR_FLAG;
 	cm.dataLen = 0;
-	mFeedbackRequestPub.publish((can_msgs::Frame)cm);
+	mFeedbackRequestPub.publish(CM_convert_CanMessage_mtof(cm));
 }
 
 void MotorVelocityFeedback::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 {
-	if ((msg->id & CanMessage::Masks::Adress_Families) != CanMessage::Address::Encoder_Velocity_Feedback)
+	if ((msg->id & CM_ADDRESS_FAMILY_MASK) != CM_ADDRESS_FAMILY_ENCODER_VELOCITY_FEEDBACK)
 		return;
-	handleFrame(CanMessage(msg.get()));
+	handleFrame(CM_convert_CanMessage_ftom(msg.get()));
 }
 
-void MotorVelocityFeedback::handleFrame(CanMessage cm)
+void MotorVelocityFeedback::handleFrame(CM_CanMessage cm)
 {
-	geometry_msgs::Point32 vec;
-	switch (cm.address & CanMessage::Masks::All_Nodes)
+	CM_Vector3f vec;
+	switch (cm.address & CM_ADDRESS_MASK)
 	{
-	case CanMessage::Address::Stm_Left:
+	case CM_ADDRESS_STM_LEFT:
 		vec = decodeMotorVel(cm);
 		mWheelsVel.frontLeft = vec.x;
 		mWheelsVel.midLeft = vec.y;
 		mWheelsVel.rearLeft = vec.z;
 		tryPublishWheelsVel();
 		break;
-	case CanMessage::Address::Stm_Right:
+	case CM_ADDRESS_STM_RIGHT:
 		vec = decodeMotorVel(cm);
 		mWheelsVel.frontRight = vec.x;
 		mWheelsVel.midRight = vec.y;
 		mWheelsVel.rearRight = vec.z;
 		tryPublishWheelsVel();
 		break;
-	case CanMessage::Address::Stm_Arm_Axis_123: // Work in progress
+	case CM_ADDRESS_STM_ARM_AXIS_123: // Work in progress
 		break;
-	case CanMessage::Address::Stm_Arm_Axis_456: // Work in progress
+	case CM_ADDRESS_STM_ARM_AXIS_456: // Work in progress
 		break;
-	case CanMessage::Address::Invalid:
 	default:
 		break;
 	}
 }
 
-geometry_msgs::Point32 MotorVelocityFeedback::decodeMotorVel(CanMessage cm) const
+CM_Vector3f MotorVelocityFeedback::decodeMotorVel(CM_CanMessage cm) const
 {
-	geometry_msgs::Point32 vec;
+	CM_Vector3f vec;
 	switch (cm.data.mode.cont_mode)
 	{
-	case 0:
-	case 1:
-	{
-		float loc_scale = (cm.data.mode.cont_mode == CanMessage::get_motor_vel_t::mode_cont_mode::FeedModeRpmExtended) ? mRPM_scale * 5 : mRPM_scale;
-		vec.x = ((float)(cm.data.get_motor_vel.motor_A_vel)) / (cm.data.get_motor_vel.motor_A_dir ? -loc_scale : loc_scale);
-		vec.y = ((float)(cm.data.get_motor_vel.motor_B_vel)) / (cm.data.get_motor_vel.motor_B_dir ? -loc_scale : loc_scale);
-		vec.z = ((float)(cm.data.get_motor_vel.motor_C_vel)) / (cm.data.get_motor_vel.motor_C_dir ? -loc_scale : loc_scale);
+	case CM_GETMOTORVEL_CONTMODE_RPM:
+		CM_convert_GetMotorVel_mtor_M(mRPM_scale,&vec,&cm.data.get_motor_vel);
 		break;
-	}
-	case 2:
-	case 3:
+	case CM_GETMOTORVEL_CONTMODE_RPM_NEWSCALE:
+		CM_convert_GetMotorVel_mtor_NM(mRPM_scale,&vec,&cm.data.get_motor_vel);
+		break;
 	default:
 		break;
 	}

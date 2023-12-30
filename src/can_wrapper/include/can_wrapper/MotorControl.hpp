@@ -5,9 +5,9 @@
 #include <string>
 #include <can_msgs/Frame.h>
 #include <memory>
-#include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/Wheels.h"
+#include "CM/CM.h"
 
 /**
  * @brief Class for interfacing ROS with CAN bus.
@@ -20,7 +20,7 @@ public:
 	 * @param rpmScale The scale factor for motor RPM.
 	 * @param mode The control mode for the motors. Defaults to RPM.
 	 */
-	MotorControl(float rpmScale, CanMessage::set_motor_vel_t::mode_cont_mode mode = CanMessage::set_motor_vel_t::mode_cont_mode::TargetModeRpm);
+	MotorControl(float rpmScale, CM_SetMotorVel_ContMode mode = CM_SETMOTORVEL_CONTMODE_RPM);
 
 	/**
 	 * @brief Sets the scale factor for motor RPM.
@@ -38,7 +38,7 @@ public:
 	 * @brief Sets the control mode for the motors.
 	 * @param mode The control mode.
 	 */
-	void setControlMode(CanMessage::set_motor_vel_t::mode_cont_mode mode);
+	void setControlMode(CM_SetMotorVel_ContMode mode);
 
 private:
 	/**
@@ -47,9 +47,9 @@ private:
 	 * @param adr The CAN address of the motor.
 	 * @return The encoded CAN frame.
 	 */
-	can_msgs::Frame encodeMotorVel(const float msg[], const CanMessage::Address adr);
+	can_msgs::Frame encodeMotorVel(const float msg[], const CM_Address_t adr);
 
-	void setMotorVel(const float msg[], const CanMessage::Address adr);
+	void setMotorVel(const float msg[], const CM_Address_t adr);
 
 	/**
 	 * @brief Callback function for handling left driver velocity messages.
@@ -61,7 +61,7 @@ private:
 	float mRPM_scale;		 /**< Scale factor for motor RPM. */
 	uint32_t mSetMotorVelSeq; /**< Sequence number for motor velocity messages. */
 
-	CanMessage::set_motor_vel_t::mode_cont_mode mControlMode; /**< The mode to use when setting motor velocity. */
+	CM_SetMotorVel_ContMode mControlMode; /**< The mode to use when setting motor velocity. */
 
 	ros::Publisher mRawCanPub;		/**< ROS publisher for raw CAN messages. */
 	ros::Subscriber mSetMotorVelSub; /**< ROS subscriber for motor velocity messages. */

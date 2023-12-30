@@ -1,11 +1,10 @@
 #ifndef CAN_WRAPPER_CAN_NODE_SETTINGS_PROVIDER_HPP
 #define CAN_WRAPPER_CAN_NODE_SETTINGS_PROVIDER_HPP
-#define INIT_MAX_TYPE_ID 0x50
 
 #include <cstdint>
 #include <memory>
 #include <linux/can.h>
-#include "can_wrapper/CanMessage.hpp"
+#include "CM/CM.h"
 
 /**
  * @brief Provides access to CAN node settings.
@@ -13,19 +12,6 @@
 class CanNodeSettingsProvider
 {
 public:
-	enum TypeGroups : uint8_t
-	{
-		Rpm_Scale_Group = 0x10,
-		Motor_A_Reg_Group = 0x20,
-		Motor_B_Reg_Group = 0x30,
-		Motor_C_Reg_Group = 0x40
-	};
-
-	enum RpmScaleAdresses : uint8_t
-	{
-		Motor_Control = 0x0,
-		Encoder_Feedback = 0x1
-	};
 
 	CanNodeSettingsProvider();
 
@@ -36,7 +22,7 @@ public:
 	 * @param setting_id The setting ID.
 	 * @return The setting value.
 	 */
-	float getSetting(canid_t frame_id, TypeGroups typeGroup, uint8_t setting_id) const;
+	float getSetting(CM_Address_t node_id, CM_StmInit_TypeId_t stm_family, CM_StmInit_TypeId_t stm_family_target) const;
 
 	/**
 	 * @brief Gets a setting value for a specific type ID and setting ID.
@@ -44,7 +30,7 @@ public:
 	 * @param type_id The type_id from documentation.
 	 * @return The setting value.
 	 */
-	float getSetting(uint8_t node_id, uint8_t type_id) const;
+	float getSetting(CM_Address_t node_id, CM_StmInit_TypeId_t stm_target) const;
 
 	/**
 	 * @brief Sets a setting value for a specific type ID and setting ID.
@@ -53,7 +39,7 @@ public:
 	 * @param value The value to set.
 	 * @return 0 if successful, -1 otherwise.
 	 */
-	int8_t setSetting(uint8_t node_id, uint8_t type_id, float value);
+	int8_t setSetting(CM_Address_t node_id, CM_StmInit_TypeId_t stm_target, float value);
 
 	/**
 	 * @brief Sets a setting value for all devices for a specific setting ID.
@@ -61,13 +47,14 @@ public:
 	 * @param value The value to set.
 	 * @return 0 if successful, -1 otherwise.
 	 */
-	int8_t setSettingForAllDevices(uint8_t setting_id, float value);
+	int8_t setSettingForAllDevices(CM_StmInit_TypeId_t stm_target, float value);
 
 private:
+
 	/**
 	 * @brief The node settings array.
 	 */
-	float mNodeSettings[0xF][INIT_MAX_TYPE_ID];
+	float mNodeSettings[0xF][CM_STMINIT_TYPEID_FAMILY_MAX];
 
 };
 
