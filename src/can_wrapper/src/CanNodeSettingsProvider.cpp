@@ -14,16 +14,28 @@ float CanNodeSettingsProvider::getSetting(CM_Address_t node_id, CM_StmInit_TypeI
 
 float CanNodeSettingsProvider::getSetting(CM_Address_t node_id, CM_StmInit_TypeId_t stm_target) const
 {
-	if (node_id > 0xF || node_id >= CM_STMINIT_TYPEID_FAMILY_MAX)
+	if (node_id >= CM_ADDRESS_MAX || node_id >= CM_STMINIT_TYPEID_FAMILY_MAX)
 		return 0;
-	return mNodeSettings[node_id][stm_target];
+
+	auto iter = mNodeSettings[node_id - NODE_SETTINGS_ARRSTART].find(stm_target);
+
+	if(iter == mNodeSettings[node_id - NODE_SETTINGS_ARRSTART].end())
+		return 0;
+	return iter->second;
 }
 
 int8_t CanNodeSettingsProvider::setSetting(CM_Address_t node_id, CM_StmInit_TypeId_t stm_target, float value)
 {
-	if (node_id > 0xF || node_id >= CM_STMINIT_TYPEID_FAMILY_MAX)
+	if (node_id >= CM_ADDRESS_MAX || node_id >= CM_STMINIT_TYPEID_FAMILY_MAX)
 		return -1;
-	mNodeSettings[node_id][stm_target] = value;
+
+	auto iter = mNodeSettings[node_id - NODE_SETTINGS_ARRSTART].find(stm_target);
+	if(iter == mNodeSettings[node_id - NODE_SETTINGS_ARRSTART].end())
+	{
+		mNodeSettings[node_id - NODE_SETTINGS_ARRSTART].insert(std::pair<CM_StmInit_TypeId_t,float>(stm_target,value));
+		return 0;
+	}
+	iter->second = value;
 	return 0;
 }
 
@@ -31,7 +43,7 @@ int8_t CanNodeSettingsProvider::setSettingForAllDevices(CM_StmInit_TypeId_t stm_
 {
 	if (stm_target >= CM_STMINIT_TYPEID_FAMILY_MAX)
 		return -1;
-	for (int i = 0; i <= 0xF; i++)
-		mNodeSettings[i][stm_target] = value;
+	for (int i = NODE_SETTINGS_ARRSTART; i <= CM_ADDRESS_MAX; i++)
+		setSetting(i,stm_target,value);
 	return 0;
 }

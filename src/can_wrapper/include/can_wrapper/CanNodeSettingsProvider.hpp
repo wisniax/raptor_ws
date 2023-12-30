@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <linux/can.h>
 #include "CM/CM.h"
 
@@ -51,10 +52,12 @@ public:
 
 private:
 
+	static constexpr int NODE_SETTINGS_ARRSTART = CM_ADDRESS_MAX - CM_ADDRESS_COUNT;
+
 	/**
 	 * @brief The node settings array.
 	 */
-	float mNodeSettings[0xF][CM_STMINIT_TYPEID_FAMILY_MAX];
+	std::unordered_map<CM_StmInit_TypeId_t,float> mNodeSettings[CM_ADDRESS_COUNT];
 
 };
 
