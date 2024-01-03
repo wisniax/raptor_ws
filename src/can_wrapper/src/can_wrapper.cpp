@@ -4,8 +4,8 @@
 #include <can_msgs/Frame.h>
 #include <std_msgs/String.h>
 
+#include "CM/CM.h"
 #include "can_wrapper/CanNodeSettingsProvider.hpp"
-#include "can_wrapper/CanMessage.hpp"
 #include "can_wrapper/MotorVelocityFeedback.hpp"
 #include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
@@ -33,14 +33,14 @@ int main(int argc, char *argv[])
 
 	MotorVelocityFeedback velFeedback(
 		canSettingsPtr->getSetting(
-			0x0,
-			CanNodeSettingsProvider::Rpm_Scale_Group | CanNodeSettingsProvider::RpmScaleAdresses::Encoder_Feedback));
+			CM_ADDRESS_STM_LEFT,
+			CM_STMINIT_TYPEID_FAMILY_MOTORCONTROL | CM_STMINIT_TYPEID_MOTORCONTROL_FEEDBACK));
 
 	MotorControl motorControl(
 		canSettingsPtr->getSetting(
-			0x0,
-			CanNodeSettingsProvider::Rpm_Scale_Group | CanNodeSettingsProvider::RpmScaleAdresses::Motor_Control),
-		CanMessage::set_motor_vel_t::mode_cont_mode::TargetModePwm);
+			CM_ADDRESS_STM_LEFT,
+			CM_STMINIT_TYPEID_FAMILY_MOTORCONTROL | CM_STMINIT_TYPEID_MOTORCONTROL_COMMAND),
+		CM_SETMOTORVEL_CONTMODE_PWM);
 
 	CanNodeErrorHandler canErrorHandler(canSettingsPtr);
 

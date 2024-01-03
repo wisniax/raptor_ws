@@ -6,9 +6,10 @@
 #include <can_msgs/Frame.h>
 #include <geometry_msgs/Point32.h>
 #include <memory>
-#include "can_wrapper/CanMessage.hpp"
+#include <linux/can.h>
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/RosCanConstants.hpp"
+#include "CM/CM.h"
 
 class MotorVelocityFeedback
 {
@@ -22,8 +23,8 @@ public:
 	void sendRequest();
 
 private:
-	void handleFrame(CanMessage cm);
-	geometry_msgs::Point32 decodeMotorVel(CanMessage cm) const;
+	void handleFrame(CM_CanMessage cm);
+	CM_Vector3f decodeMotorVel(CM_CanMessage cm) const;
 	void tryPublishWheelsVel();
 	void handleRosCallback(const can_msgs::Frame::ConstPtr &msg);
 
