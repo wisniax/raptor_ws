@@ -49,30 +49,30 @@ inline float CM_convert_SetMotorVel_mtor(CM_StmInit_Var_t rpm_scale, CM_MotorVel
 	return (motor_dir == 0 ? motor_val/rpm_scale : -motor_val/rpm_scale);
 }
 
-inline void CM_convert_SetMotorVel_mtor_M(CM_StmInit_Var_t rpm_scale, CM_Vector3f* rpm_out, const CM_SetMotorVel_msg* msg_in)
+inline void CM_convert_SetMotorVel_mtor_M(CM_Vector3f *rpm_out, const CM_StmInit_Var_t rpm_scale[], const CM_SetMotorVel_msg *msg_in)
 {
-	rpm_out->x = CM_convert_SetMotorVel_mtor(rpm_scale, msg_in->motor_A_value, msg_in->motor_A_dir);
-	rpm_out->y = CM_convert_SetMotorVel_mtor(rpm_scale, msg_in->motor_B_value, msg_in->motor_B_dir);
-	rpm_out->z = CM_convert_SetMotorVel_mtor(rpm_scale, msg_in->motor_C_value, msg_in->motor_C_dir);
+	rpm_out->x = CM_convert_SetMotorVel_mtor(rpm_scale[0], msg_in->motor_A_value, msg_in->motor_A_dir);
+	rpm_out->y = CM_convert_SetMotorVel_mtor(rpm_scale[1], msg_in->motor_B_value, msg_in->motor_B_dir);
+	rpm_out->z = CM_convert_SetMotorVel_mtor(rpm_scale[2], msg_in->motor_C_value, msg_in->motor_C_dir);
 }
 
 //Rpm2MotorVel
 
-inline void CM_convert_SetMotorVel_rtom(CM_StmInit_Var_t rpm_scale, CM_MotorVel_Value_t* motor_val, CM_MotorVel_Dir_t* motor_dir, float rpm)
+inline void CM_convert_SetMotorVel_rtom(CM_StmInit_Var_t rpm_scale, CM_MotorVel_Value_t *motor_val, CM_MotorVel_Dir_t *motor_dir, float rpm)
 {
 	*motor_dir = (rpm < 0.0f);
 	*motor_val = (CM_MotorVel_Value_t)(*motor_dir ? -rpm * rpm_scale : rpm * rpm_scale);
 }
 
-inline void CM_convert_SetMotorVel_rtom_M(CM_StmInit_Var_t rpm_scale, CM_GetMotorVel_msg* msg_out, const CM_Vector3f* rpm_in)
+inline void CM_convert_SetMotorVel_rtom_M(CM_GetMotorVel_msg *msg_out, const CM_StmInit_Var_t rpm_scale[], const CM_Vector3f *rpm_in)
 {
 	msg_out->motor_A_dir = (rpm_in->x < 0.0f);
 	msg_out->motor_B_dir = (rpm_in->y < 0.0f);
 	msg_out->motor_C_dir = (rpm_in->z < 0.0f);
 
-	msg_out->motor_A_value = (CM_MotorVel_Value_t)(msg_out->motor_A_dir ? -rpm_in->x * rpm_scale : rpm_in->x * rpm_scale);
-	msg_out->motor_B_value = (CM_MotorVel_Value_t)(msg_out->motor_B_dir ? -rpm_in->y * rpm_scale : rpm_in->y * rpm_scale);
-	msg_out->motor_C_value = (CM_MotorVel_Value_t)(msg_out->motor_C_dir ? -rpm_in->z * rpm_scale : rpm_in->z * rpm_scale);
+	msg_out->motor_A_value = (CM_MotorVel_Value_t)( (msg_out->motor_A_dir ? -rpm_in->x : rpm_in->x) * rpm_scale[0]);
+	msg_out->motor_B_value = (CM_MotorVel_Value_t)( (msg_out->motor_B_dir ? -rpm_in->y : rpm_in->y) * rpm_scale[1]);
+	msg_out->motor_C_value = (CM_MotorVel_Value_t)( (msg_out->motor_C_dir ? -rpm_in->z : rpm_in->z) * rpm_scale[2]);
 }
 
 /****************************************************************
@@ -105,18 +105,18 @@ inline float CM_convert_GetMotorVel_mtor_N(CM_StmInit_Var_t rpm_scale, CM_MotorV
 	return (motor_dir == 0 ? motor_val/(rpm_scale/5) : -motor_val/(rpm_scale/5));
 }
 
-inline void CM_convert_GetMotorVel_mtor_M(CM_StmInit_Var_t rpm_scale, CM_Vector3f* rpm_out, const CM_GetMotorVel_msg* msg_in)
+inline void CM_convert_GetMotorVel_mtor_M(CM_Vector3f* rpm_out, const CM_StmInit_Var_t rpm_scale[], const CM_GetMotorVel_msg msg_in[])
 {
-	rpm_out->x = CM_convert_GetMotorVel_mtor(rpm_scale,msg_in->motor_A_value, msg_in->motor_A_dir);
-	rpm_out->y = CM_convert_GetMotorVel_mtor(rpm_scale,msg_in->motor_B_value, msg_in->motor_B_dir);
-	rpm_out->z = CM_convert_GetMotorVel_mtor(rpm_scale,msg_in->motor_C_value, msg_in->motor_C_dir);
+	rpm_out->x = CM_convert_GetMotorVel_mtor(rpm_scale[0], msg_in->motor_A_value, msg_in->motor_A_dir);
+	rpm_out->y = CM_convert_GetMotorVel_mtor(rpm_scale[1], msg_in->motor_B_value, msg_in->motor_B_dir);
+	rpm_out->z = CM_convert_GetMotorVel_mtor(rpm_scale[2], msg_in->motor_C_value, msg_in->motor_C_dir);
 }
 
-inline void CM_convert_GetMotorVel_mtor_NM(CM_StmInit_Var_t rpm_scale, CM_Vector3f* rpm_out, const CM_GetMotorVel_msg* msg_in)
+inline void CM_convert_GetMotorVel_mtor_NM(CM_Vector3f* rpm_out, const CM_StmInit_Var_t rpm_scale[], const CM_GetMotorVel_msg msg_in[])
 {
-	rpm_out->x = CM_convert_GetMotorVel_mtor_N(rpm_scale,msg_in->motor_A_value, msg_in->motor_A_dir);
-	rpm_out->y = CM_convert_GetMotorVel_mtor_N(rpm_scale,msg_in->motor_B_value, msg_in->motor_B_dir);
-	rpm_out->z = CM_convert_GetMotorVel_mtor_N(rpm_scale,msg_in->motor_C_value, msg_in->motor_C_dir);
+	rpm_out->x = CM_convert_GetMotorVel_mtor_N(rpm_scale[0], msg_in->motor_A_value, msg_in->motor_A_dir);
+	rpm_out->y = CM_convert_GetMotorVel_mtor_N(rpm_scale[1], msg_in->motor_B_value, msg_in->motor_B_dir);
+	rpm_out->z = CM_convert_GetMotorVel_mtor_N(rpm_scale[2], msg_in->motor_C_value, msg_in->motor_C_dir);
 }
 
 //Rpm2MotorVal
@@ -133,27 +133,26 @@ inline void CM_convert_GetMotorVel_rtom_N(CM_StmInit_Var_t rpm_scale, CM_MotorVe
 	*motor_val = *motor_dir ? -rpm * (rpm_scale/5) : rpm * (rpm_scale/5);
 }
 
-inline void CM_convert_GetMotorVel_rtom_M(CM_StmInit_Var_t rpm_scale, CM_GetMotorVel_msg* msg_out, const CM_Vector3f* rpm_in)
+inline void CM_convert_GetMotorVel_rtom_M(CM_GetMotorVel_msg* msg_out, const CM_StmInit_Var_t rpm_scale[], const CM_Vector3f* rpm_in)
 {
 	msg_out->motor_A_dir = (rpm_in->x < 0.0f);
 	msg_out->motor_B_dir = (rpm_in->y < 0.0f);
 	msg_out->motor_C_dir = (rpm_in->z < 0.0f);
 
-	msg_out->motor_A_value = (CM_MotorVel_Value_t)(msg_out->motor_A_dir ? -rpm_in->x * rpm_scale : rpm_in->x * rpm_scale);
-	msg_out->motor_B_value = (CM_MotorVel_Value_t)(msg_out->motor_B_dir ? -rpm_in->y * rpm_scale : rpm_in->y * rpm_scale);
-	msg_out->motor_C_value = (CM_MotorVel_Value_t)(msg_out->motor_C_dir ? -rpm_in->z * rpm_scale : rpm_in->z * rpm_scale);
+	msg_out->motor_A_value = (CM_MotorVel_Value_t)( (msg_out->motor_A_dir ? -rpm_in->x : rpm_in->x) * rpm_scale[0] );
+	msg_out->motor_B_value = (CM_MotorVel_Value_t)( (msg_out->motor_B_dir ? -rpm_in->y : rpm_in->y) * rpm_scale[1] );
+	msg_out->motor_C_value = (CM_MotorVel_Value_t)( (msg_out->motor_C_dir ? -rpm_in->z : rpm_in->z) * rpm_scale[2] );
 }
 
-inline void CM_convert_GetMotorVel_rtom_NM(CM_StmInit_Var_t rpm_scale, CM_GetMotorVel_msg* msg_out, const CM_Vector3f* rpm_in)
+inline void CM_convert_GetMotorVel_rtom_NM(CM_GetMotorVel_msg* msg_out, const CM_StmInit_Var_t rpm_scale[], const CM_Vector3f* rpm_in)
 {
-	float rpm_scale_new = (rpm_scale/5);
-	msg_out->motor_A_dir = (rpm_in->x < 0.0f);
-	msg_out->motor_B_dir = (rpm_in->y < 0.0f);
-	msg_out->motor_C_dir = (rpm_in->z < 0.0f);
+	float rpm_scale_new[3] = {
+		rpm_scale[0] / 5,
+		rpm_scale[1] / 5,
+		rpm_scale[2] / 5
+	};
 
-	msg_out->motor_A_value = (CM_MotorVel_Value_t)(msg_out->motor_A_dir ? -rpm_in->x * rpm_scale_new : rpm_in->x * rpm_scale_new);
-	msg_out->motor_B_value = (CM_MotorVel_Value_t)(msg_out->motor_B_dir ? -rpm_in->y * rpm_scale_new : rpm_in->y * rpm_scale_new);
-	msg_out->motor_C_value = (CM_MotorVel_Value_t)(msg_out->motor_C_dir ? -rpm_in->z * rpm_scale_new : rpm_in->z * rpm_scale_new);
+	CM_convert_GetMotorVel_rtom_M(msg_out, rpm_scale_new, rpm_in);
 }
 
 /****************************************************************

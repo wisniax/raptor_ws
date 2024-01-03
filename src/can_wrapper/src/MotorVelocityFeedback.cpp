@@ -58,14 +58,16 @@ void MotorVelocityFeedback::handleFrame(CM_CanMessage cm)
 
 CM_Vector3f MotorVelocityFeedback::decodeMotorVel(CM_CanMessage cm) const
 {
+	float rpm_scale[3] = {mRPM_scale,mRPM_scale,mRPM_scale};
+
 	CM_Vector3f vec;
 	switch (cm.data.mode.cont_mode)
 	{
 	case CM_GETMOTORVEL_CONTMODE_RPM:
-		CM_convert_GetMotorVel_mtor_M(mRPM_scale,&vec,&cm.data.get_motor_vel);
+		CM_convert_GetMotorVel_mtor_M(&vec,rpm_scale,&cm.data.get_motor_vel);
 		break;
 	case CM_GETMOTORVEL_CONTMODE_RPM_NEWSCALE:
-		CM_convert_GetMotorVel_mtor_NM(mRPM_scale,&vec,&cm.data.get_motor_vel);
+		CM_convert_GetMotorVel_mtor_NM(&vec,rpm_scale,&cm.data.get_motor_vel);
 		break;
 	default:
 		break;
