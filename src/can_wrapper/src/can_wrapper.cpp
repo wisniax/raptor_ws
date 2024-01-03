@@ -33,12 +33,12 @@ int main(int argc, char *argv[])
 
 	MotorVelocityFeedback velFeedback(
 		canSettingsPtr->getSetting(
-			0x0,
+			CM_ADDRESS_STM_LEFT,
 			CM_STMINIT_TYPEID_FAMILY_MOTORCONTROL | CM_STMINIT_TYPEID_MOTORCONTROL_FEEDBACK));
 
 	MotorControl motorControl(
 		canSettingsPtr->getSetting(
-			0x0,
+			CM_ADDRESS_STM_LEFT,
 			CM_STMINIT_TYPEID_FAMILY_MOTORCONTROL | CM_STMINIT_TYPEID_MOTORCONTROL_COMMAND),
 		CM_SETMOTORVEL_CONTMODE_PWM);
 
