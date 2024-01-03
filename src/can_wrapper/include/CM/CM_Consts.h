@@ -59,7 +59,8 @@ typedef enum
 	CM_ADDRESS_FAMILY_MOTOR_CONTROL = 0x40,				// TX (ROS --> CAN)
 	CM_ADDRESS_FAMILY_ENCODER_VELOCITY_FEEDBACK = 0x50,	// RX (ROS <-- CAN)
 	CM_ADDRESS_FAMILY_ENCODER_DISTANCE_TRAVELED = 0x60,	// RX (ROS <-- CAN)
-	CM_ADDRESS_FAMILY_MAX = 0x70	// any valid value should be lower
+	CM_ADDRESS_FAMILY_MOTOR_CURRENT_FEEDBACK = 0x70,	// RX (ROS <-- CAN)
+	CM_ADDRESS_FAMILY_MAX = 0x80	// any valid value should be lower
 } CM_AddressFamily;
 
 #define CM_ADDRESS_COUNT 4
@@ -109,6 +110,18 @@ typedef enum
 	CM_GETMOTORVEL_CONTMODE_UNUSED0,
 	CM_GETMOTORVEL_CONTMODE_UNUSED1,
 } CM_GetMotorVel_ContMode;
+
+/****************************************************************
+		mode cont_mode for get_motor_vel message
+*****************************************************************/
+
+typedef enum
+{
+	CM_GETMOTORCURR_CONTMODE_AMPS,			// treat motor_curr_smsg::value as Ampers
+	CM_GETMOTORCURR_CONTMODE_AMPS_NEWSCALE,	// treat motor_curr_smsg::value as Ampers (in new scale)
+	CM_GETMOTORCURR_CONTMODE_UNUSED0,
+	CM_GETMOTORCURR_CONTMODE_UNUSED1,
+} CM_GetMotorCurr_ContMode;
 
 
 

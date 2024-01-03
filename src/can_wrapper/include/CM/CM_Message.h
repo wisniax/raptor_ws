@@ -43,6 +43,11 @@ typedef uint16_t CM_MotorFeed_Value_t;
 typedef uint8_t CM_MotorFeed_Dir_t;
 #define CM_MotorFeed_Dir_bs 1
 
+typedef uint16_t CM_MotorCurr_Value_t;
+#define CM_MotorCurr_Value_bs 11
+typedef uint8_t CM_MotorCurr_Dir_t;
+#define CM_MotorCurr_Dir_bs 1
+
 
 
 /****************************************************************
@@ -61,6 +66,10 @@ typedef uint8_t CM_MotorFeed_Dir_t;
 #define CM_emplace_motor_feed_smgs(prefix,postfix)	\
 	CM_MotorFeed_Value_t	prefix	##	value	##	postfix	: CM_MotorFeed_Value_bs;	\
 	CM_MotorFeed_Dir_t		prefix	##	dir		##	postfix	: CM_MotorVel_Dir_bs;
+
+#define CM_emplace_motor_curr_smgs(prefix,postfix)	\
+	CM_MotorCurr_Value_t	prefix	##	value	##	postfix	: CM_MotorCurr_Value_bs;	\
+	CM_MotorCurr_Dir_t		prefix	##	dir		##	postfix	: CM_MotorCurr_Dir_bs;
 
 
 
@@ -83,6 +92,11 @@ typedef struct CM_GCC_ATTRIBUTE_PACKED
 {
 	CM_emplace_motor_feed_smgs(, )
 } CM_MotorFeed_smsg;
+
+typedef struct CM_GCC_ATTRIBUTE_PACKED
+{
+	CM_emplace_motor_curr_smgs(, )
+} CM_MotorCurr_smsg;
 
 #endif
 
@@ -111,18 +125,26 @@ typedef struct CM_GCC_ATTRIBUTE_PACKED
 typedef struct CM_GCC_ATTRIBUTE_PACKED
 {
 	CM_emplace_mode_smgs(mode_, )
-		CM_emplace_motor_vel_smgs(motor_A_, )
-		CM_emplace_motor_vel_smgs(motor_B_, )
-		CM_emplace_motor_vel_smgs(motor_C_, )
+	CM_emplace_motor_vel_smgs(motor_A_, )
+	CM_emplace_motor_vel_smgs(motor_B_, )
+	CM_emplace_motor_vel_smgs(motor_C_, )
 } CM_SetMotorVel_msg;
 
 typedef struct CM_GCC_ATTRIBUTE_PACKED
 {
 	CM_emplace_mode_smgs(mode_, )
-		CM_emplace_motor_feed_smgs(motor_A_, )
-		CM_emplace_motor_feed_smgs(motor_B_, )
-		CM_emplace_motor_feed_smgs(motor_C_, )
+	CM_emplace_motor_feed_smgs(motor_A_, )
+	CM_emplace_motor_feed_smgs(motor_B_, )
+	CM_emplace_motor_feed_smgs(motor_C_, )
 } CM_GetMotorVel_msg;
+
+typedef struct CM_GCC_ATTRIBUTE_PACKED
+{
+	CM_emplace_mode_smgs(mode_, )
+	CM_emplace_motor_curr_smgs(motor_A_, )
+	CM_emplace_motor_curr_smgs(motor_B_, )
+	CM_emplace_motor_curr_smgs(motor_C_, )
+} CM_GetMotorCurr_msg;
 
 
 
@@ -146,6 +168,8 @@ typedef struct
 		CM_SetMotorVel_msg set_motor_vel;
 
 		CM_GetMotorVel_msg get_motor_vel;
+
+		CM_GetMotorCurr_msg get_motor_curr;
 
 		#ifdef CM_DEFINE_SMSG
 
