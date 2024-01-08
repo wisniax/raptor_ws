@@ -33,6 +33,9 @@ typedef uint8_t CM_StmInit_TypeId_t;
 typedef float CM_StmInit_Var_t;
 //#define CM_StmInit_Var_bs 32 // kinda not bit field because float..
 
+typedef uint8_t CM_GetMotorVel_ErrCode_t;
+#define CM_GetMotorVel_ErrCode_bs 4
+
 typedef uint16_t CM_MotorVel_Value_t;
 #define CM_MotorVel_Value_bs 11
 typedef uint8_t CM_MotorVel_Dir_t;
@@ -133,6 +136,7 @@ typedef struct CM_GCC_ATTRIBUTE_PACKED
 typedef struct CM_GCC_ATTRIBUTE_PACKED
 {
 	CM_emplace_mode_smgs(mode_, )
+	CM_GetMotorVel_ErrCode_t err_code : CM_GetMotorVel_ErrCode_bs;
 	CM_emplace_motor_feed_smgs(motor_A_, )
 	CM_emplace_motor_feed_smgs(motor_B_, )
 	CM_emplace_motor_feed_smgs(motor_C_, )
