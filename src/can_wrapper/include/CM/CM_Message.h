@@ -21,9 +21,9 @@ typedef uint8_t CM_DataRaw_t;
 typedef uint8_t CM_Mode_ContMode_t;
 #define CM_Mode_ContMode_bs 2
 typedef uint8_t CM_Mode_Unused_t;
-#define CM_Mode_Unused_bs 2
+#define CM_Mode_Unused_bs 1
 typedef uint8_t CM_Mode_Reason_t;
-#define CM_Mode_Reason_bs 2
+#define CM_Mode_Reason_bs 1
 
 typedef uint8_t CM_NodeErrors_Error_t;
 #define CM_NodeErrors_Error_bs 4
