@@ -15,7 +15,7 @@ ARG PASSWORD='vscode'
 RUN apt-get update 
 
 # Install OpenSSH Server
-RUN apt-get install -y git
+RUN apt-get install -y git gdb
 
 # Random Stuff
 ENV NOTVISIBLE "in users profile"
