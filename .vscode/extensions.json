@@ -9,6 +9,7 @@
         "cschlosser.doxdocgen",
         "ms-python.vscode-pylance",
         "ms-python.python",
-        "ms-iot.vscode-ros"
+        "ms-iot.vscode-ros",
+        "ms-vscode-remote.remote-containers"
     ]
 }
