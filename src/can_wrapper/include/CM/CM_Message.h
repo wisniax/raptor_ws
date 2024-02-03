@@ -156,7 +156,7 @@ typedef struct CM_GCC_ATTRIBUTE_PACKED
 	CanMessage
 *****************************************************************/
 
-typedef struct CM_GCC_ATTRIBUTE_PACKED
+typedef struct
 {
 	CM_Address_t address;
 	CM_DataLen_t dataLen;
