@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			if (!res.success)
+			if (res.success != 0)
 			{
 				ROS_WARN("Package ros_can_integration is not yet ready... Retrying...");
 				canNodeMode = CanNodeMode::Faulted;
