@@ -1,5 +1,5 @@
-#ifndef Vesc_CanFrameFactory_h_
-#define Vesc_CanFrameFactory_h_
+#ifndef VescCan_FrameCommand_h_
+#define VescCan_FrameCommand_h_
 
 #include "CanFrame.hpp"
 #include <type_traits>
@@ -23,28 +23,28 @@ namespace VescCan::ConstsPacked
         virtual int32_t getCommandArgScale() const noexcept override { return VescCan::Consts::SET_DUTY_SCALE; };
     };
 
-    class SetCurrent : public SendCommand<int32_t>
+    class SetCurrent : public SendCommand<float>
     {
     public:
         virtual VescCan::Consts::Command getCommandId() const noexcept override { return VescCan::Consts::Command::SET_CURRENT; }
         virtual int32_t getCommandArgScale() const noexcept override { return VescCan::Consts::SET_CURRENT_SCALE; };
     };
 
-    class SetCurrentBrake : public SendCommand<int32_t>
+    class SetCurrentBrake : public SendCommand<float>
     {
     public:
         virtual VescCan::Consts::Command getCommandId() const noexcept override { return VescCan::Consts::Command::SET_CURRENT_BRAKE; }
         virtual int32_t getCommandArgScale() const noexcept override { return VescCan::Consts::SET_CURRENT_BRAKE_SCALE; };
     };
     
-    class SetRpm : public SendCommand<int32_t>
+    class SetRpm : public SendCommand<float>
     {
     public:
         virtual VescCan::Consts::Command getCommandId() const noexcept override { return VescCan::Consts::Command::SET_RPM; }
         virtual int32_t getCommandArgScale() const noexcept override { return VescCan::Consts::SET_RPM_SCALE; };
     };
 
-    class SetPos : public SendCommand<int32_t>
+    class SetPos : public SendCommand<float>
     {
     public:
         virtual VescCan::Consts::Command getCommandId() const noexcept override { return VescCan::Consts::Command::SET_POS; }
@@ -65,7 +65,7 @@ namespace VescCan::ConstsPacked
         virtual int32_t getCommandArgScale() const noexcept override { return VescCan::Consts::SET_CURRENT_BRAKE_REL_SCALE; };
     };
 
-    class SendCurrentHandbrake : public SendCommand<int32_t>
+    class SendCurrentHandbrake : public SendCommand<float>
     {
     public:
         virtual VescCan::Consts::Command getCommandId() const noexcept override { return VescCan::Consts::Command::SET_CURRENT_HANDBRAKE; }
@@ -106,14 +106,8 @@ namespace VescCan
             int32_t scaled = static_cast<int32_t>(commandArg * sConsts.getCommandArgScale());
             return CanFrame(vescID, sConsts.getCommandId(), boost::endian::big_int32_buf_t(scaled));
         }
-
-        static nativeArg_t getUnscaledNative(CanFrame cf)
-        {
-            nativeArg_t deendianed = static_cast<nativeArg_t>(cf.commandArg.value());
-            return deendianed / sConsts.getCommandArgScale();
-        }
            
     };
 }
 
-#endif // Vesc_FrameCommand_h_
+#endif // VescCan_FrameCommand_h_
