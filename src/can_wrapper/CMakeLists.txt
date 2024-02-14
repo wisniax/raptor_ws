@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Wheels.msg
+  VescStatus.msg
   # Message1.msg
   # Message2.msg
 )
