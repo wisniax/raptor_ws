@@ -223,7 +223,7 @@ namespace VescCan
         // address section
         uint8_t vescID;
         Consts::Command commandID;
-        const uint16_t _unused0 = 0;
+        uint16_t _unused0 = 0;
 
         // dataLen
         uint8_t dataLen;
