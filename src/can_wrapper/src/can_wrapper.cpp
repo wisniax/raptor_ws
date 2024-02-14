@@ -8,6 +8,7 @@
 #include "can_wrapper/MotorVelocityFeedback.hpp"
 #include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
+#include "can_wrapper/VescMotorController.hpp"
 
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
 	ros::NodeHandle n;
 
 	MotorControl motorControl(n);
+	VescMotorController vmc;
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(1000);
@@ -35,6 +37,8 @@ int main(int argc, char *argv[])
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
 	can_wrapper::Wheels vel;
+
+	
 
 	while (ros::ok())
 	{

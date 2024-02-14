@@ -18,6 +18,7 @@ struct RosCanConstants
 		static const std::string can_get_motor_current; /**< Topic used for getting the real motor velocity. */
 		static const std::string can_stm_errors;	/**< Topic used for reporting STM32 errors. */
 		static const std::string can_stm_init;		/**< Topic used for initializing the STM32. */
+		static const std::string can_vesc_status;	/**< Topic with vesc motor status */
 	};
 
 	struct VescIds

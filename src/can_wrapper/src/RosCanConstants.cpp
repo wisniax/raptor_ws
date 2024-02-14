@@ -7,6 +7,7 @@ const std::string RosCanConstants::RosTopics::can_get_motor_vel = "/CAN/RX/real_
 const std::string RosCanConstants::RosTopics::can_get_motor_current = "/CAN/RX/real_motor_curr";
 const std::string RosCanConstants::RosTopics::can_stm_errors = "/CAN/RX/stm_errors";
 const std::string RosCanConstants::RosTopics::can_stm_init = "/CAN/TX/stm_init";
+const std::string RosCanConstants::RosTopics::can_vesc_status = "/CAN/RX/vesc_status";
 
 const uint32_t RosCanConstants::VescIds::front_left = 60;  /**< ID for the front left VESC. */
 const uint32_t RosCanConstants::VescIds::front_right = 61; /**< ID for the front right VESC. */

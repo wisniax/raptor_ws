@@ -141,7 +141,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node 
  src/can_wrapper.cpp
  #src/MotorVelocityFeedback.cpp 
- #src/MotorControl.cpp
+ src/MotorControl.cpp
  src/RosCanConstants.cpp
  #src/CanNodeErrorHandler.cpp
  #src/CanNodeSettingsProvider.cpp

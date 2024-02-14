@@ -108,7 +108,7 @@ namespace VescCan
         struct Status5  
         {
             boost::endian::big_int32_buf_t  tachometer; // unit [EREV]
-            boost::endian::big_int32_buf_t  voltsIn; // unit [V]
+            boost::endian::big_int16_buf_t  voltsIn; // unit [V]
         };
 
         struct Status6  
