@@ -1,4 +1,5 @@
 Header header
+int32 VescId
 int32 ERPM
 float32 Current
 float32 DutyCycle
