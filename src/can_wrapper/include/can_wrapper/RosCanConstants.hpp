@@ -20,6 +20,14 @@ struct RosCanConstants
 		static const std::string can_stm_init;		/**< Topic used for initializing the STM32. */
 	};
 
+	struct VescIds
+	{
+		static const uint32_t front_left; /**< ID for the front left VESC. */
+		static const uint32_t front_right; /**< ID for the front right VESC. */
+		static const uint32_t rear_left; /**< ID for the rear left VESC. */
+		static const uint32_t rear_right; /**< ID for the rear right VESC. */
+	};
+
 	static const ros::Duration max_stm_sync_time; /**< Maximum time to wait for the STM32 to synchronize. */
 };
 #endif // ROS_CAN_CONSTANTS_HPP
