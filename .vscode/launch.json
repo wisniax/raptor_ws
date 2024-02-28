@@ -4,10 +4,11 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "ROS: Launch",
             "request": "launch",
-            "target": "/path/to/raptor_ws/src/can_wrapper/launch/can_wrapper.launch",
+            "target": "/home/vscode/raptor_ws/src/can_wrapper/launch/can_wrapper.launch",
             "launch": [
                 "rviz",
                 "gz",
