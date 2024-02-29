@@ -11,6 +11,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "mqtt_bridge/VescStatus.h"
+#include "mqtt_bridge/Wheels.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -20,13 +21,15 @@
 // - rosdep (for paho)?
 // - [X] timestamp in header/MQTT
 // - separate into hpp/cpp
-// - Wheels messages
+// - [X] Wheels messages
 // - more generic way for handling different message types?
+// - wait for connection on start
+// - exception handling
 
 class ROSTopicHandler {
   public:
     ROSTopicHandler(mqtt::topic* topic);
-	void publishMessage(mqtt_bridge::VescStatus message);
+	void publishMessage(mqtt_bridge::Wheels message);
   private:
     void ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr& receivedMsg);
 	ros::Publisher pub;
@@ -36,7 +39,7 @@ class ROSTopicHandler {
 
 ROSTopicHandler::ROSTopicHandler(mqtt::topic* topic) {
   ros::NodeHandle n;
-  pub = n.advertise<mqtt_bridge::VescStatus>("/vesc_status_out", 1000);
+  pub = n.advertise<mqtt_bridge::Wheels>("/CAN/TX/set_motor_vel", 1000);
   sub = n.subscribe("/CAN/RX/vesc_status", 1000, &ROSTopicHandler::ROSTopicCallback, this);
   mqttTopic = topic;
 }
@@ -93,7 +96,7 @@ void ROSTopicHandler::ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr& 
   ROS_DEBUG("I published (MQTT): [%s]", buffer.GetString());
 }
 
-void ROSTopicHandler::publishMessage(mqtt_bridge::VescStatus message)
+void ROSTopicHandler::publishMessage(mqtt_bridge::Wheels message)
 {
   pub.publish(message);
   
@@ -114,6 +117,7 @@ int main(int argc, char* argv[])
 	const std::string SERVER_ADDRESS("mqtt://broker.hivemq.com:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const std::string TOPIC("RappTORS/VescStatus");
+	const std::string TOPIC2("RappTORS/Wheels");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	const int SESSION_EXPIRY = 604800;
 	const int QOS = 0;
@@ -141,6 +145,7 @@ int main(int argc, char* argv[])
 
 
 	mqtt::topic* topic = new mqtt::topic { cli, TOPIC, QOS };
+	mqtt::topic* topic2 = new mqtt::topic { cli, TOPIC2, QOS };
 
 	ROSTopicHandler* rth = new ROSTopicHandler(topic);
 
@@ -155,26 +160,13 @@ int main(int argc, char* argv[])
 		rapidjson::Document d;
     	d.Parse(mqtt_msg->get_payload_str().c_str());
 
-		mqtt_bridge::VescStatus msg;
+		mqtt_bridge::Wheels msg;
 
-		msg.VescId = d["VescId"].GetInt();
-		msg.ERPM = d["ERPM"].GetInt();
-		msg.Current = d["Current"].GetDouble();
-		msg.DutyCycle = d["DutyCycle"].GetDouble();
-		msg.AhUsed = d["AhUsed"].GetDouble();
-		msg.AhCharged = d["AhCharged"].GetDouble();
-		msg.WhUsed = d["WhUsed"].GetDouble();
-		msg.WhCharged = d["WhCharged"].GetDouble();
-		msg.TempFet = d["TempFet"].GetDouble();
-		msg.TempMotor = d["TempMotor"].GetDouble();
-		msg.CurrentIn = d["CurrentIn"].GetDouble();
-		msg.PidPos = d["PidPos"].GetDouble();
-		msg.Tachometer = d["Tachometer"].GetDouble();
-		msg.VoltsIn = d["VoltsIn"].GetDouble();
-		msg.ADC1 = d["ADC1"].GetDouble();
-		msg.ADC2 = d["ADC2"].GetDouble();
-		msg.ADC3 = d["ADC3"].GetDouble();
-		msg.PPM = d["PPM"].GetDouble();
+		msg.commandId = d["commandId"].GetUint();
+		msg.frontLeft = d["frontLeft"].GetDouble();
+		msg.frontRight = d["frontRight"].GetDouble();
+		msg.rearLeft = d["rearLeft"].GetDouble();
+		msg.rearRight = d["rearRight"].GetDouble();
 
 		msg.header.stamp.nsec = d["Timestamp"].GetUint64()*1000;
 
@@ -191,6 +183,7 @@ int main(int argc, char* argv[])
 
 		auto subOpts = mqtt::subscribe_options(NO_LOCAL);
 		topic->subscribe(subOpts)->wait();
+		topic2->subscribe(subOpts)->wait();
 	}
 	catch (const mqtt::exception& exc) {
 		ROS_FATAL_STREAM("Error connecting to MQTT server: " << exc.what());

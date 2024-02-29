@@ -53,6 +53,7 @@ find_package(PahoMqttCpp REQUIRED)
 add_message_files(
   FILES
   VescStatus.msg
+  Wheels.msg
 )
 
 ## Generate services in the 'srv' folder
