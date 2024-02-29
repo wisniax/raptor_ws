@@ -17,6 +17,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+
 // TODO:
 // - rosdep (for paho)?
 // - [X] timestamp in header/MQTT
@@ -25,6 +26,7 @@
 // - more generic way for handling different message types?
 // - wait for connection on start
 // - exception handling
+
 
 class ROSTopicHandler {
   public:
