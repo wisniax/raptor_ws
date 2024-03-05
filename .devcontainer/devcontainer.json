@@ -23,7 +23,10 @@
         "ms-python.vscode-pylance",
         "ms-python.python",
         "ms-iot.vscode-ros"
-      ]
+      ],
+      "settings": {
+        "dev.containers.mountWaylandSocket": false
+      }
     }
   },
 }
