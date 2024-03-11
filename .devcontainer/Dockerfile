@@ -17,12 +17,10 @@ RUN apt-get update
 # Install OpenSSH Server
 RUN apt-get install -y git gdb net-tools nano curl wget python3 python3-pip apt-utils gedit nano vim neovim net-tools
 
-# Set correct time ;)
-RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
-
 # Random Stuff
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
+RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 
 RUN useradd -m -s /bin/bash ${USERNAME}
 RUN echo "${USERNAME}:${PASSWORD}" | chpasswd
