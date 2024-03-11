@@ -18,7 +18,6 @@
   },
   "remoteUser": "vscode",
   "containerUser": "vscode",
-  "overrideCommand": false,
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
   "customizations": {
