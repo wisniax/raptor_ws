@@ -18,10 +18,15 @@ ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
 RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 
+# Create user
 RUN useradd -m -s /bin/bash ${USERNAME}
 RUN echo "${USERNAME}:${PASSWORD}" | chpasswd
 RUN usermod -aG sudo ${USERNAME}
+
+# Colorful prompts ah yee
 RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}/.bashrc
+
+# Add alias vnc to start the vnc lmao
 RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
 # RUN apt install -y ros-noetic-ros-canopen
 
