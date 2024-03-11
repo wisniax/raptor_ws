@@ -7,8 +7,7 @@
   },
   "runArgs": [
     "--privileged",
-    "--network=host",
-    "--shm-size=2g"
+    "--network=host"
   ],
   "forwardPorts": [6080],
   "portsAttributes": {
@@ -16,10 +15,8 @@
       "label": "desktop"
     }
   },
-  "remoteUser": "vscode",
-  "containerUser": "vscode",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/${localWorkspaceFolderBasename},type=bind",
-  "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/root/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/root/${localWorkspaceFolderBasename}",
   "customizations": {
     "vscode": {
       "extensions": [
