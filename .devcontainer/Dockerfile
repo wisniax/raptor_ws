@@ -22,7 +22,7 @@ RUN useradd -m -s /bin/bash ${USERNAME}
 RUN echo "${USERNAME}:${PASSWORD}" | chpasswd
 RUN usermod -aG sudo ${USERNAME}
 RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}/.bashrc
-RUN echo "source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
+RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
 # RUN apt install -y ros-noetic-ros-canopen
 
 # Environment setup
