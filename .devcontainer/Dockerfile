@@ -11,6 +11,8 @@ ARG PASSWORD='vscode'
 
 ####################################################################################################
 
+ENV DEBIAN_FRONTEND noninteractive
+
 # Update the system
 RUN apt-get update 
 
@@ -31,4 +33,4 @@ RUN apt install -y ros-noetic-ros-canopen
 
 # USER $USERNAME
 # Environment setup
-RUN mkdir /home/{USERNAME}/raptor_ws
+RUN mkdir /home/${USERNAME}/raptor_ws
