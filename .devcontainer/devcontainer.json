@@ -15,8 +15,10 @@
       "label": "desktop"
     }
   },
-  "workspaceMount": "source=${localWorkspaceFolder},target=/root/${localWorkspaceFolderBasename},type=bind",
-  "workspaceFolder": "/root/${localWorkspaceFolderBasename}",
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
   "customizations": {
     "vscode": {
       "extensions": [
