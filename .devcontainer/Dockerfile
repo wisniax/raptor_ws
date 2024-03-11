@@ -27,3 +27,9 @@ RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ro
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
+RUN apt install -y ros-noetic-ros-canopen
+
+# Install Google Chrome
+RUN curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg > /dev/null
+RUN echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main | sudo tee /etc/apt/sources.list.d/google-chrome.list
+RUN apt update && apt install -y google-chrome-stable
