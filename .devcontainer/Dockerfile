@@ -15,7 +15,10 @@ ARG PASSWORD='vscode'
 RUN apt-get update 
 
 # Install OpenSSH Server
-RUN apt-get install -y git gdb
+RUN apt-get install -y git gdb net-tools nano curl wget python3 python3-pip apt-utils gedit nano vim neovim net-tools
+
+# Set correct time ;)
+RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 
 # Random Stuff
 ENV NOTVISIBLE "in users profile"
@@ -28,6 +31,6 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}
 RUN echo "source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
 RUN apt install -y ros-noetic-ros-canopen
 
-USER $USERNAME
+# USER $USERNAME
 # Environment setup
-RUN mkdir ~/raptor_ws
+RUN mkdir /home/{USERNAME}/raptor_ws
