@@ -6,7 +6,7 @@
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages"
     ],
-    "cmake.sourceDirectory": "/workspaces/raptor_ws/src/can_wrapper",
+    "cmake.sourceDirectory": "/home/vscode/raptor_ws/src/can_wrapper",
     "cmake.configureOnOpen": false,
     "files.associations": {
         "cctype": "cpp",

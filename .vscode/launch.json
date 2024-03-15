@@ -7,7 +7,7 @@
         {
             "name": "ROS: Launch",
             "request": "launch",
-            "target": "/workspaces/raptor_ws/src/can_wrapper/launch/can_wrapper.launch",
+            "target": "/home/vscode/raptor_ws/src/can_wrapper/launch/can_wrapper.launch",
             "launch": [
                 "rviz",
                 "gz",

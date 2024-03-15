@@ -6,10 +6,10 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/workspaces/raptor_ws/devel/include/**",
+        "/home/vscode/raptor_ws/devel/include/**",
         "/opt/ros/noetic/include/**",
-        "/workspaces/raptor_ws/src/can_wrapper/include/**",
-        "/workspaces/raptor_ws/src/ros_can_integration/include/**",
+        "/home/vscode/raptor_ws/src/can_wrapper/include/**",
+        "/home/vscode/raptor_ws/src/ros_can_integration/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",
