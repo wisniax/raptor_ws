@@ -9,6 +9,7 @@
 #include "mqtt/async_client.h"
 #include "mqtt/topic.h"
 #include "ros/ros.h"
+#include "sensor_msgs/Imu.h"
 #include "ros/console.h"
 #include "mqtt_bridge/VescStatus.h"
 #include "mqtt_bridge/Wheels.h"
@@ -16,6 +17,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/error/en.h"
 
 
 // TODO:
@@ -23,33 +25,38 @@
 // - [X] timestamp in header/MQTT
 // - separate into hpp/cpp
 // - [X] Wheels messages
-// - more generic way for handling different message types?
+// - more generic way for handling different message types
 // - wait for connection on start
-// - exception handling
+// - [WiP] exception handling
 
 
 class ROSTopicHandler {
   public:
-    ROSTopicHandler(mqtt::topic* topic);
+    ROSTopicHandler(mqtt::topic* topic, mqtt::topic* topic2);
 	void publishMessage(mqtt_bridge::Wheels message);
   private:
     void ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr& receivedMsg);
+    void ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr& receivedMsg);
 	ros::Publisher pub;
     ros::Subscriber sub;
+    ros::Subscriber sub2;
 	mqtt::topic* mqttTopic;
+	mqtt::topic* mqttTopic2;
 };
 
-ROSTopicHandler::ROSTopicHandler(mqtt::topic* topic) {
+ROSTopicHandler::ROSTopicHandler(mqtt::topic* topic, mqtt::topic* topic2) {
   ros::NodeHandle n;
   pub = n.advertise<mqtt_bridge::Wheels>("/CAN/TX/set_motor_vel", 1000);
   sub = n.subscribe("/CAN/RX/vesc_status", 1000, &ROSTopicHandler::ROSTopicCallback, this);
+  sub2 = n.subscribe("/zed/zed_node/imu/data", 1000, &ROSTopicHandler::ROSTopicCallback2, this);
   mqttTopic = topic;
+  mqttTopic2 = topic2;
 }
 
 void ROSTopicHandler::ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr& receivedMsg)
 {
   //ROS_INFO("I received (ROS): [%s]", receivedMsg->header.c_str());
-  ROS_DEBUG("I received (ROS): a message");
+  ROS_DEBUG("I received (ROS): a message (VescStatus)");
 
     rapidjson::Document d;
     d.SetObject();
@@ -98,6 +105,110 @@ void ROSTopicHandler::ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr& 
   ROS_DEBUG("I published (MQTT): [%s]", buffer.GetString());
 }
 
+void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr& receivedMsg)
+{
+  //ROS_INFO("I received (ROS): [%s]", receivedMsg->header.c_str());
+  ROS_DEBUG("I received (ROS): a message (Imu)");
+
+    rapidjson::Document d;
+    d.SetObject();
+
+	int jsonDoubleArray9Fields = 3;
+	int jsonVector3Fields = 2;
+
+	std::string jsonDoubleArray9FieldNames[jsonDoubleArray9Fields] = {"orientation_covariance", "angular_velocity_covariance", "linear_acceleration_covariance"};
+	boost::array<double, 9> jsonDoubleArray9FieldValues[jsonDoubleArray9Fields] = {receivedMsg->orientation_covariance,
+																				 receivedMsg->angular_velocity_covariance, receivedMsg->linear_acceleration_covariance};
+	
+	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
+	geometry_msgs::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {receivedMsg->angular_velocity, receivedMsg->linear_acceleration};
+
+
+	for (int i = 0; i < jsonDoubleArray9Fields; i++) {
+		rapidjson::Value k(jsonDoubleArray9FieldNames[i], d.GetAllocator());
+		rapidjson::Value v;
+		v.SetArray();
+		for (int j = 0; j < 9; j++)
+		{
+			v.PushBack(jsonDoubleArray9FieldValues[i][j], d.GetAllocator());
+		}
+		d.AddMember(k, v, d.GetAllocator());
+	}
+
+	for (int i = 0; i < jsonVector3Fields; i++) {
+		rapidjson::Value k(jsonVector3FieldNames[i], d.GetAllocator());
+		rapidjson::Value v;
+		v.SetObject();
+		{
+			rapidjson::Value coordinateFieldName("x", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].x);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		{
+			rapidjson::Value coordinateFieldName("y", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].y);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		{
+			rapidjson::Value coordinateFieldName("z", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].z);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		d.AddMember(k, v, d.GetAllocator());
+	}
+
+	// orientation
+	{
+		rapidjson::Value k("orientation", d.GetAllocator());
+		rapidjson::Value v;
+		v.SetObject();
+		{
+			rapidjson::Value coordinateFieldName("x", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(receivedMsg->orientation.x);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		{
+			rapidjson::Value coordinateFieldName("y", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(receivedMsg->orientation.y);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		{
+			rapidjson::Value coordinateFieldName("z", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(receivedMsg->orientation.z);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		{
+			rapidjson::Value coordinateFieldName("w", d.GetAllocator());
+			rapidjson::Value coordinateFieldValue;
+			coordinateFieldValue.SetDouble(receivedMsg->orientation.w);
+			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+		}
+		d.AddMember(k, v, d.GetAllocator());
+	}
+
+	// timestamp
+	{
+		rapidjson::Value k("Timestamp", d.GetAllocator());
+		rapidjson::Value v;
+		v.SetUint64(receivedMsg->header.stamp.toNSec()/1000000);
+		d.AddMember(k, v, d.GetAllocator());
+	}
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    d.Accept(writer);
+  
+  mqttTopic2->publish(buffer.GetString());
+  
+  ROS_DEBUG("I published (MQTT): [%s]", buffer.GetString());
+}
+
 void ROSTopicHandler::publishMessage(mqtt_bridge::Wheels message)
 {
   pub.publish(message);
@@ -120,6 +231,7 @@ int main(int argc, char* argv[])
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const std::string TOPIC("RappTORS/VescStatus");
 	const std::string TOPIC2("RappTORS/Wheels");
+	const std::string TOPIC3("RappTORS/ZedImuData");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	const int SESSION_EXPIRY = 604800;
 	const int QOS = 0;
@@ -148,8 +260,9 @@ int main(int argc, char* argv[])
 
 	mqtt::topic* topic = new mqtt::topic { cli, TOPIC, QOS };
 	mqtt::topic* topic2 = new mqtt::topic { cli, TOPIC2, QOS };
+	mqtt::topic* topic3 = new mqtt::topic { cli, TOPIC3, QOS };
 
-	ROSTopicHandler* rth = new ROSTopicHandler(topic);
+	ROSTopicHandler* rth = new ROSTopicHandler(topic, topic3);
 
 	// callback for connection lost
 	cli.set_connection_lost_handler([](const std::string&) {
@@ -160,19 +273,25 @@ int main(int argc, char* argv[])
 	cli.set_message_callback([rth](mqtt::const_message_ptr mqtt_msg) {
 		ROS_DEBUG("I received (MQTT): [%s]", mqtt_msg->get_payload_str().c_str());
 		rapidjson::Document d;
-    	d.Parse(mqtt_msg->get_payload_str().c_str());
+    	rapidjson::ParseResult ok = d.Parse(mqtt_msg->get_payload_str().c_str());
 
-		mqtt_bridge::Wheels msg;
+		if (!ok) {
+    		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+		} else {
+			mqtt_bridge::Wheels msg;
 
-		msg.commandId = d["commandId"].GetUint();
-		msg.frontLeft = d["frontLeft"].GetDouble();
-		msg.frontRight = d["frontRight"].GetDouble();
-		msg.rearLeft = d["rearLeft"].GetDouble();
-		msg.rearRight = d["rearRight"].GetDouble();
+			msg.commandId = d["commandId"].GetUint();
+			msg.frontLeft = d["frontLeft"].GetDouble();
+			msg.frontRight = d["frontRight"].GetDouble();
+			msg.rearLeft = d["rearLeft"].GetDouble();
+			msg.rearRight = d["rearRight"].GetDouble();
 
-		msg.header.stamp.nsec = d["Timestamp"].GetUint64()*1000;
+			ros::Time timestamp;
+			timestamp.fromSec(d["Timestamp"].GetUint64()/(double)1000.0);
+			msg.header.stamp = timestamp;
 
-		rth->publishMessage(msg);
+			rth->publishMessage(msg);
+		}
 	});
 
 
@@ -184,7 +303,6 @@ int main(int argc, char* argv[])
 		ROS_INFO("Connected to MQTT server.");
 
 		auto subOpts = mqtt::subscribe_options(NO_LOCAL);
-		topic->subscribe(subOpts)->wait();
 		topic2->subscribe(subOpts)->wait();
 	}
 	catch (const mqtt::exception& exc) {
