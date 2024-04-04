@@ -140,6 +140,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
   src/mqtt_bridge_node.cpp
+  src/ROSTopicHandler.cpp
 )
 
 ## Rename C++ executable without prefix
