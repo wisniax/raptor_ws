@@ -18,16 +18,20 @@ class ROSTopicHandler
 {
 public:
   ROSTopicHandler(mqtt::async_client *cli, int QOS);
-  void publishMessage(mqtt_bridge::Wheels message);
+  void publishMessage_Wheels(mqtt_bridge::Wheels message);
 
 private:
-  void ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg);
-  void ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receivedMsg);
+  void ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg);
+  void ROSTopicCallback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
   void publishMqttMessage(const std::string topicName, const char *message);
   void addTimestampToJSON(rapidjson::Document &doc, long int nsec);
-  ros::Publisher pub;
-  ros::Subscriber sub;
-  ros::Subscriber sub2;
+  template<typename T>
+  void addMemberToJSON(rapidjson::Document &doc, std::string name, T value);
+  template<typename T>
+  void addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T>& m);
+  ros::Publisher pub_Wheels;
+  ros::Subscriber sub_VescStatus;
+  ros::Subscriber sub_ZedImuData;
   mqtt::async_client *cli;
   int QOS;
 };

@@ -27,9 +27,7 @@ public:
 
 // TODO:
 // - rosdep (for paho)?
-// - [X] separate into hpp/cpp
-// - more generic way for handling different message types
-// - wait for connection on start
+// - more generic way for handling different message types?
 // - [WiP] exception handling
 // - send MQTT messages at a specified rate
 
@@ -63,7 +61,7 @@ void processMqttWheelsMessage(const char *payloadMsg, ROSTopicHandler *rth)
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
-			rth->publishMessage(msg);
+			rth->publishMessage_Wheels(msg);
 		}
 		catch (JsonAssertException e)
 		{
@@ -94,18 +92,17 @@ int main(int argc, char *argv[])
 	// const bool NO_LOCAL = true;
 	const bool CLEAN_START = false;
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/Wheels2"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0};
+
 
 	mqtt::async_client *cli = new mqtt::async_client(SERVER_ADDRESS, CLIENT_ID,
 													 mqtt::create_options(MQTT_VERSION));
 
-	// auto lwt = mqtt::message(TOPIC, "LWT message", QOS, false);
 
 	auto connOpts = mqtt::connect_options_builder()
 						.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})
 						.clean_start(CLEAN_START)
-						//.will(std::move(lwt))
 						.keep_alive_interval(std::chrono::seconds(KEEP_ALIVE))
 						.automatic_reconnect(RECONNECT_MIN_RETRY_INTERVAL, RECONNECT_MAX_RETRY_INTERVAL)
 						.finalize();
@@ -124,28 +121,36 @@ int main(int argc, char *argv[])
 
 		if (messageTopic == "RappTORS/Wheels") {
 			processMqttWheelsMessage(mqtt_msg->get_payload_str().c_str(), rth);
-		} else if (messageTopic == "RappTORS/Wheels2") {
-			ROS_DEBUG("Wheels2");
 		} else {
 			ROS_WARN_STREAM("Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });
 
-	// Start the MQTT connection, subscribe to MQTT topics.
-	try
-	{
-		ROS_INFO("Connecting to MQTT server...");
-		auto tok = cli->connect(connOpts);
-		tok->wait();
-		ROS_INFO("Connected to MQTT server.");
+	// loop for connecting to MQTT broker (repeat on failure)
+	while (true) {
+		// Start the MQTT connection, subscribe to MQTT topics.
+		try
+		{
+			ROS_INFO("Trying to connect to MQTT server...");
+			auto tok = cli->connect(connOpts);
+			tok->wait();
+			ROS_INFO("Successfully connected to MQTT server.");
 
-		// auto subOpts = mqtt::subscribe_options(NO_LOCAL);
-		cli->subscribe(SUBSCRIBED_TOPICS_NAMES, SUBSCRIBED_TOPICS_QOS);
+			cli->subscribe(SUBSCRIBED_TOPICS_NAMES, SUBSCRIBED_TOPICS_QOS);
+			break;
+		}
+		catch (const mqtt::exception &exc)
+		{
+			ROS_ERROR_STREAM("Error connecting to MQTT server: " << exc.what() << ", retrying in 5 seconds...");
+			ros::Duration(5).sleep();
+			if (ros::isShuttingDown()) {
+				ros::waitForShutdown();
+				delete rth;
+				delete cli;
+				return 1;
+			}
+		}
 	}
-	catch (const mqtt::exception &exc)
-	{
-		ROS_FATAL_STREAM("Error connecting to MQTT server: " << exc.what());
-		return 1;
-	}
+
 
 	ros::spin();
 

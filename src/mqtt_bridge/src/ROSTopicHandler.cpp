@@ -7,9 +7,9 @@
 ROSTopicHandler::ROSTopicHandler(mqtt::async_client *mqttClient, int mqttQOS)
 {
 	ros::NodeHandle n;
-	pub = n.advertise<mqtt_bridge::Wheels>("/CAN/TX/set_motor_vel", 1000);
-	sub = n.subscribe("/CAN/RX/vesc_status", 1000, &ROSTopicHandler::ROSTopicCallback, this);
-	sub2 = n.subscribe("/zed/zed_node/imu/data", 1000, &ROSTopicHandler::ROSTopicCallback2, this);
+	pub_Wheels = n.advertise<mqtt_bridge::Wheels>("/CAN/TX/set_motor_vel", 1000);
+	sub_VescStatus = n.subscribe("/CAN/RX/vesc_status", 1000, &ROSTopicHandler::ROSTopicCallback_VescStatus, this);
+	sub_ZedImuData = n.subscribe("/zed/zed_node/imu/data", 1000, &ROSTopicHandler::ROSTopicCallback_ZedImuData, this);
 	cli = mqttClient;
 	QOS = mqttQOS;
 }
@@ -29,43 +29,43 @@ void ROSTopicHandler::addTimestampToJSON(rapidjson::Document &doc, long int nsec
 	doc.AddMember(k, v, doc.GetAllocator());
 }
 
-void ROSTopicHandler::ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg)
+template<typename T>
+void ROSTopicHandler::addMemberToJSON(rapidjson::Document &doc, std::string name, T value)
+{
+    rapidjson::Value k(name, doc.GetAllocator());
+	rapidjson::Value v(value);
+	doc.AddMember(k, v, doc.GetAllocator());
+}
+
+template<typename T>
+void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T>& m)
+{
+	for (const auto& n : m) {
+		addMemberToJSON(doc, n.first, n.second);
+	}
+}
+
+void ROSTopicHandler::ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg)
 {
 	ROS_DEBUG("I received (ROS): a message (VescStatus)");
 
 	rapidjson::Document d;
 	d.SetObject();
 
-	int jsonIntFields = 2;
-	int jsonDoubleFields = 16;
-	std::string jsonIntFieldNames[jsonIntFields] = {"VescId", "ERPM"};
-	int jsonIntFieldValues[jsonIntFields] = {receivedMsg->VescId, receivedMsg->ERPM};
-	std::string jsonDoubleFieldNames[jsonDoubleFields] = {"Current", "DutyCycle", "AhUsed", "AhCharged",
-														  "WhUsed", "WhCharged", "TempFet", "TempMotor",
-														  "CurrentIn", "PidPos", "Tachometer", "VoltsIn",
-														  "ADC1", "ADC2", "ADC3", "PPM"};
-	double jsonDoubleFieldValues[jsonDoubleFields] = {receivedMsg->Current, receivedMsg->DutyCycle, receivedMsg->AhUsed, receivedMsg->AhCharged,
-													  receivedMsg->WhUsed, receivedMsg->WhCharged, receivedMsg->TempFet, receivedMsg->TempMotor,
-													  receivedMsg->CurrentIn, receivedMsg->PidPos, receivedMsg->Tachometer, receivedMsg->VoltsIn,
-													  receivedMsg->ADC1, receivedMsg->ADC2, receivedMsg->ADC3, receivedMsg->PPM};
+	std::map<std::string, int> jsonIntFieldsMap{{"VescId", receivedMsg->VescId}, {"ERPM", receivedMsg->ERPM}};
 
-	for (int i = 0; i < jsonIntFields; i++)
-	{
-		rapidjson::Value k(jsonIntFieldNames[i], d.GetAllocator());
-		rapidjson::Value v;
-		v.SetInt(jsonIntFieldValues[i]);
-		d.AddMember(k, v, d.GetAllocator());
-	}
+	std::map<std::string, double> jsonDoubleFieldsMap{
+	{"Current", receivedMsg->Current}, {"DutyCycle", receivedMsg->DutyCycle}, {"AhUsed", receivedMsg->AhUsed}, {"AhCharged", receivedMsg->AhCharged},
+	{"WhUsed", receivedMsg->WhUsed}, {"WhCharged", receivedMsg->WhCharged}, {"TempFet", receivedMsg->TempFet}, {"TempMotor", receivedMsg->TempMotor},
+	{"CurrentIn", receivedMsg->CurrentIn}, {"PidPos", receivedMsg->PidPos}, {"Tachometer", receivedMsg->Tachometer}, {"VoltsIn", receivedMsg->VoltsIn},
+	{"ADC1", receivedMsg->ADC1}, {"ADC2", receivedMsg->ADC2}, {"ADC3", receivedMsg->ADC3}, {"PPM", receivedMsg->PPM}
+	};
 
-	for (int i = 0; i < jsonDoubleFields; i++)
-	{
-		rapidjson::Value k(jsonDoubleFieldNames[i], d.GetAllocator());
-		rapidjson::Value v;
-		v.SetDouble(jsonDoubleFieldValues[i]);
-		d.AddMember(k, v, d.GetAllocator());
-	}
+	addMembersFromMapToJSON(d, jsonIntFieldsMap);
 
-	this->addTimestampToJSON(d, receivedMsg->header.stamp.toNSec());
+	addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+
+	addTimestampToJSON(d, receivedMsg->header.stamp.toNSec());
 
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -76,7 +76,7 @@ void ROSTopicHandler::ROSTopicCallback(const mqtt_bridge::VescStatus::ConstPtr &
 	ROS_DEBUG("I published (MQTT): [%s]", buffer.GetString());
 }
 
-void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receivedMsg)
+void ROSTopicHandler::ROSTopicCallback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg)
 {
 	ROS_DEBUG("I received (ROS): a message (Imu)");
 
@@ -93,6 +93,7 @@ void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receiv
 	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
 	geometry_msgs::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {receivedMsg->angular_velocity, receivedMsg->linear_acceleration};
 
+	// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
 	for (int i = 0; i < jsonDoubleArray9Fields; i++)
 	{
 		rapidjson::Value k(jsonDoubleArray9FieldNames[i], d.GetAllocator());
@@ -105,12 +106,14 @@ void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receiv
 		d.AddMember(k, v, d.GetAllocator());
 	}
 
+	// geometry_msgs/Vector3: angular_velocity, linear_acceleration
 	for (int i = 0; i < jsonVector3Fields; i++)
 	{
 		rapidjson::Value k(jsonVector3FieldNames[i], d.GetAllocator());
 		rapidjson::Value v;
 		v.SetObject();
 		{
+			
 			rapidjson::Value coordinateFieldName("x", d.GetAllocator());
 			rapidjson::Value coordinateFieldValue;
 			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].x);
@@ -131,7 +134,7 @@ void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receiv
 		d.AddMember(k, v, d.GetAllocator());
 	}
 
-	// orientation
+	// geometry_msgs/Quaternion: orientation
 	{
 		rapidjson::Value k("orientation", d.GetAllocator());
 		rapidjson::Value v;
@@ -174,8 +177,8 @@ void ROSTopicHandler::ROSTopicCallback2(const sensor_msgs::Imu::ConstPtr &receiv
 	ROS_DEBUG("I published (MQTT): [%s]", buffer.GetString());
 }
 
-void ROSTopicHandler::publishMessage(mqtt_bridge::Wheels message)
+void ROSTopicHandler::publishMessage_Wheels(mqtt_bridge::Wheels message)
 {
-	pub.publish(message);
+	pub_Wheels.publish(message);
 	ROS_DEBUG("I published (ROS): a message (Wheels)");
 }
