@@ -69,7 +69,7 @@ int CanSocket::tryHandleError()
 	case 0:
 	case EAGAIN:
 	case ETIMEDOUT:
-		return 0;
+		return -1;
 	case EPIPE:
 		ROS_ERROR("CAN: Socket pipe broken. Recreating socket...");
 		return createSocket();
