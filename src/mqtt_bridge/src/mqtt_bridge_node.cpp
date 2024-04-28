@@ -38,7 +38,7 @@ ros::Time unixMillisecondsToROSTimestamp(unsigned long int msec)
 	return timestamp;
 }
 
-void processMqttWheelsMessage(const char *payloadMsg, ROSTopicHandler *rth)
+void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
 {
 	rapidjson::Document d;
 	rapidjson::ParseResult ok = d.Parse(payloadMsg);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0};
 
 
-	mqtt::async_client *cli = new mqtt::async_client(SERVER_ADDRESS, CLIENT_ID,
+	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
 													 mqtt::create_options(MQTT_VERSION));
 
 
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 						.automatic_reconnect(RECONNECT_MIN_RETRY_INTERVAL, RECONNECT_MAX_RETRY_INTERVAL)
 						.finalize();
 
-	ROSTopicHandler *rth = new ROSTopicHandler(cli, PUBLISHER_QOS);
+	std::shared_ptr<ROSTopicHandler> rth = std::make_shared<ROSTopicHandler>(cli, PUBLISHER_QOS);
 
 	// callback for connection lost to MQTT broker
 	cli->set_connection_lost_handler([](const std::string &)
@@ -144,8 +144,6 @@ int main(int argc, char *argv[])
 			ros::Duration(5).sleep();
 			if (ros::isShuttingDown()) {
 				ros::waitForShutdown();
-				delete rth;
-				delete cli;
 				return 1;
 			}
 		}
@@ -164,12 +162,8 @@ int main(int argc, char *argv[])
 	catch (const mqtt::exception &exc)
 	{
 		std::cout << "Error disconnecting from MQTT server: " << exc.what() << std::endl;
-		delete rth;
-		delete cli;
 		return 1;
 	}
 
-	delete rth;
-	delete cli;
 	return 0;
 }
