@@ -27,9 +27,6 @@ public:
 
 // TODO:
 // - rosdep (for paho)?
-// - more generic way for handling different message types?
-// - [WiP] exception handling
-// - send MQTT messages at a specified rate
 
 ros::Time unixMillisecondsToROSTimestamp(unsigned long int msec)
 {
@@ -89,7 +86,6 @@ int main(int argc, char *argv[])
 	const int KEEP_ALIVE = 20;
 	const std::chrono::seconds RECONNECT_MIN_RETRY_INTERVAL{1};
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
-	// const bool NO_LOCAL = true;
 	const bool CLEAN_START = false;
 
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels"});

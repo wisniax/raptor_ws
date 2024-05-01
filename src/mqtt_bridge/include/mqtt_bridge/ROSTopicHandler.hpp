@@ -2,7 +2,6 @@
 #define ROS_TOPIC_HANDLER_H
 
 #include <ros/ros.h>
-#include <ros/callback_queue.h>
 #include <sensor_msgs/Imu.h>
 #include "mqtt_bridge/Wheels.h"
 #include "mqtt_bridge/VescStatus.h"
@@ -20,13 +19,10 @@ class ROSTopicHandler
 {
 public:
   ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS);
-  ~ROSTopicHandler();
 
   void publishMessage_Wheels(mqtt_bridge::Wheels message);
 
 private:
-  typedef std::shared_ptr<boost::circular_buffer<mqtt_bridge::VescStatus::ConstPtr>> VescStatusBufferPtr;
-
   void publishMqttMessage(const std::string topicName, const char *message);
   void addTimestampToJSON(rapidjson::Document &doc, long int nsec);
   template<typename T>
@@ -37,16 +33,22 @@ private:
   std::shared_ptr<mqtt::async_client> cli;
   int QOS;
 
-  void ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg);
-  void ROSTopicCallback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
-
+  const double interval_VescStatus = 0.05;
   ros::Subscriber sub_VescStatus;
   ros::Timer timer_VescStatus;
-  std::map<int, VescStatusBufferPtr> bufferMap_VescStatus;
+  std::map<int, std::shared_ptr<mqtt_bridge::VescStatus>> msgMap_VescStatus;
+  void ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg);
   void fire_VescStatus(const ros::TimerEvent& event);
-  void PublishMqttMessage_VescStatus(mqtt_bridge::VescStatus &msg);
+  void PublishMqttMessage_VescStatus(std::shared_ptr<mqtt_bridge::VescStatus> msg);
 
+  const double interval_ZedImuData = 0.05;
   ros::Subscriber sub_ZedImuData;
+  ros::Timer timer_ZedImuData;
+  std::shared_ptr<sensor_msgs::Imu> msg_ZedImuData;
+  bool first_ZedImuData = true;
+  void ROSTopicCallback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
+  void fire_ZedImuData(const ros::TimerEvent& event);
+  void PublishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg);
 
   ros::Publisher pub_Wheels;
 };
