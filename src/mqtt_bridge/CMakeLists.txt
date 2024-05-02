@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   message_generation
+  can_wrapper
 )
 
 # MQTT client library
@@ -51,11 +52,11 @@ find_package(PahoMqttCpp REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  VescStatus.msg
-  Wheels.msg
-)
+# add_message_files(
+#   FILES
+#   VescStatus.msg
+#   Wheels.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(

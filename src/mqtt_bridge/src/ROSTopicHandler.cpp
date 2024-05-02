@@ -6,27 +6,27 @@
 
 ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS)
 {
-	cli = mqttClient;
-	QOS = mqttQOS;
+	mCli = mqttClient;
+	mQOS = mqttQOS;
 
 	ros::NodeHandle n;
 
-	sub_VescStatus = n.subscribe("/CAN/RX/vesc_status", 100, &ROSTopicHandler::ROSTopicCallback_VescStatus, this);
-	timer_VescStatus = n.createTimer(ros::Duration(interval_VescStatus), &ROSTopicHandler::fire_VescStatus, this);
+	mSub_VescStatus = n.subscribe("/CAN/RX/vesc_status", 100, &ROSTopicHandler::callback_VescStatus, this);
+	mTimer_VescStatus = n.createTimer(ros::Duration(mInterval_VescStatus), &ROSTopicHandler::fire_VescStatus, this);
 
-	msg_ZedImuData = std::make_shared<sensor_msgs::Imu>();
-	sub_ZedImuData = n.subscribe("/zed/zed_node/imu/data", 100, &ROSTopicHandler::ROSTopicCallback_ZedImuData, this);
-	timer_ZedImuData = n.createTimer(ros::Duration(interval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
+	mMsg_ZedImuData = std::make_shared<sensor_msgs::Imu>();
+	mSub_ZedImuData = n.subscribe("/zed2/zed_node/imu/data", 100, &ROSTopicHandler::callback_ZedImuData, this);
+	mTimer_ZedImuData = n.createTimer(ros::Duration(mInterval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
 
-	pub_Wheels = n.advertise<mqtt_bridge::Wheels>("/CAN/TX/set_motor_vel", 1000);
+	mPub_Wheels = n.advertise<can_wrapper::Wheels>("/CAN/TX/set_motor_vel", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
 {
 	ROS_DEBUG("Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
 	mqtt::message_ptr pubmsg = mqtt::make_message(topicName, message);
-	pubmsg->set_qos(QOS);
-	cli->publish(pubmsg);
+	pubmsg->set_qos(mQOS);
+	mCli->publish(pubmsg);
 }
 
 // ###### json operations ######
@@ -62,23 +62,23 @@ void ROSTopicHandler::fire_VescStatus(const ros::TimerEvent &event)
 {
 	//ROS_DEBUG("VescStatus timer fired");
 
-	for (auto msgPair : msgMap_VescStatus)
+	for (auto msgPair : mMsgMap_VescStatus)
 	{
-		PublishMqttMessage_VescStatus(msgPair.second);
+		publishMqttMessage_VescStatus(msgPair.second);
 	}
 	
-	msgMap_VescStatus.clear();
+	mMsgMap_VescStatus.clear();
 }
 
-void ROSTopicHandler::ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_VescStatus(const can_wrapper::VescStatus::ConstPtr &receivedMsg)
 {
 	//ROS_DEBUG("I received (ROS): a message (VescStatus)");
 
-	std::map<int, std::shared_ptr<mqtt_bridge::VescStatus>>::iterator it = msgMap_VescStatus.find(receivedMsg->VescId);
-	if (it != msgMap_VescStatus.end())
+	std::map<int, std::shared_ptr<can_wrapper::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->VescId);
+	if (it != mMsgMap_VescStatus.end())
 	{
 		// if message for received VescId exists, then average the received msg with that message
-		std::shared_ptr<mqtt_bridge::VescStatus> msg = it->second;
+		std::shared_ptr<can_wrapper::VescStatus> msg = it->second;
 		msg->header.stamp = receivedMsg->header.stamp;
 		msg->ERPM = (msg->ERPM + receivedMsg->ERPM) / 2;
 		msg->Current = (msg->Current + receivedMsg->Current) / 2;
@@ -101,7 +101,7 @@ void ROSTopicHandler::ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus:
 	}
 
 	// if message for received VescId does not exist, then make a new message and insert it into the map
-	std::shared_ptr<mqtt_bridge::VescStatus> msg = std::make_shared<mqtt_bridge::VescStatus>();
+	std::shared_ptr<can_wrapper::VescStatus> msg = std::make_shared<can_wrapper::VescStatus>();
 
 	msg->header.stamp = receivedMsg->header.stamp;
 	msg->VescId = receivedMsg->VescId;
@@ -123,10 +123,10 @@ void ROSTopicHandler::ROSTopicCallback_VescStatus(const mqtt_bridge::VescStatus:
 	msg->ADC3 = receivedMsg->ADC3;
 	msg->PPM = receivedMsg->PPM;
 
-	msgMap_VescStatus.insert({receivedMsg->VescId, msg});
+	mMsgMap_VescStatus.insert({receivedMsg->VescId, msg});
 }
 
-void ROSTopicHandler::PublishMqttMessage_VescStatus(std::shared_ptr<mqtt_bridge::VescStatus> msg)
+void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper::VescStatus> msg)
 {
 	rapidjson::Document d;
 	d.SetObject();
@@ -154,54 +154,54 @@ void ROSTopicHandler::PublishMqttMessage_VescStatus(std::shared_ptr<mqtt_bridge:
 void ROSTopicHandler::fire_ZedImuData(const ros::TimerEvent &event)
 {
 	//ROS_DEBUG("Imu timer fired");
-	if (!first_ZedImuData)
+	if (!mFirst_ZedImuData)
 	{
-		PublishMqttMessage_ZedImuData(msg_ZedImuData);
-		first_ZedImuData = true;
+		publishMqttMessage_ZedImuData(mMsg_ZedImuData);
+		mFirst_ZedImuData = true;
 	}
 }
 
-void ROSTopicHandler::ROSTopicCallback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg)
 {
 	//ROS_DEBUG("I received (ROS): a message (Imu)");
 
-	if (!first_ZedImuData) {
-		msg_ZedImuData->header.stamp = receivedMsg->header.stamp;
-		msg_ZedImuData->orientation.x = (msg_ZedImuData->orientation.x + receivedMsg->orientation.x) / 2;
-		msg_ZedImuData->orientation.y = (msg_ZedImuData->orientation.y + receivedMsg->orientation.y) / 2;
-		msg_ZedImuData->orientation.z = (msg_ZedImuData->orientation.z + receivedMsg->orientation.z) / 2;
-		msg_ZedImuData->orientation.w = (msg_ZedImuData->orientation.w + receivedMsg->orientation.w) / 2;
+	if (!mFirst_ZedImuData) {
+		mMsg_ZedImuData->header.stamp = receivedMsg->header.stamp;
+		mMsg_ZedImuData->orientation.x = (mMsg_ZedImuData->orientation.x + receivedMsg->orientation.x) / 2;
+		mMsg_ZedImuData->orientation.y = (mMsg_ZedImuData->orientation.y + receivedMsg->orientation.y) / 2;
+		mMsg_ZedImuData->orientation.z = (mMsg_ZedImuData->orientation.z + receivedMsg->orientation.z) / 2;
+		mMsg_ZedImuData->orientation.w = (mMsg_ZedImuData->orientation.w + receivedMsg->orientation.w) / 2;
 
-		msg_ZedImuData->angular_velocity.x = (msg_ZedImuData->angular_velocity.x + receivedMsg->angular_velocity.x) / 2;
-		msg_ZedImuData->angular_velocity.y = (msg_ZedImuData->angular_velocity.y + receivedMsg->angular_velocity.y) / 2;
-		msg_ZedImuData->angular_velocity.z = (msg_ZedImuData->angular_velocity.z + receivedMsg->angular_velocity.z) / 2;
+		mMsg_ZedImuData->angular_velocity.x = (mMsg_ZedImuData->angular_velocity.x + receivedMsg->angular_velocity.x) / 2;
+		mMsg_ZedImuData->angular_velocity.y = (mMsg_ZedImuData->angular_velocity.y + receivedMsg->angular_velocity.y) / 2;
+		mMsg_ZedImuData->angular_velocity.z = (mMsg_ZedImuData->angular_velocity.z + receivedMsg->angular_velocity.z) / 2;
 
-		msg_ZedImuData->linear_acceleration.x = (msg_ZedImuData->linear_acceleration.x + receivedMsg->linear_acceleration.x) / 2;
-		msg_ZedImuData->linear_acceleration.y = (msg_ZedImuData->linear_acceleration.y + receivedMsg->linear_acceleration.y) / 2;
-		msg_ZedImuData->linear_acceleration.z = (msg_ZedImuData->linear_acceleration.z + receivedMsg->linear_acceleration.z) / 2;
+		mMsg_ZedImuData->linear_acceleration.x = (mMsg_ZedImuData->linear_acceleration.x + receivedMsg->linear_acceleration.x) / 2;
+		mMsg_ZedImuData->linear_acceleration.y = (mMsg_ZedImuData->linear_acceleration.y + receivedMsg->linear_acceleration.y) / 2;
+		mMsg_ZedImuData->linear_acceleration.z = (mMsg_ZedImuData->linear_acceleration.z + receivedMsg->linear_acceleration.z) / 2;
 
 		for (int i = 0; i < 9; i++)
 		{
-			msg_ZedImuData->orientation_covariance[i] = (msg_ZedImuData->orientation_covariance[i] + receivedMsg->orientation_covariance[i]) / 2;
-			msg_ZedImuData->angular_velocity_covariance[i] = (msg_ZedImuData->angular_velocity_covariance[i] + receivedMsg->angular_velocity_covariance[i]) / 2;
-			msg_ZedImuData->linear_acceleration_covariance[i] = (msg_ZedImuData->linear_acceleration_covariance[i] + receivedMsg->linear_acceleration_covariance[i]) / 2;
+			mMsg_ZedImuData->orientation_covariance[i] = (mMsg_ZedImuData->orientation_covariance[i] + receivedMsg->orientation_covariance[i]) / 2;
+			mMsg_ZedImuData->angular_velocity_covariance[i] = (mMsg_ZedImuData->angular_velocity_covariance[i] + receivedMsg->angular_velocity_covariance[i]) / 2;
+			mMsg_ZedImuData->linear_acceleration_covariance[i] = (mMsg_ZedImuData->linear_acceleration_covariance[i] + receivedMsg->linear_acceleration_covariance[i]) / 2;
 		}
 
 		return;
 	}
 
-	msg_ZedImuData->header.stamp = receivedMsg->header.stamp;
-	msg_ZedImuData->orientation = receivedMsg->orientation;
-	msg_ZedImuData->angular_velocity = receivedMsg->angular_velocity;
-	msg_ZedImuData->linear_acceleration = receivedMsg->linear_acceleration;
-	msg_ZedImuData->orientation_covariance = receivedMsg->orientation_covariance;
-	msg_ZedImuData->angular_velocity_covariance = receivedMsg->angular_velocity_covariance;
-	msg_ZedImuData->linear_acceleration_covariance = receivedMsg->linear_acceleration_covariance;
+	mMsg_ZedImuData->header.stamp = receivedMsg->header.stamp;
+	mMsg_ZedImuData->orientation = receivedMsg->orientation;
+	mMsg_ZedImuData->angular_velocity = receivedMsg->angular_velocity;
+	mMsg_ZedImuData->linear_acceleration = receivedMsg->linear_acceleration;
+	mMsg_ZedImuData->orientation_covariance = receivedMsg->orientation_covariance;
+	mMsg_ZedImuData->angular_velocity_covariance = receivedMsg->angular_velocity_covariance;
+	mMsg_ZedImuData->linear_acceleration_covariance = receivedMsg->linear_acceleration_covariance;
 
-	first_ZedImuData = false;
+	mFirst_ZedImuData = false;
 }
 
-void ROSTopicHandler::PublishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg)
+void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg)
 {
 	rapidjson::Document d;
 	d.SetObject();
@@ -300,8 +300,8 @@ void ROSTopicHandler::PublishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 
 // ###### Wheels ######
 
-void ROSTopicHandler::publishMessage_Wheels(mqtt_bridge::Wheels message)
+void ROSTopicHandler::publishMessage_Wheels(can_wrapper::Wheels message)
 {
-	pub_Wheels.publish(message);
+	mPub_Wheels.publish(message);
 	ROS_DEBUG("I published (ROS): a message (Wheels)");
 }
