@@ -7,7 +7,6 @@
 #include "can_wrapper/VescStatus.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
-#include <boost/circular_buffer.hpp>
 
 // forward declarations
 namespace mqtt
@@ -30,6 +29,15 @@ private:
   template<typename T>
   void addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T>& m);
 
+  void callback_VescStatus(const can_wrapper::VescStatus::ConstPtr &receivedMsg);
+  void fire_VescStatus(const ros::TimerEvent& event);
+  void publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper::VescStatus> msg);
+
+  void callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
+  void fire_ZedImuData(const ros::TimerEvent& event);
+  void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg);
+
+
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
 
@@ -37,18 +45,12 @@ private:
   ros::Subscriber mSub_VescStatus;
   ros::Timer mTimer_VescStatus;
   std::map<int, std::shared_ptr<can_wrapper::VescStatus>> mMsgMap_VescStatus;
-  void callback_VescStatus(const can_wrapper::VescStatus::ConstPtr &receivedMsg);
-  void fire_VescStatus(const ros::TimerEvent& event);
-  void publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper::VescStatus> msg);
 
   const double mInterval_ZedImuData = 0.05;
   ros::Subscriber mSub_ZedImuData;
   ros::Timer mTimer_ZedImuData;
   std::shared_ptr<sensor_msgs::Imu> mMsg_ZedImuData;
   bool mFirst_ZedImuData = true;
-  void callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
-  void fire_ZedImuData(const ros::TimerEvent& event);
-  void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg);
 
   ros::Publisher mPub_Wheels;
 };
