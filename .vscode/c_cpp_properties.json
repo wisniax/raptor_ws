@@ -10,6 +10,7 @@
         "/opt/ros/noetic/include/**",
         "/home/vscode/raptor_ws/src/can_wrapper/include/**",
         "/home/vscode/raptor_ws/src/ros_can_integration/include/**",
+        "/home/vscode/raptor_ws/src/mqtt_bridge/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",
