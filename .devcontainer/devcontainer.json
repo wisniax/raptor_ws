@@ -2,14 +2,24 @@
 {
   "name": "Raptor ROS desktop-full",
   "dockerFile": "Dockerfile",
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
   "runArgs": [
     "--privileged",
-    "--network=host"
+    "--network=host",
+    "--shm-size=2g"
   ],
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "desktop"
+    }
+  },
   "remoteUser": "vscode",
+  "containerUser": "vscode",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/home/vscode/${localWorkspaceFolderBasename}",
-
   "customizations": {
     "vscode": {
       "extensions": [
