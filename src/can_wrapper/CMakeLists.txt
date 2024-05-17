@@ -54,6 +54,7 @@ add_message_files(
   FILES
   Wheels.msg
   VescStatus.msg
+  RoverControl.msg
   # Message1.msg
   # Message2.msg
 )
