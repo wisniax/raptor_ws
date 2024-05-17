@@ -13,9 +13,9 @@ void MotorControl::handleSetMotorVel(const can_wrapper::Wheels &msg)
 
 void MotorControl::sendMotorVel(const can_wrapper::Wheels msg)
 {
-	can_msgs::Frame can_msg1 = encodeMotorVel(msg.frontLeft, static_cast<VescCan::Consts::Command>(msg.commandId), RosCanConstants::VescIds::front_left);
+	can_msgs::Frame can_msg1 = encodeMotorVel(msg.frontLeft.setValue, static_cast<VescCan::Consts::Command>(msg.frontLeft.commandId), RosCanConstants::VescIds::front_left);
 	mRawCanPub.publish(can_msg1);
-	can_msgs::Frame can_msg2 = encodeMotorVel(msg.frontRight, static_cast<VescCan::Consts::Command>(msg.commandId), RosCanConstants::VescIds::front_right);
+	can_msgs::Frame can_msg2 = encodeMotorVel(msg.frontRight.setValue, static_cast<VescCan::Consts::Command>(msg.frontRight.commandId), RosCanConstants::VescIds::front_right);
 	mRawCanPub.publish(can_msg2);
 	// can_msgs::Frame can_msg3 = encodeMotorVel(msg.rearLeft, msg.commandId, RosCanConstants::VescIds::rear_left);
 	// mRawCanPub.publish(can_msg3);

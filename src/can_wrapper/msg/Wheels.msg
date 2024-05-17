@@ -1,6 +1,5 @@
 Header header
-uint8 commandId
-float32 frontLeft
-float32 frontRight
-float32 rearLeft
-float32 rearRight
+can_wrapper/Wheel frontLeft
+can_wrapper/Wheel frontRight
+can_wrapper/Wheel rearLeft
+can_wrapper/Wheel rearRight

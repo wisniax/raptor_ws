@@ -24,11 +24,13 @@ enum class CanNodeMode
 	Faulted
 };
 
-double setDuty;
+double XVelAxis;
+double ZRotAxis;
 
 static void roverControlCallback(const can_wrapper::RoverControl::ConstPtr &msg)
 {
-	setDuty = msg->XVelAxis;
+	XVelAxis = msg->XVelAxis;
+	ZRotAxis = msg->ZRotAxis;
 	// Process the rover control message here
 }
 
@@ -87,12 +89,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			vel.commandId = 0;
 			vel.header.stamp = ros::Time::now();
-			vel.frontLeft = setDuty;
-			vel.frontRight = setDuty;
-			vel.rearLeft = setDuty;
-			vel.rearRight = setDuty;
+			vel.frontLeft.commandId = 0; // setPos is not valid here
+			vel.frontLeft.commandIdAngle = 4; // only setPos is implemented in stepper driver
+			vel.frontLeft.setValue = XVelAxis;
+			vel.frontLeft.setAngle = ZRotAxis*180;
 			motorControl.sendMotorVel(vel);
 			break;
 

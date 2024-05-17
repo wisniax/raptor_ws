@@ -1,0 +1,4 @@
+uint8 commandId
+float32 setValue
+uint8 commandIdAngle
+float32 setAngle

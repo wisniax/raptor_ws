@@ -50,13 +50,13 @@ void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHa
 		{
 			can_wrapper::Wheels msg;
 
-			msg.commandId = d["commandId"].GetUint();
-			msg.frontLeft = d["frontLeft"].GetDouble();
-			msg.frontRight = d["frontRight"].GetDouble();
-			msg.rearLeft = d["rearLeft"].GetDouble();
-			msg.rearRight = d["rearRight"].GetDouble();
+			// msg.commandId = d["commandId"].GetUint();
+			// msg.frontLeft = d["frontLeft"].GetDouble();
+			// msg.frontRight = d["frontRight"].GetDouble();
+			// msg.rearLeft = d["rearLeft"].GetDouble();
+			// msg.rearRight = d["rearRight"].GetDouble();
 
-			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+			// msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
 			rth->publishMessage_Wheels(msg);
 		}
