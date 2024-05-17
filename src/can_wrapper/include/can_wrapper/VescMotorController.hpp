@@ -127,6 +127,9 @@ public:
             status.VoltsIn = VescCan::ConverterF16<VescCan::Consts::STATUS_5_VOLTSIN_SCALE>::decode(mMotorStatus[key].vescFrame.data.status5.voltsIn);
         }
 
+        status.VescId = key.vescId;
+        status.header.stamp = ros::Time::now();
+
         ROS_INFO("Published status!");
         lastSendTime = ros::Time::now();
         mStatusPublisher.publish(status);
