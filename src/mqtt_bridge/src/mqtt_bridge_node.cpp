@@ -67,6 +67,35 @@ void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHa
 	}
 }
 
+void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			can_wrapper::RoverControl msg;
+
+			msg.XVelAxis = d["XVelAxis"].GetDouble();
+			msg.ZRotAxis = d["ZRotAxis"].GetDouble();
+
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+			rth->publishMessage_RoverControl(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			ROS_WARN("JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "mqtt_bridge_node");
@@ -78,7 +107,7 @@ int main(int argc, char *argv[])
 	}
 
 	// ### MQTT configuration ###
-	const std::string SERVER_ADDRESS("mqtt://broker.hivemq.com:1883");
+	const std::string SERVER_ADDRESS("mqtt://192.168.10.20:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	const int SESSION_EXPIRY = 604800;
@@ -88,8 +117,8 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0};
 
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
@@ -117,6 +146,8 @@ int main(int argc, char *argv[])
 
 		if (messageTopic == "RappTORS/Wheels") {
 			processMqttWheelsMessage(mqtt_msg->get_payload_str().c_str(), rth);
+		} else if (messageTopic == "RappTORS/RoverControl") {
+			processMqttRoverControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
 		} else {
 			ROS_WARN_STREAM("Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });

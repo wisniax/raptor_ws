@@ -5,6 +5,7 @@
 #include <sensor_msgs/Imu.h>
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/VescStatus.h"
+#include "can_wrapper/RoverControl.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -20,6 +21,7 @@ public:
   ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS);
 
   void publishMessage_Wheels(can_wrapper::Wheels message);
+  void publishMessage_RoverControl(can_wrapper::RoverControl message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
@@ -53,6 +55,7 @@ private:
   bool mFirst_ZedImuData = true;
 
   ros::Publisher mPub_Wheels;
+  ros::Publisher mPub_RoverControl;
 };
 
 #endif // ROS_TOPIC_HANDLER_H
