@@ -39,8 +39,6 @@ RUN cmake -Bbuild -H. -DPAHO_BUILD_SAMPLES=ON -DPAHO_BUILD_STATIC=ON
 RUN cmake --build build/ --target install
 RUN ldconfig
 
-USER $USERNAME
-
 # Add alias vnc to start the vnc lmao
 RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
 # RUN apt install -y ros-noetic-ros-canopen
