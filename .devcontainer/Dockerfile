@@ -41,7 +41,6 @@ RUN ldconfig
 
 # Add alias vnc to start the vnc lmao
 RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
-# RUN apt install -y ros-noetic-ros-canopen
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
