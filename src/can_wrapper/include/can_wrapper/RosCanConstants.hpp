@@ -23,10 +23,20 @@ struct RosCanConstants
 
 	struct VescIds
 	{
-		static const uint32_t front_left; /**< ID for the front left VESC. */
-		static const uint32_t front_right; /**< ID for the front right VESC. */
-		static const uint32_t rear_left; /**< ID for the rear left VESC. */
-		static const uint32_t rear_right; /**< ID for the rear right VESC. */
+
+		//0x50 - 0x5f - range for wheel vesc motors
+		static const uint8_t front_left_vesc;	/**< ID for the front left VESC. */
+		static const uint8_t front_right_vesc;	/**< ID for the front right VESC. */
+		static const uint8_t rear_left_vesc;	/**< ID for the rear left VESC. */
+		static const uint8_t rear_right_vesc;	/**< ID for the rear right VESC. */
+
+		//0x60 - 0x6f - range for wheel stepper motors
+		static const uint8_t front_left_stepper;	/**< ID for the front left stepper. */
+		static const uint8_t front_right_stepper;	/**< ID for the front right stepper. */
+		static const uint8_t rear_left_stepper;		/**< ID for the rear left stepper. */
+		static const uint8_t rear_right_stepper;	/**< ID for the rear right stepper. */
+
+		//0x70 - 0x7f - range for manipulator motors
 	};
 
 	static const ros::Duration max_stm_sync_time; /**< Maximum time to wait for the STM32 to synchronize. */

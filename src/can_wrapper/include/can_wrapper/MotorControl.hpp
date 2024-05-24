@@ -5,6 +5,7 @@
 #include <string>
 #include <can_msgs/Frame.h>
 #include <memory>
+#include <array>
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/VescCan/CanFrame.hpp"

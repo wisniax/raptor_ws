@@ -89,12 +89,12 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			vel.header.stamp = ros::Time::now();
-			vel.frontLeft.commandId = 0; // setPos is not valid here
-			vel.frontLeft.commandIdAngle = 4; // only setPos is implemented in stepper driver
-			vel.frontLeft.setValue = XVelAxis;
-			vel.frontLeft.setAngle = ZRotAxis*180;
-			motorControl.sendMotorVel(vel);
+			// vel.header.stamp = ros::Time::now();
+			// vel.frontLeft.commandId = 0; // setPos is not valid here
+			// vel.frontLeft.commandIdAngle = 4; // only setPos is implemented in stepper driver
+			// vel.frontLeft.setValue = XVelAxis;
+			// vel.frontLeft.setAngle = ZRotAxis*180;
+			// motorControl.sendMotorVel(vel);
 			break;
 
 		case CanNodeMode::Closing:
