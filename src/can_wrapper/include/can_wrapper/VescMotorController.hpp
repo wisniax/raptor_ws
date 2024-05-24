@@ -127,6 +127,21 @@ public:
             status.VoltsIn = VescCan::ConverterF16<VescCan::Consts::STATUS_5_VOLTSIN_SCALE>::decode(mMotorStatus[key].vescFrame.data.status5.voltsIn);
         }
 
+        key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_6);
+        if(mMotorStatus.find(key) != mMotorStatus.cend())
+        {
+            status.ADC1 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC1_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc1);
+            status.ADC2 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC2_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc2);
+            status.ADC3 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC3_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc3);
+            status.PPM = VescCan::ConverterF16<VescCan::Consts::STATUS_6_PPM_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.ppm);
+        }
+
+        key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_7);
+        if(mMotorStatus.find(key) != mMotorStatus.cend())
+        {
+            status.PrecisePos = VescCan::ConverterF64<VescCan::Consts::STATUS_7_PRECISE_POS>::decode(mMotorStatus[key].vescFrame.data.status7.precisePos);
+        }
+
         status.VescId = key.vescId;
         status.header.stamp = ros::Time::now();
 

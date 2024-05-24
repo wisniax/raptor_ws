@@ -39,7 +39,8 @@ namespace VescCan
             STATUS_3 = 15,
             STATUS_4 = 16,
             STATUS_5 = 27,
-            STATUS_6 = 28
+            STATUS_6 = 28,
+            STATUS_7 = 29
         };
 
         constexpr int32_t SET_DUTY_SCALE = 100000;
@@ -74,6 +75,8 @@ namespace VescCan
         constexpr int16_t STATUS_6_ADC2_SCALE = 1000;
         constexpr int16_t STATUS_6_ADC3_SCALE = 1000;
         constexpr int16_t STATUS_6_PPM_SCALE = 1000;
+
+        constexpr int64_t STATUS_7_PRECISE_POS = 1000000;
     }
 
     namespace Data
@@ -117,6 +120,11 @@ namespace VescCan
             boost::endian::big_int16_buf_t  adc2; // unit [V]
             boost::endian::big_int16_buf_t  adc3; // unit [V]
             boost::endian::big_int16_buf_t  ppm; // unit [% / 100]
+        };
+
+        struct Status7
+        {
+            boost::endian::big_int64_buf_t precisePos; // uint [deg]
         };
     }
 
@@ -206,7 +214,8 @@ namespace VescCan
                 case VescCan::Consts::Command::STATUS_3: BOOST_FALLTHROUGH;
                 case VescCan::Consts::Command::STATUS_4: BOOST_FALLTHROUGH;
                 case VescCan::Consts::Command::STATUS_5: BOOST_FALLTHROUGH;
-                case VescCan::Consts::Command::STATUS_6: 
+                case VescCan::Consts::Command::STATUS_6: BOOST_FALLTHROUGH;
+                case VescCan::Consts::Command::STATUS_7: 
                     return true;
                 default:
                     return false;
@@ -238,6 +247,7 @@ namespace VescCan
             VescCan::Data::Status4 status4;
             VescCan::Data::Status5 status5;
             VescCan::Data::Status6 status6;
+            VescCan::Data::Status7 status7;
         } data;
     };
 }

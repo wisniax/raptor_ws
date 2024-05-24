@@ -9,7 +9,7 @@
 namespace VescCan
 {
 
-    template< typename NativeType, class Buffer, int32_t scale >
+    template< typename NativeType, class Buffer, int64_t scale >
     class Converter
     {
     public:
@@ -25,26 +25,30 @@ namespace VescCan
         }
     };
 
-    template< class Buffer, int32_t scale >
+    template< class Buffer, int64_t scale >
     using ConverterI = Converter<int,Buffer,scale>;
 
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterI8 = ConverterI<boost::endian::big_int8_buf_t,scale>;
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterI16 = ConverterI<boost::endian::big_int16_buf_t,scale>;
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterI32 = ConverterI<boost::endian::big_int32_buf_t,scale>;
+    template< int64_t scale >
+    using ConverterI64 = ConverterI<boost::endian::big_int64_buf_t,scale>;
 
 
-    template< class Buffer, int32_t scale >
+    template< class Buffer, int64_t scale >
     using ConverterF = Converter<float,Buffer,scale>;
 
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterF8 = ConverterF<boost::endian::big_int8_buf_t,scale>;
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterF16 = ConverterF<boost::endian::big_int16_buf_t,scale>;
-    template< int32_t scale >
+    template< int64_t scale >
     using ConverterF32 = ConverterF<boost::endian::big_int32_buf_t,scale>;
+    template< int64_t scale >
+    using ConverterF64 = ConverterF<boost::endian::big_int64_buf_t,scale>;
 }
 
 #endif // VescCan_Converter_h_
