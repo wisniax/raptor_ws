@@ -14,6 +14,8 @@
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
 
+#define RPM_MAX 500
+
 enum class CanNodeMode
 {
 	Created,
@@ -31,6 +33,7 @@ static void roverControlCallback(const can_wrapper::RoverControl::ConstPtr &msg)
 {
 	XVelAxis = msg->XVelAxis;
 	ZRotAxis = msg->ZRotAxis;
+
 	// Process the rover control message here
 }
 
@@ -50,6 +53,10 @@ int main(int argc, char *argv[])
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
 	can_wrapper::Wheels vel;
+
+	bool forward;
+	float left;
+	float right;
 
 	while (ros::ok())
 	{
@@ -89,12 +96,40 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			// vel.header.stamp = ros::Time::now();
-			// vel.frontLeft.commandId = 0; // setPos is not valid here
-			// vel.frontLeft.commandIdAngle = 4; // only setPos is implemented in stepper driver
-			// vel.frontLeft.setValue = XVelAxis;
-			// vel.frontLeft.setAngle = ZRotAxis*180;
-			// motorControl.sendMotorVel(vel);
+			forward = XVelAxis > 0.0f;
+			left = (std::abs(XVelAxis) + (std::max(ZRotAxis,0.0) * -2.0)) * RPM_MAX;
+			right = (std::abs(XVelAxis) + (std::min(ZRotAxis,0.0) * 2.0)) * RPM_MAX;
+
+			if(!forward)
+			{
+				left = -left;
+				right = -right;
+			}
+
+			//ROS_INFO("Left: %01.2f ; Right: %01.2f", left, right);
+
+			vel.header.stamp = ros::Time::now();
+
+			vel.frontLeft.commandIdAngle = 0; //nope
+			vel.frontLeft.setAngle = 0;	
+			vel.frontRight.commandIdAngle = 0; //nope again
+			vel.frontRight.setAngle = 0;	
+			vel.rearLeft.commandIdAngle = 0; //still nope
+			vel.rearLeft.setAngle = 0;	
+			vel.rearRight.commandIdAngle = 0; //nope nope nope
+			vel.rearRight.setAngle = 0;
+
+			vel.frontLeft.commandId = (int)VescCan::Consts::Command::SET_RPM;
+			vel.frontLeft.setValue = left;
+			vel.rearLeft.commandId = (int)VescCan::Consts::Command::SET_RPM;
+			vel.rearLeft.setValue = left;
+
+			vel.frontRight.commandId = (int)VescCan::Consts::Command::SET_RPM;
+			vel.frontRight.setValue = right;
+			vel.rearRight.commandId = (int)VescCan::Consts::Command::SET_RPM;
+			vel.rearRight.setValue = right;
+			
+			motorControl.sendMotorVel(vel);
 			break;
 
 		case CanNodeMode::Closing:

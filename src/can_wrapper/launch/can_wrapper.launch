@@ -1,4 +1,5 @@
 <launch>
 	<include file="$(find ros_can_integration)/launch/ros_can_integration.launch" />
+	<include file="$(find mqtt_bridge)/launch/mqtt_bridge.launch" />
 	<node name="can_wrapper" pkg="can_wrapper" type="can_wrapper_node" output="screen" />
 </launch>
