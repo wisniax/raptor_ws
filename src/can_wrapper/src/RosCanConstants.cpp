@@ -11,8 +11,8 @@ const std::string RosCanConstants::RosTopics::can_vesc_status = "/CAN/RX/vesc_st
 
 const uint8_t RosCanConstants::VescIds::front_left_vesc = 0x50;  /**< ID for the front left VESC. */
 const uint8_t RosCanConstants::VescIds::front_right_vesc = 0x51; /**< ID for the front right VESC. */
-const uint8_t RosCanConstants::VescIds::rear_left_vesc = 0x52;   /**< ID for the rear left VESC. */
-const uint8_t RosCanConstants::VescIds::rear_right_vesc = 0x53;  /**< ID for the rear right VESC. */
+const uint8_t RosCanConstants::VescIds::rear_left_vesc = 0x53;   /**< ID for the rear left VESC. */
+const uint8_t RosCanConstants::VescIds::rear_right_vesc = 0x52;  /**< ID for the rear right VESC. */
 
 const uint8_t RosCanConstants::VescIds::front_left_stepper = 0x60;  /**< ID for the front left stepper. */
 const uint8_t RosCanConstants::VescIds::front_right_stepper = 0x61; /**< ID for the front right stepper. */

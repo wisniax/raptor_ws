@@ -14,7 +14,8 @@
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
 
-#define RPM_MAX 500
+#define MOTOR_MUL 1000
+#define MOTOR_MODE VescCan::Consts::Command::SET_RPM
 
 enum class CanNodeMode
 {
@@ -25,6 +26,11 @@ enum class CanNodeMode
 	Closed,
 	Faulted
 };
+
+void doDrivingStuff(MotorControl& mtrCtl);
+
+static std::chrono::system_clock::time_point lastSendWheels;
+static std::chrono::nanoseconds diff;
 
 double XVelAxis;
 double ZRotAxis;
@@ -52,11 +58,6 @@ int main(int argc, char *argv[])
 
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
-	can_wrapper::Wheels vel;
-
-	bool forward;
-	float left;
-	float right;
 
 	while (ros::ok())
 	{
@@ -96,40 +97,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			forward = XVelAxis > 0.0f;
-			left = (std::abs(XVelAxis) + (std::max(ZRotAxis,0.0) * -2.0)) * RPM_MAX;
-			right = (std::abs(XVelAxis) + (std::min(ZRotAxis,0.0) * 2.0)) * RPM_MAX;
-
-			if(!forward)
-			{
-				left = -left;
-				right = -right;
-			}
-
-			//ROS_INFO("Left: %01.2f ; Right: %01.2f", left, right);
-
-			vel.header.stamp = ros::Time::now();
-
-			vel.frontLeft.commandIdAngle = 0; //nope
-			vel.frontLeft.setAngle = 0;	
-			vel.frontRight.commandIdAngle = 0; //nope again
-			vel.frontRight.setAngle = 0;	
-			vel.rearLeft.commandIdAngle = 0; //still nope
-			vel.rearLeft.setAngle = 0;	
-			vel.rearRight.commandIdAngle = 0; //nope nope nope
-			vel.rearRight.setAngle = 0;
-
-			vel.frontLeft.commandId = (int)VescCan::Consts::Command::SET_RPM;
-			vel.frontLeft.setValue = left;
-			vel.rearLeft.commandId = (int)VescCan::Consts::Command::SET_RPM;
-			vel.rearLeft.setValue = left;
-
-			vel.frontRight.commandId = (int)VescCan::Consts::Command::SET_RPM;
-			vel.frontRight.setValue = right;
-			vel.rearRight.commandId = (int)VescCan::Consts::Command::SET_RPM;
-			vel.rearRight.setValue = right;
-			
-			motorControl.sendMotorVel(vel);
+			doDrivingStuff(motorControl);
 			break;
 
 		case CanNodeMode::Closing:
@@ -152,5 +120,51 @@ int main(int argc, char *argv[])
 		}
 		rate.sleep();
 		ros::spinOnce();
+	}
+}
+
+void doDrivingStuff(MotorControl& mtrCtl)
+{
+	can_wrapper::Wheels vel;
+
+	bool forward = XVelAxis > 0.0f;
+	float left = (std::abs(XVelAxis) + (std::max(ZRotAxis,0.0) * -2.0)) * MOTOR_MUL;
+	float right = (std::abs(XVelAxis) + (std::min(ZRotAxis,0.0) * 2.0)) * MOTOR_MUL ;
+
+	if(!forward)
+	{
+		left = -left;
+		right = -right;
+	}
+
+	ROS_INFO("Left: %01.2f ; Right: %01.2f", left, right);
+
+	vel.header.stamp = ros::Time::now();
+
+	vel.frontLeft.commandIdAngle = 0; //nope
+	vel.frontLeft.setAngle = 0;	
+	vel.frontRight.commandIdAngle = 0; //nope again
+	vel.frontRight.setAngle = 0;	
+	vel.rearLeft.commandIdAngle = 0; //still nope
+	vel.rearLeft.setAngle = 0;	
+	vel.rearRight.commandIdAngle = 0; //nope nope nope
+	vel.rearRight.setAngle = 0;
+
+	vel.frontLeft.commandId = (int)MOTOR_MODE;
+	vel.frontLeft.setValue = left;
+	vel.rearLeft.commandId = (int)MOTOR_MODE;
+	vel.rearLeft.setValue = left;
+
+	vel.frontRight.commandId = (int)MOTOR_MODE;
+	vel.frontRight.setValue = right;
+	vel.rearRight.commandId = (int)MOTOR_MODE;
+	vel.rearRight.setValue = right;
+			
+	diff = std::chrono::system_clock::now() - lastSendWheels;
+
+	if(diff.count() > 100000000)
+	{
+		lastSendWheels = std::chrono::system_clock::now();
+		mtrCtl.sendMotorVel(vel);
 	}
 }
