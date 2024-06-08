@@ -8,6 +8,7 @@
 #include <sstream>
 #include <mqtt/async_client.h>
 #include <ros/console.h>
+
 #define RAPIDJSON_HAS_STDSTRING 1
 class JsonAssertException : public std::exception
 {
@@ -96,6 +97,39 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 	}
 }
 
+void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			std_msgs::Float64MultiArray msg;
+			msg.data.resize(7);
+
+			msg.data[0] = d["Axis1"].GetFloat();
+			msg.data[1] = d["Axis2"].GetFloat();
+			msg.data[2] = d["Axis3"].GetFloat();
+			msg.data[3] = d["Axis4"].GetFloat();
+			msg.data[4] = d["Axis5"].GetFloat();
+			msg.data[5] = d["Axis6"].GetFloat();
+			msg.data[6] = d["Gripper"].GetBool();
+
+			rth->publishMessage_ManipulatorControl(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			ROS_WARN("JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "mqtt_bridge_node");
@@ -117,8 +151,8 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0};
 
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
@@ -148,6 +182,8 @@ int main(int argc, char *argv[])
 			processMqttWheelsMessage(mqtt_msg->get_payload_str().c_str(), rth);
 		} else if (messageTopic == "RappTORS/RoverControl") {
 			processMqttRoverControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
+		} else if (messageTopic == "RappTORS/ManipulatorControl") {
+			processMqttManipulatorControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
 		} else {
 			ROS_WARN_STREAM("Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });

@@ -20,6 +20,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
 	mPub_Wheels = n.advertise<can_wrapper::Wheels>("/CAN/TX/set_motor_vel", 1000);
 	mPub_RoverControl = n.advertise<can_wrapper::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_ManipulatorControl = n.advertise<std_msgs::Float64MultiArray>("/manipulator_joints", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
@@ -313,4 +314,12 @@ void ROSTopicHandler::publishMessage_RoverControl(can_wrapper::RoverControl mess
 {
 	mPub_RoverControl.publish(message);
 	ROS_DEBUG("I published (ROS): a message (RoverControl)");
+}
+
+// ##### ManipulatorControl ######
+
+void ROSTopicHandler::publishMessage_ManipulatorControl(std_msgs::Float64MultiArray message)
+{
+	mPub_ManipulatorControl.publish(message);
+	ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
 }

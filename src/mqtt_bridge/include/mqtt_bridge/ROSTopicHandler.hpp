@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+#include <std_msgs/Float64MultiArray.h>
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/VescStatus.h"
 #include "can_wrapper/RoverControl.h"
@@ -22,6 +23,7 @@ public:
 
   void publishMessage_Wheels(can_wrapper::Wheels message);
   void publishMessage_RoverControl(can_wrapper::RoverControl message);
+  void publishMessage_ManipulatorControl(std_msgs::Float64MultiArray message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
@@ -56,6 +58,7 @@ private:
 
   ros::Publisher mPub_Wheels;
   ros::Publisher mPub_RoverControl;
+  ros::Publisher mPub_ManipulatorControl;
 };
 
 #endif // ROS_TOPIC_HANDLER_H
