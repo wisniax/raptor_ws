@@ -28,16 +28,13 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}
 
 # paho-mqtt libraries (for mqtt_bridge)
 WORKDIR /tmp
-RUN git clone https://github.com/eclipse/paho.mqtt.c.git
-RUN git clone https://github.com/eclipse/paho.mqtt.cpp.git
-WORKDIR /tmp/paho.mqtt.c
-RUN git checkout v1.3.13
-RUN cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=FALSE -DPAHO_HIGH_PERFORMANCE=TRUE -DPAHO_BUILD_STATIC=TRUE -DPAHO_WITH_SSL=TRUE -DOPENSSL_ROOT_DIR=/usr
-RUN cmake --build build/ --target install
+RUN git clone https://github.com/eclipse/paho.mqtt.cpp
 WORKDIR /tmp/paho.mqtt.cpp
-RUN cmake -Bbuild -H. -DPAHO_BUILD_SAMPLES=ON -DPAHO_BUILD_STATIC=ON
-RUN cmake --build build/ --target install
-RUN ldconfig
+RUN git checkout v1.4.0
+RUN git submodule init
+RUN git submodule update
+RUN cmake -Bbuild -H. -DPAHO_WITH_MQTT_C=ON -DPAHO_BUILD_EXAMPLES=ON
+RUN sudo cmake --build build/ --target install
 
 # Add alias vnc to start the vnc lmao
 RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
