@@ -141,14 +141,17 @@ void doDrivingStuff(MotorControl& mtrCtl)
 
 	vel.header.stamp = ros::Time::now();
 
-	vel.frontLeft.commandIdAngle = 0; //nope
-	vel.frontLeft.setAngle = 0;	
-	vel.frontRight.commandIdAngle = 0; //nope again
-	vel.frontRight.setAngle = 0;	
-	vel.rearLeft.commandIdAngle = 0; //still nope
-	vel.rearLeft.setAngle = 0;	
-	vel.rearRight.commandIdAngle = 0; //nope nope nope
-	vel.rearRight.setAngle = 0;
+	//0-180 rotates stepper right
+	//181-359 rotates stepper left
+
+	vel.frontLeft.commandIdAngle = 4; //nope
+	vel.frontLeft.setAngle = ZRotAxis > 0 ? 269 : (ZRotAxis < 0 ? 169 : -69);	
+	vel.frontRight.commandIdAngle = 4; //nope again
+	vel.frontRight.setAngle = ZRotAxis > 0 ? 269 : (ZRotAxis < 0 ? 169 : -69);	
+	vel.rearLeft.commandIdAngle = 4; //still nope
+	vel.rearLeft.setAngle = ZRotAxis > 0 ? 269 : (ZRotAxis < 0 ? 169 : -69);	
+	vel.rearRight.commandIdAngle = 4; //nope nope nope
+	vel.rearRight.setAngle = ZRotAxis > 0 ? 269 : (ZRotAxis < 0 ? 169 : -69);	
 
 	vel.frontLeft.commandId = (int)MOTOR_MODE;
 	vel.frontLeft.setValue = left;
