@@ -15,6 +15,7 @@
       ],
       "name": "ROS",
       "intelliSenseMode": "gcc-x64",
+      "compileCommands": "build/compile_commands.json",
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "gnu11",
       "cppStandard": "c++14"
