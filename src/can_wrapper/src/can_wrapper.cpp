@@ -8,7 +8,7 @@
 #include "can_wrapper/MotorVelocityFeedback.hpp"
 #include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
-#include "can_wrapper/VescMotorController.hpp"
+#include "can_wrapper/VescStatusHandler.hpp"
 #include "can_wrapper/RoverControl.h"
 
 #include <ros/service.h>
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	ros::NodeHandle n;
 
 	MotorControl motorControl(n);
-	VescMotorController vmc(n);
+	VescStatusHandler mVescStatusHandler(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(1000);

@@ -1,12 +1,12 @@
-#include "can_wrapper/VescMotorController.hpp"
+#include "can_wrapper/VescStatusHandler.hpp"
 
-VescMotorController::VescMotorController(ros::NodeHandle& nh)
+VescStatusHandler::VescStatusHandler(ros::NodeHandle& nh)
 {
-	mStatusGrabber = nh.subscribe<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_RX,1024,&VescMotorController::statusGrabber,this);
+	mStatusGrabber = nh.subscribe<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_RX,1024,&VescStatusHandler::statusGrabber,this);
 	mStatusPublisher = nh.advertise<can_wrapper::VescStatus>(RosCanConstants::RosTopics::can_vesc_status,256);
 }
 
-void VescMotorController::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
+void VescStatusHandler::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
 {
 	if(!VescCan::CanFrame::isValidVescCanFrame(frame->id))
 		return;
@@ -29,7 +29,7 @@ void VescMotorController::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
 	}
 }
 
-void VescMotorController::sendUpdate(uint8_t vescId)
+void VescStatusHandler::sendUpdate(uint8_t vescId)
 {
 	MotorStatusKey key;
 
@@ -96,7 +96,7 @@ void VescMotorController::sendUpdate(uint8_t vescId)
 	mStatusPublisher.publish(status);
 }
 
-void VescMotorController::clear()
+void VescStatusHandler::clear()
 {
 	mMotorStatus.clear();
 }

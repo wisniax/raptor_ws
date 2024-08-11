@@ -1,5 +1,5 @@
-#ifndef VescMotorController_h_
-#define VescMotorController_h_
+#ifndef VescStatusHandler_h_
+#define VescStatusHandler_h_
 
 #include <ros/ros.h>
 #include <unordered_map>
@@ -51,10 +51,10 @@ public:
 	}
 };
 
-class VescMotorController
+class VescStatusHandler
 {
 public:
-	VescMotorController(ros::NodeHandle& nh);
+	VescStatusHandler(ros::NodeHandle& nh);
 
 	void statusGrabber(const can_msgs::Frame::ConstPtr &frame);
 	void sendUpdate(uint8_t vescId);

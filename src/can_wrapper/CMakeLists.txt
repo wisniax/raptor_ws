@@ -149,7 +149,7 @@ add_executable(${PROJECT_NAME}_node
  #src/CanNodeSettingsProvider.cpp
  #src/MotorCurrentFeedback.cpp 
  src/VescCan/CanFrameFactory.cpp
- src/VescMotorController.cpp
+ src/VescStatusHandler.cpp
 )
 
 ## Rename C++ executable without prefix
