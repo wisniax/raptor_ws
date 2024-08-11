@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	ros::NodeHandle n;
 
 	MotorControl motorControl(n);
-	VescMotorController vmc;
+	VescMotorController vmc(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(1000);
