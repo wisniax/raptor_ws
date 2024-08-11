@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find can_wrapper)/launch/can_wrapper.launch" />
+	<include file="$(find quad_rover_kinematics)/launch/kinematics.launch" />
+</launch>

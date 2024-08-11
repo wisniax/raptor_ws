@@ -41,11 +41,10 @@ RUN ldconfig
 
 # Add alias vnc to start the vnc lmao
 RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
-# RUN apt install -y ros-noetic-ros-canopen
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
-RUN apt install -y ros-noetic-ros-canopen
+RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
 
 # Install Google Chrome
 RUN curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg > /dev/null
