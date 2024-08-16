@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	}
 
 	// ### MQTT configuration ###
-	const std::string SERVER_ADDRESS("mqtt://192.168.10.20:1883");
+	const std::string SERVER_ADDRESS("mqtt://192.168.1.20:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	const int SESSION_EXPIRY = 604800;
