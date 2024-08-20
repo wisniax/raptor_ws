@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
+
+## firstly libVescCan to build
+add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
+
 project(can_wrapper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -166,6 +170,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  libVescCan
 )
 
 #############
