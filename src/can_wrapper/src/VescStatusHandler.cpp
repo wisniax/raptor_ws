@@ -8,11 +8,8 @@ VescStatusHandler::VescStatusHandler(ros::NodeHandle& nh)
 
 void VescStatusHandler::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
 {
-	if(!VescCan::CanFrame::isValidVescCanFrame(frame->id))
-		return;
-
-	auto vescFrame = VescCan::CanFrame(frame);
-	auto key = MotorStatusKey(vescFrame.vescID, vescFrame.commandID);
+	auto vescFrame = VescInterop::rosToVesc(*frame);
+	auto key = MotorStatusKey(vescFrame.vescID, (VESC_Command)vescFrame.command);
 	auto value = MotorStatusValue(vescFrame,frame->header.stamp);
 
 	auto findResult = mMotorStatus.find(key);
@@ -23,7 +20,7 @@ void VescStatusHandler::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
 	}
 	else
 	{
-		if(key.commandId == VescCan::Consts::Command::STATUS_1)
+		if(key.commandId == VESC_COMMAND_STATUS_1)
 			sendUpdate(key.vescId);
 		mMotorStatus[key] = value;
 	}
@@ -35,57 +32,85 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 
 	can_wrapper::VescStatus status;
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_1);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_1);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.ERPM = VescCan::ConverterI32<VescCan::Consts::STATUS_1_ERPM_SCALE>::decode(mMotorStatus[key].vescFrame.data.status1.eRpm);
-		status.Current = VescCan::ConverterF16<VescCan::Consts::STATUS_1_CURRENT_SCALE>::decode(mMotorStatus[key].vescFrame.data.status1.current);
-		status.DutyCycle = VescCan::ConverterF16<VescCan::Consts::STATUS_1_DUTYCYCLE_SCALE>::decode(mMotorStatus[key].vescFrame.data.status1.dutyCucle);
+		VESC_Status_1 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus1(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.ERPM = statusData.erpm;
+		status.Current = statusData.current;
+		status.DutyCycle = statusData.dutyCycle;
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_2);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_2);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.AhUsed = VescCan::ConverterF32<VescCan::Consts::STATUS_2_AMPHOURS_SCALE>::decode(mMotorStatus[key].vescFrame.data.status2.ampHours);
-		status.AhCharged = VescCan::ConverterF32<VescCan::Consts::STATUS_2_AMPHOURSCHG_SCALE>::decode(mMotorStatus[key].vescFrame.data.status2.ampHoursChg);
+		VESC_Status_2 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus2(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.AhUsed = statusData.apmHours;
+		status.AhCharged = statusData.apmHoursChg;
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_3);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_3);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.WhUsed = VescCan::ConverterF32<VescCan::Consts::STATUS_3_WATTHOURS_SCALE>::decode(mMotorStatus[key].vescFrame.data.status3.wattHours);
-		status.WhCharged = VescCan::ConverterF32<VescCan::Consts::STATUS_3_WATTHOURSCHG_SCALE>::decode(mMotorStatus[key].vescFrame.data.status3.wattHoursChg);
+		VESC_Status_3 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus3(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.WhUsed = statusData.wattHours;
+		status.WhCharged = statusData.wattHoursChg;
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_4);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_4);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.TempFet = VescCan::ConverterF16<VescCan::Consts::STATUS_4_TEMPFET_SCALE>::decode(mMotorStatus[key].vescFrame.data.status4.tempFet);
-		status.TempMotor = VescCan::ConverterF16<VescCan::Consts::STATUS_4_TEMPMOTOR_SCALE>::decode(mMotorStatus[key].vescFrame.data.status4.tempMotor);
-		status.CurrentIn = VescCan::ConverterF16<VescCan::Consts::STATUS_4_CURRENTIN_SCALE>::decode(mMotorStatus[key].vescFrame.data.status4.currentIn);
-		status.PidPos = VescCan::ConverterF16<VescCan::Consts::STATUS_4_PIDPOS_SCALE>::decode(mMotorStatus[key].vescFrame.data.status4.pidPos);
+		VESC_Status_4 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus4(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.TempFet = statusData.tempFet;
+		status.TempMotor = statusData.tempMotor;
+		status.CurrentIn = statusData.currentIn;
+		status.PidPos = statusData.pidPos;
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_5);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_5);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.Tachometer = VescCan::ConverterF32<VescCan::Consts::STATUS_5_TACHOMETER_SCALE>::decode(mMotorStatus[key].vescFrame.data.status5.tachometer);
-		status.VoltsIn = VescCan::ConverterF16<VescCan::Consts::STATUS_5_VOLTSIN_SCALE>::decode(mMotorStatus[key].vescFrame.data.status5.voltsIn);
+		VESC_Status_5 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus5(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.Tachometer = statusData.tachometer;
+		status.VoltsIn = statusData.voltsIn;
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_6);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_6);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.ADC1 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC1_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc1);
-		status.ADC2 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC2_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc2);
-		status.ADC3 = VescCan::ConverterF16<VescCan::Consts::STATUS_6_ADC3_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.adc3);
-		status.PPM = VescCan::ConverterF16<VescCan::Consts::STATUS_6_PPM_SCALE>::decode(mMotorStatus[key].vescFrame.data.status6.ppm);
+		VESC_Status_6 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus6(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.ADC1 = statusData.adc1;
+		status.ADC2 = statusData.adc2;
+		status.ADC3 = statusData.adc3;
+		status.PPM = statusData.ppm; 	
 	}
 
-	key = MotorStatusKey(vescId, VescCan::Consts::Command::STATUS_7);
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_7);
 	if(mMotorStatus.find(key) != mMotorStatus.cend())
 	{
-		status.PrecisePos = VescCan::ConverterF64<VescCan::Consts::STATUS_7_PRECISE_POS>::decode(mMotorStatus[key].vescFrame.data.status7.precisePos);
+		VESC_Status_7 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus7(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.PrecisePos = statusData.precisePos;
 	}
 
 	status.VescId = key.vescId;

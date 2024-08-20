@@ -23,28 +23,28 @@ void MotorControl::sendMotorVel(const can_wrapper::Wheels msg)
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.frontLeft.setAngle,
-		static_cast<VescCan::Consts::Command>(msg.frontLeft.commandIdAngle),
+		static_cast<VESC_Command>(msg.frontLeft.commandIdAngle),
 		RosCanConstants::VescIds::front_left_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.frontRight.setAngle,
-		static_cast<VescCan::Consts::Command>(msg.frontRight.commandIdAngle),
+		static_cast<VESC_Command>(msg.frontRight.commandIdAngle),
 		RosCanConstants::VescIds::front_right_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.rearLeft.setAngle,
-		static_cast<VescCan::Consts::Command>(msg.rearLeft.commandIdAngle),
+		static_cast<VESC_Command>(msg.rearLeft.commandIdAngle),
 		RosCanConstants::VescIds::rear_left_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.rearRight.setAngle,
-		static_cast<VescCan::Consts::Command>(msg.rearRight.commandIdAngle),
+		static_cast<VESC_Command>(msg.rearRight.commandIdAngle),
 		RosCanConstants::VescIds::rear_right_stepper
 	);
 
@@ -53,28 +53,28 @@ void MotorControl::sendMotorVel(const can_wrapper::Wheels msg)
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.frontLeft.setValue,
-		static_cast<VescCan::Consts::Command>(msg.frontLeft.commandId),
+		static_cast<VESC_Command>(msg.frontLeft.commandId),
 		RosCanConstants::VescIds::front_left_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.frontRight.setValue,
-		static_cast<VescCan::Consts::Command>(msg.frontRight.commandId),
+		static_cast<VESC_Command>(msg.frontRight.commandId),
 		RosCanConstants::VescIds::front_right_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.rearLeft.setValue,
-		static_cast<VescCan::Consts::Command>(msg.rearLeft.commandId),
+		static_cast<VESC_Command>(msg.rearLeft.commandId),
 		RosCanConstants::VescIds::rear_left_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
 		msg.rearRight.setValue,
-		static_cast<VescCan::Consts::Command>(msg.rearRight.commandId),
+		static_cast<VESC_Command>(msg.rearRight.commandId),
 		RosCanConstants::VescIds::rear_right_vesc
 	);
 
@@ -84,52 +84,20 @@ void MotorControl::sendMotorVel(const can_wrapper::Wheels msg)
 		mRawCanPub.publish(*iter);
 }
 
-can_msgs::Frame MotorControl::encodeMotorVel(const float msg, const VescCan::Consts::Command command, const uint8_t vescId)
+can_msgs::Frame MotorControl::encodeMotorVel(const float msg, const VESC_Command command, const VESC_Id_t vescId)
 {
-	VescCan::CanFrame frame;
-	switch (command)
-	{
-	case VescCan::Consts::Command::SET_DUTY:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetDuty>::create(vescId, msg);
-		break;
+	VESC_CommandFrame cmdf;
+	VESC_ZeroMemory(&cmdf, sizeof(cmdf));
 
-	case VescCan::Consts::Command::SET_CURRENT:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetCurrent>::create(vescId, msg);
-		break;
+	cmdf.commandData = msg;
+	cmdf.command = command;
+	cmdf.vescID = vescId;
 
-	case VescCan::Consts::Command::SET_CURRENT_BRAKE:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetCurrentBrake>::create(vescId, msg);
-		break;
+	VESC_RawFrame rf;
+	VESC_ZeroMemory(&rf, sizeof(rf));
+	VESC_convertCmdToRaw(&rf, &cmdf);
 
-	case VescCan::Consts::Command::SET_RPM:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetRpm>::create(vescId, msg);
-		break;
-
-	case VescCan::Consts::Command::SET_POS:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetPos>::create(vescId, msg);
-		break;
-
-	case VescCan::Consts::Command::SET_CURRENT_REL:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetCurrentRel>::create(vescId, msg);
-		break;
-
-	case VescCan::Consts::Command::SET_CURRENT_BRAKE_REL:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SetCurrentBreakeRel>::create(vescId, msg);
-		break;
-
-	case VescCan::Consts::Command::SET_CURRENT_HANDBRAKE:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SendCurrentHandbrake>::create(vescId, msg);
-		break;
-
-	case VescCan::Consts::Command::SET_CURRENT_HANDBRAKE_REL:
-		frame = VescCan::CanFrameFactory<VescCan::ConstsPacked::SendCurrentHandbrakeRel>::create(vescId, msg);
-		break;
-
-	default:
-		break;
-	}
-
-	can_msgs::Frame fr = can_msgs::Frame(frame);
+	can_msgs::Frame fr = VescInterop::vescToRos(rf);
 	fr.header.seq = mSetMotorVelSeq++;
 	return fr;
 }
