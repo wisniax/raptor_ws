@@ -7,6 +7,7 @@
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/VescStatus.h"
 #include "can_wrapper/RoverControl.h"
+#include "can_wrapper/RoverStatus.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -24,6 +25,7 @@ public:
   void publishMessage_Wheels(can_wrapper::Wheels message);
   void publishMessage_RoverControl(can_wrapper::RoverControl message);
   void publishMessage_ManipulatorControl(std_msgs::Float64MultiArray message);
+  void publishMessage_RoverStatus(can_wrapper::RoverStatus message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
@@ -59,6 +61,7 @@ private:
   ros::Publisher mPub_Wheels;
   ros::Publisher mPub_RoverControl;
   ros::Publisher mPub_ManipulatorControl;
+  ros::Publisher mPub_RoverStatus;
 };
 
 #endif // ROS_TOPIC_HANDLER_H

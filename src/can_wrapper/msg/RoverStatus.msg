@@ -1,0 +1,4 @@
+Header header
+int32 CommunicationState
+bool PadConnected
+int32 ControlMode
