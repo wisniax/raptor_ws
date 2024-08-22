@@ -117,9 +117,13 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 			msg.data[1] = d["Axis2"].GetFloat();
 			msg.data[2] = d["Axis3"].GetFloat();
 			msg.data[3] = d["Axis4"].GetFloat();
+			
+			//TODO: update app to send 6 axis & gripper data
+			//instead of 5 axis + gripper axis
 			msg.data[4] = d["Axis5"].GetFloat();
-			msg.data[5] = d["Axis6"].GetFloat();
-			msg.data[6] = d["Gripper"].GetBool();
+			msg.data[5] = d["Gripper"].GetFloat();
+			//msg.data[5] = d["Axis6"].GetFloat();
+			//msg.data[6] = d["Gripper"].GetBool();
 
 			rth->publishMessage_ManipulatorControl(msg);
 		}
