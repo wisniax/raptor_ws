@@ -168,8 +168,8 @@ int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "mqtt_bridge_node");
 
-	// set ROS console logger level to DEBUG
-	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+	// set ROS console logger level to INFO
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
 	{
 		ros::console::notifyLoggerLevelsChanged();
 	}
