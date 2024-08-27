@@ -12,7 +12,6 @@
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
 
-
 enum class CanNodeMode
 {
 	Created,
@@ -23,7 +22,7 @@ enum class CanNodeMode
 	Faulted
 };
 
-void doDrivingStuff(MotorControl& mtrCtl);
+void doDrivingStuff(MotorControl &mtrCtl);
 
 static std::chrono::system_clock::time_point lastSendWheels;
 static std::chrono::nanoseconds diff;
@@ -42,6 +41,12 @@ static void roverControlCallback(const can_wrapper::RoverControl::ConstPtr &msg)
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "can_wrapper");
+
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Warn))
+	{
+		ros::console::notifyLoggerLevelsChanged();
+	}
+
 	ros::NodeHandle n;
 
 	MotorControl motorControl(n);
@@ -116,4 +121,6 @@ int main(int argc, char *argv[])
 		rate.sleep();
 		ros::spinOnce();
 	}
+
+	std::cout << "Can Wrapper shutting down" << std::endl;
 }

@@ -9,6 +9,12 @@
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "ros_can_integration");
+
+	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Warn))
+	{
+		ros::console::notifyLoggerLevelsChanged();
+	}
+
 	ros::NodeHandle n;
 	CanSocket cSocket("can0", 0, 1000);
 
@@ -20,7 +26,7 @@ int main(int argc, char *argv[])
 	int lastErrCode = 2;
 	ros::Rate rate(1000);
 
-	while (ros::ok)
+	while (ros::ok())
 	{
 		if (lastErrCode != cSocket.getErrorCode())
 		{
@@ -34,4 +40,6 @@ int main(int argc, char *argv[])
 		rate.sleep();
 		ros::spinOnce();
 	}
+
+	std::cout << "Ros-Can integration shutting down" << std::endl;
 }
