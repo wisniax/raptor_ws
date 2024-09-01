@@ -86,6 +86,7 @@ private:
 	timeval mAwaitMessageTimeout;
 	ros::Time mSocketCreatedTimestamp;
 	ros::Duration mSocketMinimumLifetime;
+	uint32_t sendErrStreak = 0;
 };
 
 #endif
