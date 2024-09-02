@@ -30,6 +30,9 @@ VESC_RawFrame VescInterop::rosToVesc(const can_msgs::Frame& rosf)
     canf->can_id |= rosf.is_rtr ? CAN_RTR_FLAG : 0;
     canf->can_id |= rosf.is_error ? CAN_ERR_FLAG : 0;
 
+    if(rosf.is_error)
+        return vescf;
+        
     canf->can_dlc = rosf.dlc;
     memcpy(canf->data, rosf.data.begin(), rosf.dlc);
 

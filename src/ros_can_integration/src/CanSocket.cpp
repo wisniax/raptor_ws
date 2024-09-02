@@ -157,7 +157,10 @@ ssize_t CanSocket::awaitAndPublishCanMessage(ros::Publisher &canRawPub)
 	}
 
 	can_msgs::Frame fr;
-	fr.id = frame.can_id;
+	fr.is_rtr = (frame.can_id & CAN_RTR_FLAG) != 0;
+	fr.is_error = (frame.can_id & CAN_ERR_FLAG) != 0;
+	fr.is_extended = (frame.can_id & CAN_EFF_FLAG) != 0;
+	fr.id = frame.can_id & (fr.is_extended ? CAN_EFF_MASK : CAN_SFF_MASK);
 	fr.dlc = frame.can_dlc;
 	memcpy(fr.data.data(), frame.data, CAN_MAX_DLEN);
 	fr.header.stamp = ros::Time::now();
