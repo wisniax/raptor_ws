@@ -7,16 +7,19 @@
 #include <boost/shared_ptr.hpp>
 #include <can_wrapper/VescStatus.h>
 #include <can_wrapper/RosCanConstants.hpp>
-#include <can_wrapper/VescCan/CanFrame.hpp>
-#include <can_wrapper/VescCan/CanFrameFactory.hpp>
-#include <can_wrapper/VescCan/Converter.hpp>
+#include <can_wrapper/VescInterop.hpp>
+#include <can_msgs/Frame.h>
+extern "C"
+{
+#include <libVescCan/VESC.h>
+}
 
 struct MotorStatusKey
 {
-	uint8_t vescId;
-	VescCan::Consts::Command commandId;
+	VESC_Id_t vescId;
+	VESC_Command commandId;
 	MotorStatusKey() = default;
-	inline MotorStatusKey(uint8_t vescId, VescCan::Consts::Command commandId) :
+	inline MotorStatusKey(VESC_Id_t vescId, VESC_Command commandId) :
 		vescId(vescId), commandId(commandId)
 	{}
 	
@@ -28,10 +31,10 @@ struct MotorStatusKey
 
 struct MotorStatusValue
 {
-	VescCan::CanFrame vescFrame;
+	VESC_RawFrame vescFrame;
 	ros::Time recivedTime;
 	MotorStatusValue() = default;
-	inline MotorStatusValue(VescCan::CanFrame vescFrame, ros::Time recivedTime) :
+	inline MotorStatusValue(VESC_RawFrame vescFrame, ros::Time recivedTime) :
 		vescFrame(vescFrame), recivedTime(recivedTime)
 	{}
 };

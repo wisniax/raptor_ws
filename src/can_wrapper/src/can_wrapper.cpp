@@ -4,8 +4,6 @@
 #include <can_msgs/Frame.h>
 #include <std_msgs/String.h>
 
-#include "CM/CM.h"
-#include "can_wrapper/MotorVelocityFeedback.hpp"
 #include "can_wrapper/MotorControl.hpp"
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/VescStatusHandler.hpp"

@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
+
+## firstly libVescCan to build
+add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
+
 project(can_wrapper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -143,14 +147,12 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
  src/can_wrapper.cpp
- #src/MotorVelocityFeedback.cpp 
  src/MotorControl.cpp
  src/RosCanConstants.cpp
- #src/CanNodeErrorHandler.cpp
- #src/CanNodeSettingsProvider.cpp
- #src/MotorCurrentFeedback.cpp 
- src/VescCan/CanFrameFactory.cpp
  src/VescStatusHandler.cpp
+ src/VescInterop.cpp
+ #src/MotorCurrentFeedback.cpp 
+ #src/MotorVelocityFeedback.cpp 
 )
 
 ## Rename C++ executable without prefix
@@ -166,6 +168,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  libVescCan
 )
 
 #############
