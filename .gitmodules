@@ -5,4 +5,4 @@
 [submodule "src/libVescCan"]
 	path = src/libVescCan
 	url = https://github.com/AlvaroBajceps/libVescCan.git
-	branch = tags/v1.0.0
+
