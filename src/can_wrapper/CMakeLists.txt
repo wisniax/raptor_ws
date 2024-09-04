@@ -151,8 +151,6 @@ add_executable(${PROJECT_NAME}_node
  src/RosCanConstants.cpp
  src/VescStatusHandler.cpp
  src/VescInterop.cpp
- #src/MotorCurrentFeedback.cpp 
- #src/MotorVelocityFeedback.cpp 
 )
 
 ## Rename C++ executable without prefix
