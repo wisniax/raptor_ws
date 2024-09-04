@@ -5,10 +5,16 @@
 #include <string>
 #include <can_msgs/Frame.h>
 #include <memory>
+#include <array>
+#include <can_wrapper/VescInterop.hpp>
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/Wheels.h"
-#include "can_wrapper/VescCan/CanFrame.hpp"
-#include "can_wrapper/VescCan/CanFrameFactory.hpp"
+extern "C"
+{
+#include <libVescCan/VESC.h>
+}
+
+
 
 /**
  * @brief Class for interfacing ROS with CAN bus.
@@ -21,7 +27,7 @@ public:
 	void sendMotorVel(const can_wrapper::Wheels msg);
 
 private:
-	can_msgs::Frame encodeMotorVel(const float msg, const VescCan::Consts::Command command, const uint8_t vescId);
+	can_msgs::Frame encodeMotorVel(const float msg, const VESC_Command command, const VESC_Id_t vescId);
 
 	void handleSetMotorVel(const can_wrapper::Wheels &msg);
 

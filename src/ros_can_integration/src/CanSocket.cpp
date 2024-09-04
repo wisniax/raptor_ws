@@ -67,6 +67,9 @@ int CanSocket::tryHandleError()
 	switch (error_code)
 	{
 	case 0:
+		if (sendErrStreak > 50)
+			return createSocket();
+		return 0;
 	case EAGAIN:
 	case ETIMEDOUT:
 		return -1;
@@ -111,13 +114,16 @@ int CanSocket::sendMessage(const can_frame &frame)
 	if (mInitErrCode != 0)
 	{
 		ROS_INFO("Can raw socket not initialized");
+		sendErrStreak++;
 		return -2;
 	}
 	ssize_t nbytes = write(mSocket, &frame, sizeof(struct can_frame));
 	if (nbytes < 0)
 	{
+		sendErrStreak++;
 		return -1;
 	}
+	sendErrStreak = 0;
 	return nbytes;
 }
 
@@ -151,7 +157,10 @@ ssize_t CanSocket::awaitAndPublishCanMessage(ros::Publisher &canRawPub)
 	}
 
 	can_msgs::Frame fr;
-	fr.id = frame.can_id;
+	fr.is_rtr = (frame.can_id & CAN_RTR_FLAG) != 0;
+	fr.is_error = (frame.can_id & CAN_ERR_FLAG) != 0;
+	fr.is_extended = (frame.can_id & CAN_EFF_FLAG) != 0;
+	fr.id = frame.can_id & (fr.is_extended ? CAN_EFF_MASK : CAN_SFF_MASK);
 	fr.dlc = frame.can_dlc;
 	memcpy(fr.data.data(), frame.data, CAN_MAX_DLEN);
 	fr.header.stamp = ros::Time::now();
@@ -176,6 +185,7 @@ void CanSocket::handleRosCallback(const can_msgs::Frame::ConstPtr &msg)
 		ros::Duration(0.0005).sleep();
 		if (tryHandleError() < 0)
 			break;
+		;
 	}
 	ROS_ERROR("CAN: Failed to send message, MaxIterCount exceeded. Aborting...");
 }

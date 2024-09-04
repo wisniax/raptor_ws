@@ -17,3 +17,4 @@ float32 ADC1
 float32 ADC2
 float32 ADC3
 float32 PPM
+float64 PrecisePos

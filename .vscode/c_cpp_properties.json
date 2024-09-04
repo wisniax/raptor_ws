@@ -11,10 +11,12 @@
         "/home/vscode/raptor_ws/src/can_wrapper/include/**",
         "/home/vscode/raptor_ws/src/ros_can_integration/include/**",
         "/home/vscode/raptor_ws/src/mqtt_bridge/include/**",
+        "/home/vscode/raptor_ws/src/libVescCan/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",
       "intelliSenseMode": "gcc-x64",
+      "compileCommands": "build/compile_commands.json",
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "gnu11",
       "cppStandard": "c++14"

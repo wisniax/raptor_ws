@@ -19,6 +19,9 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mTimer_ZedImuData = n.createTimer(ros::Duration(mInterval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
 
 	mPub_Wheels = n.advertise<can_wrapper::Wheels>("/CAN/TX/set_motor_vel", 1000);
+	mPub_RoverControl = n.advertise<can_wrapper::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_ManipulatorControl = n.advertise<std_msgs::Float64MultiArray>("/manipulator_joints", 1000);
+	mPub_RoverStatus = n.advertise<can_wrapper::RoverStatus>("/MQTT/RoverStatus", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
@@ -304,4 +307,28 @@ void ROSTopicHandler::publishMessage_Wheels(can_wrapper::Wheels message)
 {
 	mPub_Wheels.publish(message);
 	ROS_DEBUG("I published (ROS): a message (Wheels)");
+}
+
+// ###### RoverControl ######
+
+void ROSTopicHandler::publishMessage_RoverControl(can_wrapper::RoverControl message)
+{
+	mPub_RoverControl.publish(message);
+	ROS_DEBUG("I published (ROS): a message (RoverControl)");
+}
+
+// ##### ManipulatorControl ######
+
+void ROSTopicHandler::publishMessage_ManipulatorControl(std_msgs::Float64MultiArray message)
+{
+	mPub_ManipulatorControl.publish(message);
+	ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
+}
+
+// ##### RoverStatus ######
+
+void ROSTopicHandler::publishMessage_RoverStatus(can_wrapper::RoverStatus message)
+{
+	mPub_RoverStatus.publish(message);
+	ROS_DEBUG("I published (ROS): a message (RoverStatus)");
 }
