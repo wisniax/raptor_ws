@@ -8,6 +8,7 @@
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/VescStatusHandler.hpp"
 #include "can_wrapper/RoverControl.h"
+#include "can_wrapper/StatusMessage.hpp"
 
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
@@ -40,6 +41,7 @@ int main(int argc, char *argv[])
 
 	MotorControl motorControl(n);
 	VescStatusHandler mVescStatusHandler(n);
+	StatusMessage mStatusMessage(n, true);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(100);
@@ -87,10 +89,12 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			if (statusMsg + ros::Duration(1) < ros::Time::now())
-				break;
-			statusMsg = ros::Time::now();
-			
+			if (statusMsg + ros::Duration(1) > ros::Time::now())
+			{
+				statusMsg = ros::Time::now();
+				mStatusMessage.sendStatusMessage();
+			}
+
 			break;
 
 		case CanNodeMode::Closing:

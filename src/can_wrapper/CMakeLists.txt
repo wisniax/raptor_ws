@@ -61,8 +61,6 @@ add_message_files(
   VescStatus.msg
   RoverControl.msg
   RoverStatus.msg
-  # Message1.msg
-  # Message2.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -151,6 +149,7 @@ add_executable(${PROJECT_NAME}_node
  src/RosCanConstants.cpp
  src/VescStatusHandler.cpp
  src/VescInterop.cpp
+ src/StatusMessage.cpp
 )
 
 ## Rename C++ executable without prefix
