@@ -27,17 +27,6 @@ void doDrivingStuff(MotorControl &mtrCtl);
 static std::chrono::system_clock::time_point lastSendWheels;
 static std::chrono::nanoseconds diff;
 
-double XVelAxis;
-double ZRotAxis;
-
-static void roverControlCallback(const can_wrapper::RoverControl::ConstPtr &msg)
-{
-	XVelAxis = msg->XVelAxis;
-	ZRotAxis = msg->ZRotAxis;
-
-	// Process the rover control message here
-}
-
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "can_wrapper");
@@ -53,12 +42,12 @@ int main(int argc, char *argv[])
 	VescStatusHandler mVescStatusHandler(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
-	ros::Rate rate(1000);
-
-	ros::Subscriber sub = n.subscribe("/MQTT/RoverControl", 100, roverControlCallback);
+	ros::Rate rate(100);
 
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
+
+	ros::Time statusMsg = ros::Time::now();
 
 	while (ros::ok())
 	{
@@ -98,6 +87,10 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
+			if (statusMsg + ros::Duration(1) < ros::Time::now())
+				break;
+			statusMsg = ros::Time::now();
+			
 			break;
 
 		case CanNodeMode::Closing:
