@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
 
-	ros::Time statusMsg = ros::Time::now();
+	int iter = 0;
 
 	while (ros::ok())
 	{
@@ -89,9 +89,8 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			if (statusMsg + ros::Duration(1) > ros::Time::now())
+			if ((iter++%100) == 9)
 			{
-				statusMsg = ros::Time::now();
 				mStatusMessage.sendStatusMessage();
 			}
 
