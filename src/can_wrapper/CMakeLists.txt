@@ -152,6 +152,7 @@ add_executable(${PROJECT_NAME}_node
  src/VescStatusHandler.cpp
  src/VescInterop.cpp
  src/StatusMessage.cpp
+ src/ManipulatorControl.cpp
 )
 
 ## Rename C++ executable without prefix
