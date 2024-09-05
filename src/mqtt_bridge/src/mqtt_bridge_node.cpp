@@ -110,20 +110,17 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 	{
 		try
 		{
-			std_msgs::Float64MultiArray msg;
-			msg.data.resize(7);
+			mqtt_bridge::ManipulatorMessage msg;
 
-			msg.data[0] = d["Axis1"].GetFloat();
-			msg.data[1] = d["Axis2"].GetFloat();
-			msg.data[2] = d["Axis3"].GetFloat();
-			msg.data[3] = d["Axis4"].GetFloat();
-			
-			//TODO: update app to send 6 axis & gripper data
-			//instead of 5 axis + gripper axis
-			msg.data[4] = d["Axis5"].GetFloat();
-			msg.data[5] = d["Gripper"].GetFloat();
-			//msg.data[5] = d["Axis6"].GetFloat();
-			//msg.data[6] = d["Gripper"].GetBool();
+			msg.Axis1 = d["Axis1"].GetDouble();
+			msg.Axis2 = d["Axis2"].GetDouble();
+			msg.Axis3 = d["Axis3"].GetDouble();
+			msg.Axis4 = d["Axis4"].GetDouble();
+			msg.Axis5 = d["Axis5"].GetDouble();
+			msg.Axis6 = d["Axis6"].GetDouble();
+			msg.Gripper = d["Gripper"].GetDouble();
+
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
 			rth->publishMessage_ManipulatorControl(msg);
 		}
