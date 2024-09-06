@@ -86,7 +86,7 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 			msg.Vel = d["Vel"].GetDouble();
 			msg.XAxis = d["XAxis"].GetDouble();
 			msg.YAxis = d["YAxis"].GetDouble();
-			msg.Mode = d["Mode"].GetDouble();
+			msg.Mode = d["Mode"].GetUint();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
