@@ -63,6 +63,7 @@ add_message_files(
   RoverStatus.msg
   Stepper.msg
   ManipulatorControl.msg
+  ProbeStatus.msg
 )
 
 ## Generate services in the 'srv' folder
