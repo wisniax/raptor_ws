@@ -63,6 +63,7 @@ add_message_files(
   RoverStatus.msg
   Stepper.msg
   ManipulatorControl.msg
+  ProbeStatus.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -153,6 +154,7 @@ add_executable(${PROJECT_NAME}_node
  src/VescInterop.cpp
  src/StatusMessage.cpp
  src/ManipulatorControl.cpp
+ src/ProbeStatusForwarder.cpp
 )
 
 ## Rename C++ executable without prefix

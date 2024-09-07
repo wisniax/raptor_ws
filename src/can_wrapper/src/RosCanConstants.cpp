@@ -9,6 +9,7 @@ const std::string RosCanConstants::RosTopics::can_stm_errors = "/CAN/RX/stm_erro
 const std::string RosCanConstants::RosTopics::can_stm_init = "/CAN/TX/stm_init";
 const std::string RosCanConstants::RosTopics::can_vesc_status = "/CAN/RX/vesc_status";
 const std::string RosCanConstants::RosTopics::can_manipulator_ctl = "/CAN/TX/manipulator_ctl";
+const std::string RosCanConstants::RosTopics::can_probe_status = "/CAN/RX/probe_status";
 
 const uint8_t RosCanConstants::VescIds::ros_can_host = 0x20; /**< ID for the computer that interconnects ROS and CAN BUS. */
 
