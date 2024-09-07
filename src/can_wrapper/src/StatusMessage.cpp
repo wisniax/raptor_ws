@@ -2,6 +2,11 @@
 
 StatusMessage::StatusMessage(const ros::NodeHandle &nh, bool sendOnUpdate) : mNh(nh)
 {
+	can_wrapper::RoverStatus zeroMsg;
+	zeroMsg.CommunicationState = 0;
+	zeroMsg.ControlMode = 0;
+	zeroMsg.PadConnected = false;
+	mLastStatus = zeroMsg;
 	mSendOnUpdate = sendOnUpdate;
 	mStatusMessageSeq = 0;
 	mRawCanPub = mNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);

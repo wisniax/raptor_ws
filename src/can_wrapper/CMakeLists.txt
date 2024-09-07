@@ -64,6 +64,7 @@ add_message_files(
   Stepper.msg
   ManipulatorControl.msg
   ProbeStatus.msg
+  SamplerMessage.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -155,6 +156,7 @@ add_executable(${PROJECT_NAME}_node
  src/StatusMessage.cpp
  src/ManipulatorControl.cpp
  src/ProbeStatusForwarder.cpp
+ src/ProbeControl.cpp
 )
 
 ## Rename C++ executable without prefix

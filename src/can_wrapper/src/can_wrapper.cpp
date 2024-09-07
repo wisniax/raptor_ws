@@ -11,6 +11,7 @@
 #include "can_wrapper/StatusMessage.hpp"
 #include "can_wrapper/ManipulatorControl.hpp"
 #include "can_wrapper/ProbeStatusForwarder.hpp"
+#include "can_wrapper/ProbeControl.hpp"
 
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
 	StatusMessage mStatusMessage(n, true);
 	ManipulatorControl mManipulatorCtl(n);
 	ProbeStatusForwarder mProbeStatusForwarder(n);
+	ProbeControl mProbeControl(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	ros::Rate rate(100);
@@ -96,6 +98,9 @@ int main(int argc, char *argv[])
 			if ((iter++%100) == 9)
 			{
 				mStatusMessage.sendStatusMessage();
+			}
+			if (iter % 10 == 0){
+				mProbeControl.sendProbeControl();
 			}
 
 			break;
