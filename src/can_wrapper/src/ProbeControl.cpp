@@ -14,7 +14,7 @@ ProbeControl::ProbeControl(const ros::NodeHandle &nh, bool sendOnUpdate)
 
     mRawCanPub = mNh.advertise<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_TX, 256);
     mProbeControlSub = mNh.subscribe("/MQTT/SamplerControl", 256, &ProbeControl::handleProbeControl, this);
-    mRoverStatusSub = mNh.subscribe("/MQTT/RoverStatus", 256, &ProbeControl::handleProbeControl, this);
+    // mRoverStatusSub = mNh.subscribe("/MQTT/RoverStatus", 256, &ProbeControl::handleProbeControl, this);
 }
 
 void ProbeControl::handleProbeControl(const can_wrapper::SamplerMessage &msg)
@@ -40,15 +40,15 @@ void ProbeControl::sendProbeControl(const can_wrapper::SamplerMessage &msg)
 
 void ProbeControl::sendProbeControl()
 {
-    if (mRoverStatus.CommunicationState != 2)
-    {
-        can_wrapper::SamplerMessage zeroMsg;
-        zeroMsg.DrillCommand = 0;
-        zeroMsg.DrillState = 0;
-        zeroMsg.isContainerExtended = false;
-        zeroMsg.PlatformCommand = 0;
-        mLastSamplerMessage = zeroMsg;
-    }
+    // if (mRoverStatus.CommunicationState != 2)
+    // {
+    //     can_wrapper::SamplerMessage zeroMsg;
+    //     zeroMsg.DrillCommand = 0;
+    //     zeroMsg.DrillState = 0;
+    //     zeroMsg.isContainerExtended = false;
+    //     zeroMsg.PlatformCommand = 0;
+    //     mLastSamplerMessage = zeroMsg;
+    // }
     
     std::array<can_msgs::Frame, 4> sendQueue;
 
