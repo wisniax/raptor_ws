@@ -8,6 +8,7 @@
 #include "can_wrapper/RoverControl.h"
 #include "can_wrapper/RoverStatus.h"
 #include "mqtt_bridge/ManipulatorMessage.h"
+#include "mqtt_bridge/SamplerMessage.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -25,6 +26,7 @@ public:
   void publishMessage_Wheels(can_wrapper::Wheels message);
   void publishMessage_RoverControl(can_wrapper::RoverControl message);
   void publishMessage_ManipulatorControl(mqtt_bridge::ManipulatorMessage message);
+  void publishMessage_SamplerControl(mqtt_bridge::SamplerMessage message);
   void publishMessage_RoverStatus(can_wrapper::RoverStatus message);
 
 private:
@@ -61,6 +63,7 @@ private:
   ros::Publisher mPub_Wheels;
   ros::Publisher mPub_RoverControl;
   ros::Publisher mPub_ManipulatorControl;
+  ros::Publisher mPub_SamplerControl;
   ros::Publisher mPub_RoverStatus;
 };
 

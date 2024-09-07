@@ -83,8 +83,10 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 		{
 			can_wrapper::RoverControl msg;
 
-			msg.XVelAxis = d["XVelAxis"].GetDouble();
-			msg.ZRotAxis = d["ZRotAxis"].GetDouble();
+			msg.Vel = d["Vel"].GetDouble();
+			msg.XAxis = d["XAxis"].GetDouble();
+			msg.YAxis = d["YAxis"].GetDouble();
+			msg.Mode = d["Mode"].GetUint();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
@@ -130,6 +132,38 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 		}
 	}
 }
+
+void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			mqtt_bridge::SamplerMessage msg;
+
+			msg.DrillCommand = d["DrillCommand"].GetUint();
+			msg.PlatformCommand = d["PlatformCommand"].GetUint();
+			msg.DrillState = d["DrillState"].GetUint();
+			msg.isContainerExtended = d["isContainerExtended"].GetBool();
+
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+			rth->publishMessage_SamplerControl(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			ROS_WARN("JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 //TODO
 void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
 {
@@ -182,8 +216,8 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/RoverStatus"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/RoverStatus", "RappTORS/SamplerControl"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
 
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
@@ -217,7 +251,9 @@ int main(int argc, char *argv[])
 			processMqttManipulatorControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
 		} else if (messageTopic == "RappTORS/RoverStatus") {
 			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth);
-		} else {
+		} else if (messageTopic == "RappTORS/SamplerControl") {
+			processMqttSamplerControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
+		}  else {
 			ROS_WARN_STREAM("Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });
 
