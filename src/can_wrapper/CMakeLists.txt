@@ -56,15 +56,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Wheel.msg
-  Wheels.msg
-  VescStatus.msg
+  ManipulatorControl.msg
+  ProbeStatus.msg
   RoverControl.msg
   RoverStatus.msg
   Stepper.msg
-  ManipulatorControl.msg
-  ProbeStatus.msg
-  SamplerMessage.msg
+  VescStatus.msg
+  Wheel.msg
+  Wheels.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -149,14 +148,13 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
  src/can_wrapper.cpp
- src/MotorControl.cpp
- src/RosCanConstants.cpp
- src/VescStatusHandler.cpp
- src/VescInterop.cpp
- src/StatusMessage.cpp
  src/ManipulatorControl.cpp
+ src/MotorControl.cpp
  src/ProbeStatusForwarder.cpp
- src/ProbeControl.cpp
+ src/RosCanConstants.cpp
+ src/StatusMessage.cpp
+ src/VescInterop.cpp
+ src/VescStatusHandler.cpp
 )
 
 ## Rename C++ executable without prefix
