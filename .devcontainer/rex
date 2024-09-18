@@ -1,0 +1,57 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          rex
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     0 6
+# Default-Stop:      1 2 3 4 5
+# Short-Description: REX ROS stuff
+### END INIT INFO
+
+# Stop script on errors
+set -e
+
+. /lib/lsb/init-functions
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+  start)
+        log_daemon_msg "Starting REX ROS stuff" "rex" || true
+        if start-stop-daemon --start --quiet --oknodo --chuid rex:rex --user rex --group rex -d /home/rex/raptor_ws/ --background --exec /bin/sh .devcontainer/rexlaunch.sh; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
+        ;;
+  stop)
+        log_daemon_msg "Stopping REX ROS stuff" "rex" || true
+        if su - rex -c 'start-stop-daemon --stop --quiet --oknodo --retry 30 --exec /usr/bin/python3 -- /opt/ros/noetic/bin/roslaunch master.launch'; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
+        ;;
+
+  try-restart|condrestart|reload|force-reload|restart)
+        log_daemon_msg "Restarting REX ROS stuff" "rex" || true
+        su - rex -c 'start-stop-daemon --stop --quiet --oknodo --retry 15 --exec /usr/bin/python3 -- /opt/ros/noetic/bin/roslaunch master.launch'
+        if start-stop-daemon --start --quiet --oknodo --chuid rex:rex --user rex --group rex -d /home/rex/raptor_ws/ --background --exec /bin/sh .devcontainer/rexlaunch.sh; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
+        ;;
+
+  status)
+        less +G /home/rex/.ros/log/latest/roslaunch-raptors-nuc-*.log
+        # status_of_proc -p /run/ros.pid /bin/sh ros && exit 0 || exit $?
+        ;;
+
+  *)
+        log_action_msg "Usage: /etc/init.d/rex {start|stop|reload|force-reload|restart|try-restart|condrestart|status}" || true
+        exit 1
+esac
+
+exit 0
