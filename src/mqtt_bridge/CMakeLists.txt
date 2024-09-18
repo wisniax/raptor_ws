@@ -55,7 +55,6 @@ find_package(PahoMqttCpp REQUIRED)
 add_message_files(
   FILES
   ManipulatorMessage.msg
-  SamplerMessage.msg
 )
 
 ## Generate services in the 'srv' folder

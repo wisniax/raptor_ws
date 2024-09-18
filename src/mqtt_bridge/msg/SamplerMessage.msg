@@ -1,5 +1,0 @@
-Header header
-uint8 DrillCommand
-uint8 PlatformCommand
-uint8 DrillState
-bool isContainerExtended
