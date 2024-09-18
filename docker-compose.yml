@@ -16,6 +16,11 @@ services:
         target: /home/rex/raptor_ws
         bind:
           create_host_path: true
+      - type: bind
+        source: ./.devcontainer/rex
+        target: /etc/init.d/rex
+        bind:
+          create_host_path: true
     restart: unless-stopped
   mosquitto:
     image: eclipse-mosquitto

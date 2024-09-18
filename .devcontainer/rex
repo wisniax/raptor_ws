@@ -17,14 +17,6 @@ set -e
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
 case "$1" in
-  start)
-        log_daemon_msg "Starting REX ROS stuff" "rex" || true
-        if start-stop-daemon --start --quiet --oknodo --chuid rex:rex --user rex --group rex -d /home/rex/raptor_ws/ --background --exec /bin/sh .devcontainer/rexlaunch.sh; then
-            log_end_msg 0 || true
-        else
-            log_end_msg 1 || true
-        fi
-        ;;
   stop)
         log_daemon_msg "Stopping REX ROS stuff" "rex" || true
         if su - rex -c 'start-stop-daemon --stop --quiet --oknodo --retry 30 --exec /usr/bin/python3 -- /opt/ros/noetic/bin/roslaunch master.launch'; then
@@ -34,8 +26,8 @@ case "$1" in
         fi
         ;;
 
-  try-restart|condrestart|reload|force-reload|restart)
-        log_daemon_msg "Restarting REX ROS stuff" "rex" || true
+  try-restart|condrestart|reload|force-reload|restart|start)
+        log_daemon_msg "(Re)starting REX ROS stuff" "rex" || true
         su - rex -c 'start-stop-daemon --stop --quiet --oknodo --retry 15 --exec /usr/bin/python3 -- /opt/ros/noetic/bin/roslaunch master.launch'
         if start-stop-daemon --start --quiet --oknodo --chuid rex:rex --user rex --group rex -d /home/rex/raptor_ws/ --background --exec /bin/sh .devcontainer/rexlaunch.sh; then
             log_end_msg 0 || true
