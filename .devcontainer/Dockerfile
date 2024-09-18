@@ -36,8 +36,8 @@ RUN cmake -Bbuild -H. -DPAHO_WITH_MQTT_C=ON -DPAHO_BUILD_EXAMPLES=ON
 RUN sudo cmake --build build/ --target install
 
 # Add important stuff to bashrc
-RUN echo "\nexport ROS_MASTER_URI=http://192.168.1.20:11311 \nexport ROS_HOSTNAME=192.168.1.20\n" >> /home/${USERNAME}/.bashrc
-RUN echo "\nsource /home/rex/raptor_ws/devel/setup.bash \nsource /opt/ros/noetic/setup.sh\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nexport ROS_MASTER_URI=http://127.0.0.1:11311\nexport ROS_HOSTNAME=127.0.0.1\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nsource /opt/ros/noetic/setup.sh\nsource /home/rex/raptor_ws/devel/setup.bash\n" >> /home/${USERNAME}/.bashrc
 # Add alias vnc to start the vnc lmao
 RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
