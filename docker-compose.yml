@@ -1,0 +1,30 @@
+services:
+  ros-noetic:
+    image: ros-noetic
+    command: /bin/bash -c 'service ssh start && tail -f /dev/null'
+    stdin_open: true
+    container_name: ros-noetic
+    tty: true
+    network_mode: "host"
+    environment:
+      - TZ=Europe/Warsaw
+    volumes:
+      - type: bind
+        source: ./raptor_ws
+        target: /home/vscode/raptor_ws
+        bind:
+          create_host_path: true
+    # ports:
+    #   - '69:22/tcp'
+    restart: unless-stopped
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - /var/opt/mosquitto/config:/mosquitto/config
+      - /var/opt/mosquitto/data:/mosquitto/data
+      - /var/opt/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
