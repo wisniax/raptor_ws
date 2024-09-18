@@ -1,5 +1,7 @@
 services:
   ros-noetic:
+    build:
+      context: ./.devcontainer
     image: ros-noetic
     command: /bin/bash -c 'service ssh start && tail -f /dev/null'
     stdin_open: true
