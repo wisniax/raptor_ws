@@ -3,15 +3,14 @@ FROM osrf/ros:noetic-desktop-full
 
 # Dockerfile for ROS-NOETIC
 
-ARG USERNAME='vscode'
-ARG PASSWORD='vscode'
+ARG USERNAME='rex'
+ARG PASSWORD='changeme'
 
 # Update the system
 RUN apt update && apt upgrade -y
 
 # Install random stuff
-RUN DEBIAN_FRONTEND=noninteractive apt install -y git gdb nano curl wget python3 python3-pip net-tools apt-utils nano
-# gedit vim neovim firefox
+RUN DEBIAN_FRONTEND=noninteractive apt install -y git gdb nano curl wget python3 python3-pip net-tools apt-utils nano can-utils
 
 # Random Stuff
 ENV NOTVISIBLE "in users profile"
@@ -36,14 +35,12 @@ RUN git submodule update
 RUN cmake -Bbuild -H. -DPAHO_WITH_MQTT_C=ON -DPAHO_BUILD_EXAMPLES=ON
 RUN sudo cmake --build build/ --target install
 
+# Add important stuff to bashrc
+RUN echo "\nexport ROS_MASTER_URI=http://192.168.1.20:11311 \nexport ROS_HOSTNAME=192.168.1.20\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nsource /home/rex/raptor-ws/devel/setup.bash \nsource /opt/ros/noetic/setup.sh\n" >> /home/${USERNAME}/.bashrc
 # Add alias vnc to start the vnc lmao
-RUN echo "\n alias vnc='sudo /usr/local/share/desktop-init.sh' \n source /opt/ros/noetic/setup.sh" >> /home/${USERNAME}/.bashrc
+RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
 RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
-
-# Install Google Chrome
-RUN curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg > /dev/null
-RUN echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main | sudo tee /etc/apt/sources.list.d/google-chrome.list
-RUN apt update && apt install -y google-chrome-stable

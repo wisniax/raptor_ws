@@ -54,11 +54,11 @@ CATKIN_IGNORE
 .catkin_tools/*
 
 .vscode/
-# !.vscode/c_cpp_properties.json
-# !.vscode/settings.json
-!.vscode/tasks.json
-# !.vscode/launch.json
+!.vscode/c_cpp_properties.json
 !.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 !.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
