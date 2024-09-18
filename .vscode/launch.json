@@ -7,7 +7,7 @@
         {
             "name": "ROS: Launch",
             "request": "launch",
-            "target": "/home/vscode/raptor_ws/master.launch",
+            "target": "/home/rex/raptor_ws/master.launch",
             "launch": [
                 "rviz",
                 "gz",

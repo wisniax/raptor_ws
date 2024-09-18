@@ -6,12 +6,12 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/home/vscode/raptor_ws/devel/include/**",
+        "/home/rex/raptor_ws/devel/include/**",
         "/opt/ros/noetic/include/**",
-        "/home/vscode/raptor_ws/src/can_wrapper/include/**",
-        "/home/vscode/raptor_ws/src/ros_can_integration/include/**",
-        "/home/vscode/raptor_ws/src/mqtt_bridge/include/**",
-        "/home/vscode/raptor_ws/src/libVescCan/include/**",
+        "/home/rex/raptor_ws/src/can_wrapper/include/**",
+        "/home/rex/raptor_ws/src/ros_can_integration/include/**",
+        "/home/rex/raptor_ws/src/mqtt_bridge/include/**",
+        "/home/rex/raptor_ws/src/libVescCan/include/**",
         "/usr/include/**"
       ],
       "name": "ROS",
