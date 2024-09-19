@@ -1,3 +1,5 @@
 Header header
-float64 XVelAxis
-float64 ZRotAxis
+float64 Vel
+float64 XAxis
+float64 YAxis
+uint8 Mode

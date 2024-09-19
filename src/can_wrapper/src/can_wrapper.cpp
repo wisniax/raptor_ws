@@ -8,6 +8,9 @@
 #include "can_wrapper/RosCanConstants.hpp"
 #include "can_wrapper/VescStatusHandler.hpp"
 #include "can_wrapper/RoverControl.h"
+#include "can_wrapper/StatusMessage.hpp"
+#include "can_wrapper/ManipulatorControl.hpp"
+#include "can_wrapper/ProbeStatusForwarder.hpp"
 
 #include <ros/service.h>
 #include <std_srvs/SetBool.h>
@@ -27,17 +30,6 @@ void doDrivingStuff(MotorControl &mtrCtl);
 static std::chrono::system_clock::time_point lastSendWheels;
 static std::chrono::nanoseconds diff;
 
-double XVelAxis;
-double ZRotAxis;
-
-static void roverControlCallback(const can_wrapper::RoverControl::ConstPtr &msg)
-{
-	XVelAxis = msg->XVelAxis;
-	ZRotAxis = msg->ZRotAxis;
-
-	// Process the rover control message here
-}
-
 int main(int argc, char *argv[])
 {
 	ros::init(argc, argv, "can_wrapper");
@@ -51,14 +43,17 @@ int main(int argc, char *argv[])
 
 	MotorControl motorControl(n);
 	VescStatusHandler mVescStatusHandler(n);
+	StatusMessage mStatusMessage(n, true);
+	ManipulatorControl mManipulatorCtl(n);
+	ProbeStatusForwarder mProbeStatusForwarder(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
-	ros::Rate rate(1000);
-
-	ros::Subscriber sub = n.subscribe("/MQTT/RoverControl", 100, roverControlCallback);
+	ros::Rate rate(100);
 
 	std_srvs::SetBool::Request req;
 	std_srvs::SetBool::Response res;
+
+	int iter = 0;
 
 	while (ros::ok())
 	{
@@ -98,6 +93,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
+			if ((iter++%100) == 9)
+			{
+				mStatusMessage.sendStatusMessage();
+			}
+
 			break;
 
 		case CanNodeMode::Closing:
