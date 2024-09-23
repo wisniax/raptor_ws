@@ -32,7 +32,9 @@ VESC_RawFrame VescInterop::rosToVesc(const can_msgs::Frame& rosf)
 
     if(rosf.is_error)
         return vescf;
-        
+    if (rosf.dlc > 8)
+        return vescf;
+    
     canf->can_dlc = rosf.dlc;
     memcpy(canf->data, rosf.data.begin(), rosf.dlc);
 

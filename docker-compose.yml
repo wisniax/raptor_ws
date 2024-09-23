@@ -1,0 +1,35 @@
+services:
+  ros-noetic:
+    build:
+      context: ./.devcontainer
+    image: ros-noetic
+    command: /bin/bash -c 'service ssh start && service rex start && tail -f /dev/null'
+    stdin_open: true
+    container_name: ros-noetic
+    tty: true
+    network_mode: "host"
+    environment:
+      - TZ=Europe/Warsaw
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/rex/raptor_ws
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./.devcontainer/rex
+        target: /etc/init.d/rex
+        bind:
+          create_host_path: true
+    restart: unless-stopped
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - /var/opt/mosquitto/data:/mosquitto/data
+      - /var/opt/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
