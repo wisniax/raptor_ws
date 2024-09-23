@@ -100,6 +100,7 @@ void ROSTopicHandler::callback_VescStatus(const can_wrapper::VescStatus::ConstPt
 		msg->ADC2 = (msg->ADC2 + receivedMsg->ADC2) / 2;
 		msg->ADC3 = (msg->ADC3 + receivedMsg->ADC3) / 2;
 		msg->PPM = (msg->PPM + receivedMsg->PPM) / 2;
+		msg->PrecisePos = (msg->PrecisePos + receivedMsg->PrecisePos) / 2;
 		return;
 	}
 
@@ -125,6 +126,7 @@ void ROSTopicHandler::callback_VescStatus(const can_wrapper::VescStatus::ConstPt
 	msg->ADC2 = receivedMsg->ADC2;
 	msg->ADC3 = receivedMsg->ADC3;
 	msg->PPM = receivedMsg->PPM;
+	msg->PrecisePos = receivedMsg->PrecisePos;
 
 	mMsgMap_VescStatus.insert({receivedMsg->VescId, msg});
 }
@@ -137,7 +139,7 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper:
 	std::map<std::string, int> jsonIntFieldsMap{{"VescId", msg->VescId}, {"ERPM", msg->ERPM}};
 
 	std::map<std::string, double> jsonDoubleFieldsMap{
-		{"Current", msg->Current}, {"DutyCycle", msg->DutyCycle}, {"AhUsed", msg->AhUsed}, {"AhCharged", msg->AhCharged}, {"WhUsed", msg->WhUsed}, {"WhCharged", msg->WhCharged}, {"TempFet", msg->TempFet}, {"TempMotor", msg->TempMotor}, {"CurrentIn", msg->CurrentIn}, {"PidPos", msg->PidPos}, {"Tachometer", msg->Tachometer}, {"VoltsIn", msg->VoltsIn}, {"ADC1", msg->ADC1}, {"ADC2", msg->ADC2}, {"ADC3", msg->ADC3}, {"PPM", msg->PPM}};
+		{"Current", msg->Current}, {"DutyCycle", msg->DutyCycle}, {"AhUsed", msg->AhUsed}, {"AhCharged", msg->AhCharged}, {"WhUsed", msg->WhUsed}, {"WhCharged", msg->WhCharged}, {"TempFet", msg->TempFet}, {"TempMotor", msg->TempMotor}, {"CurrentIn", msg->CurrentIn}, {"PidPos", msg->PidPos}, {"Tachometer", msg->Tachometer}, {"VoltsIn", msg->VoltsIn}, {"ADC1", msg->ADC1}, {"ADC2", msg->ADC2}, {"ADC3", msg->ADC3}, {"PPM", msg->PPM}, {"PrecisePos", msg->PrecisePos}};
 
 	addMembersFromMapToJSON(d, jsonIntFieldsMap);
 
