@@ -1,7 +1,7 @@
 # Use the official image as a parent image
 FROM osrf/ros:jazzy-desktop-full
 
-# Dockerfile for ROS-NOETIC
+# Dockerfile for ROS-JAZZY
 
 ARG USERNAME='rex'
 ARG PASSWORD='changeme'
@@ -37,7 +37,9 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}
 
 # Add important stuff to bashrc
 # RUN echo "\nexport ROS_MASTER_URI=http://127.0.0.1:11311\nexport ROS_HOSTNAME=127.0.0.1\n" >> /home/${USERNAME}/.bashrc
-# RUN echo "\nsource /opt/ros/noetic/setup.sh\nsource /home/rex/raptor_ws/devel/setup.bash\n" >> /home/${USERNAME}/.bashrc
+# RUN echo "\nsource /opt/ros/jazzy/setup.bash\nsource /home/rex/raptor_ws/devel/setup.bash\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=1\n" >> /home/${USERNAME}/.bashrc
+
 # Add alias vnc to start the vnc lmao
 RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
