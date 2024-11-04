@@ -1,11 +1,11 @@
 services:
-  ros-noetic:
+  ros-jazzy:
     build:
       context: ./.devcontainer
-    image: ros-noetic
+    image: ros-jazzy
     command: /bin/bash -c 'service ssh start && service rex start && tail -f /dev/null'
     stdin_open: true
-    container_name: ros-noetic
+    container_name: ros-jazzy
     tty: true
     network_mode: "host"
     environment:
