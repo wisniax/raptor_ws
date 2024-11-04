@@ -1,3 +1,0 @@
-<launch>
-<node name="ros_can_integration" pkg="ros_can_integration" type="ros_can_integration_node" output="screen" />
-</launch>
