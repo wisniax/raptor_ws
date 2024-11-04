@@ -1,0 +1,4 @@
+std_msgs/Header header
+int32 communication_state
+bool pad_connected
+int32 control_mode
