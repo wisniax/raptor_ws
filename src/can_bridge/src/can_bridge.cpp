@@ -36,6 +36,7 @@ static std::chrono::nanoseconds diff;
 // - Implement this as lifecycle node
 // - Utilize a new QoS profile for the publisher and subscriber
 // - Recreate the package to use new multi-node architecture (maybe multi-threaded?)
+// - Move messages and RosCanConstants to a new package
 int main(int argc, char *argv[])
 {
 	rclcpp::init(argc, argv);
