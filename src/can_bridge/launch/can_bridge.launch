@@ -1,0 +1,5 @@
+<launch>
+	<!-- <include file="$(find ros_can_integration)/launch/ros_can_integration.launch" /> -->
+	<!-- <include file="$(find mqtt_bridge)/launch/mqtt_bridge.launch" /> -->
+	<node name="can_bridge" pkg="can_bridge" exec="can_bridge_node" output="screen" />
+</launch>
