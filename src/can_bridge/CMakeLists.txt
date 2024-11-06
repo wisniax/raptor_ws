@@ -39,6 +39,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/RosCanConstants.cpp
 	src/VescInterop.cpp
  	src/VescStatusHandler.cpp
+	src/StatusMessage.cpp
  )
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
