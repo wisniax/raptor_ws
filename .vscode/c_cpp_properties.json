@@ -1,21 +1,23 @@
 {
-  "configurations": [
-    {
-      "browse": {
-        "databaseFilename": "${default}",
-        "limitSymbolsToIncludedHeaders": false
-      },
-      "includePath": [
-        "/opt/ros/jazzy/include/**",
-        "/usr/include/**"
-      ],
-      "name": "ROS",
-      "intelliSenseMode": "gcc-x64",
-      "compileCommands": "build/compile_commands.json",
-      "compilerPath": "/usr/bin/gcc",
-      "cStandard": "gnu11",
-      "cppStandard": "c++14"
-    }
-  ],
-  "version": 4
+	"configurations": [
+		{
+			"browse": {
+				"databaseFilename": "${default}",
+				"limitSymbolsToIncludedHeaders": false
+			},
+			"includePath": [
+				"/opt/ros/jazzy/include/**",
+				"/usr/include/**",
+				"${workspaceFolder}/src/can_bridge/include",
+				"${workspaceFolder}/src/libVescCan/include"
+			],
+			"name": "ROS",
+			"intelliSenseMode": "gcc-x64",
+			"compileCommands": "build/compile_commands.json",
+			"compilerPath": "/usr/bin/gcc",
+			"cStandard": "gnu11",
+			"cppStandard": "c++14"
+		}
+	],
+	"version": 4
 }
