@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
 
-# ## firstly libVescCan to build
-# add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
 
 project(can_bridge)
 
@@ -42,6 +40,8 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/VescInterop.cpp
  	src/VescStatusHandler.cpp
  )
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
 
 target_include_directories(can_bridge_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -1,26 +1,32 @@
 #include "can_bridge/VescStatusHandler.hpp"
 
-VescStatusHandler::VescStatusHandler(ros::NodeHandle& nh)
+VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 {
-	mStatusGrabber = nh.subscribe<can_msgs::Frame>(RosCanConstants::RosTopics::can_raw_RX,1024,&VescStatusHandler::statusGrabber,this);
-	mStatusPublisher = nh.advertise<can_wrapper::VescStatus>(RosCanConstants::RosTopics::can_vesc_status,256);
+	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
+
+	mStatusGrabber = nh->create_subscription<can_msgs::msg::Frame>(
+		RosCanConstants::RosTopics::can_raw_RX, qos,
+		std::bind(&VescStatusHandler::statusGrabber, this, std::placeholders::_1));
+
+	mStatusPublisher = nh->create_publisher<can_bridge::msg::VescStatus>(
+		RosCanConstants::RosTopics::can_vesc_status, qos);
 }
 
-void VescStatusHandler::statusGrabber(const can_msgs::Frame::ConstPtr &frame)
+void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
 {
 	auto vescFrame = VescInterop::rosToVesc(*frame);
 	auto key = MotorStatusKey(vescFrame.vescID, (VESC_Command)vescFrame.command);
-	auto value = MotorStatusValue(vescFrame,frame->header.stamp);
+	auto value = MotorStatusValue(vescFrame, frame->header.stamp);
 
 	auto findResult = mMotorStatus.find(key);
 
-	if( findResult == mMotorStatus.cend() )
+	if (findResult == mMotorStatus.cend())
 	{
-		mMotorStatus.insert(std::pair<MotorStatusKey,MotorStatusValue>(key,value));
+		mMotorStatus.insert(std::pair<MotorStatusKey, MotorStatusValue>(key, value));
 	}
 	else
 	{
-		if(key.commandId == VESC_COMMAND_STATUS_1)
+		if (key.commandId == VESC_COMMAND_STATUS_1)
 			sendUpdate(key.vescId);
 		mMotorStatus[key] = value;
 	}
@@ -30,95 +36,94 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 {
 	MotorStatusKey key;
 
-	can_wrapper::VescStatus status;
+	can_bridge::msg::VescStatus status;
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_1);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_1 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus1(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.ERPM = statusData.erpm;
-		status.Current = statusData.current;
-		status.DutyCycle = statusData.dutyCycle;
+		status.erpm = statusData.erpm;
+		status.current = statusData.current;
+		status.duty_cycle = statusData.dutyCycle;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_2);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_2 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus2(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.AhUsed = statusData.apmHours;
-		status.AhCharged = statusData.apmHoursChg;
+		status.ah_used = statusData.apmHours;
+		status.ah_charged = statusData.apmHoursChg;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_3);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_3 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus3(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.WhUsed = statusData.wattHours;
-		status.WhCharged = statusData.wattHoursChg;
+		status.wh_used = statusData.wattHours;
+		status.wh_charged = statusData.wattHoursChg;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_4);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_4 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus4(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.TempFet = statusData.tempFet;
-		status.TempMotor = statusData.tempMotor;
-		status.CurrentIn = statusData.currentIn;
-		status.PidPos = statusData.pidPos;
+		status.temp_fet = statusData.tempFet;
+		status.temp_motor = statusData.tempMotor;
+		status.current_in = statusData.currentIn;
+		status.pid_pos = statusData.pidPos;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_5);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_5 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus5(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.Tachometer = statusData.tachometer;
-		status.VoltsIn = statusData.voltsIn;
+		status.tachometer = statusData.tachometer;
+		status.volts_in = statusData.voltsIn;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_6);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_6 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus6(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.ADC1 = statusData.adc1;
-		status.ADC2 = statusData.adc2;
-		status.ADC3 = statusData.adc3;
-		status.PPM = statusData.ppm; 	
+		status.adc1 = statusData.adc1;
+		status.adc2 = statusData.adc2;
+		status.adc3 = statusData.adc3;
+		status.ppm = statusData.ppm;
 	}
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_7);
-	if(mMotorStatus.find(key) != mMotorStatus.cend())
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
 	{
 		VESC_Status_7 statusData;
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus7(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.PrecisePos = statusData.precisePos;
+		status.precise_pos = statusData.precisePos;
 	}
 
-	status.VescId = key.vescId;
-	status.header.stamp = ros::Time::now();
-
-	ROS_INFO("Published status!");
-	lastSendTime = ros::Time::now();
-	mStatusPublisher.publish(status);
+	status.vesc_id = key.vescId;
+	status.header.stamp = rclcpp::Clock().now();
+	RCLCPP_DEBUG(mNh->get_logger(), "Publishing status for VESC %d", key.vescId);
+	lastSendTime = status.header.stamp;
+	mStatusPublisher->publish(status);
 }
 
 void VescStatusHandler::clear()

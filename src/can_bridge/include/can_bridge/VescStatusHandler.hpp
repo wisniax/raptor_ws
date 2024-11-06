@@ -19,10 +19,10 @@ struct MotorStatusKey
 	VESC_Id_t vescId;
 	VESC_Command commandId;
 	MotorStatusKey() = default;
-	inline MotorStatusKey(VESC_Id_t vescId, VESC_Command commandId) :
-		vescId(vescId), commandId(commandId)
-	{}
-	
+	inline MotorStatusKey(VESC_Id_t vescId, VESC_Command commandId) : vescId(vescId), commandId(commandId)
+	{
+	}
+
 	inline bool operator==(const MotorStatusKey &rhs) const
 	{
 		return vescId == rhs.vescId && commandId == rhs.commandId;
@@ -32,21 +32,21 @@ struct MotorStatusKey
 struct MotorStatusValue
 {
 	VESC_RawFrame vescFrame;
-	ros::Time recivedTime;
+	rclcpp::Time receivedTime;
 	MotorStatusValue() = default;
-	inline MotorStatusValue(VESC_RawFrame vescFrame, ros::Time recivedTime) :
-		vescFrame(vescFrame), recivedTime(recivedTime)
-	{}
+	inline MotorStatusValue(VESC_RawFrame vescFrame, rclcpp::Time recivedTime) : vescFrame(vescFrame), receivedTime(receivedTime)
+	{
+	}
 };
 
-template<class T>
+template <class T>
 struct MyHash;
 
-template<>
+template <>
 struct MyHash<MotorStatusKey>
 {
 public:
-	inline std::size_t operator()(MotorStatusKey const& key) const 
+	inline std::size_t operator()(MotorStatusKey const &key) const
 	{
 		std::size_t h1 = std::hash<uint8_t>()(key.vescId);
 		std::size_t h2 = std::hash<uint8_t>()(uint8_t(key.commandId));
@@ -57,25 +57,21 @@ public:
 class VescStatusHandler
 {
 public:
-	VescStatusHandler(ros::NodeHandle& nh);
+	VescStatusHandler(rclcpp::Node::SharedPtr &nh);
 
-	void statusGrabber(const can_msgs::Frame::ConstPtr &frame);
+	void statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame);
 	void sendUpdate(uint8_t vescId);
 	void clear();
 
 private:
-
-	ros::Time lastSendTime;
+	rclcpp::Time lastSendTime;
 
 	std::unordered_map<MotorStatusKey, MotorStatusValue, MyHash<MotorStatusKey>> mMotorStatus;
 
-	ros::Subscriber mStatusGrabber;
-	ros::Publisher mStatusPublisher;
-
-	ros::Timer mMotorCommandTimer;
-	
+	rclcpp::Node::SharedPtr mNh;
+	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mStatusGrabber;
+	rclcpp::Publisher<can_bridge::msg::VescStatus>::SharedPtr mStatusPublisher;
+	rclcpp::TimerBase::SharedPtr mMotorCommandTimer;
 };
 
-
-
-#endif //VescMotorController_h_
+#endif // VescMotorController_h_
