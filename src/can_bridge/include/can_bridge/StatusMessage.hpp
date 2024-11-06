@@ -2,7 +2,7 @@
 #define STATUSMESSAGE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include <can_msgs/msg/frame.h>
+#include <can_msgs/msg/frame.hpp>
 #include <can_bridge/msg/rover_status.hpp>
 #include <can_bridge/VescInterop.hpp>
 #include "can_bridge/RosCanConstants.hpp"
