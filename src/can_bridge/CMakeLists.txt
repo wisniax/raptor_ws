@@ -41,6 +41,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
  	src/VescStatusHandler.cpp
 	src/StatusMessage.cpp
 	src/MotorControl.cpp
+	src/ManipulatorControl.cpp
  )
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})

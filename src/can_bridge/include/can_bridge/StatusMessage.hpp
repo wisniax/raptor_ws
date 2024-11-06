@@ -20,9 +20,9 @@ public:
 	void sendStatusMessage();
 
 private:
-	can_msgs::msg::Frame encodeStatusMessage(const can_bridge::msg::RoverStatus &msg);
-
 	void handleStatusMessage(const can_bridge::msg::RoverStatus::ConstSharedPtr &msg);
+
+	can_msgs::msg::Frame encodeStatusMessage(const can_bridge::msg::RoverStatus &msg);
 
 	rclcpp::Node::SharedPtr mNh;
 
