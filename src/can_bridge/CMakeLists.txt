@@ -20,6 +20,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(can_msgs REQUIRED)
+find_package(libVescCan REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VescMotorCommand.msg"
@@ -45,8 +46,6 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/ProbeStatusForwarder.cpp
  )
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/libVescCan ${CATKIN_DEVEL_PREFIX})
-
 target_include_directories(can_bridge_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
@@ -61,7 +60,7 @@ target_link_libraries(can_bridge_node PUBLIC
   ${std_srvs_TARGETS}
   ${rcl_interfaces_TARGETS}
   rclcpp::rclcpp
-  libVescCan
+  libVescCan::libVescCan
 )
 
 target_compile_features(can_bridge_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
