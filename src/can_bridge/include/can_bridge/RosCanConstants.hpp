@@ -21,6 +21,7 @@ struct RosCanConstants
 		static const std::string can_vesc_status;		/**< Topic with vesc motor status */
 		static const std::string can_manipulator_ctl;	/**< Topic used for manipulator 'manipulation' */
 		static const std::string can_probe_status;		/**< Topic with probe status */
+		static const std::string mqtt_rover_status;		/**< Topic for rover status from MQTT. */
 	};
 
 	struct VescIds
@@ -55,7 +56,7 @@ struct RosCanConstants
 		static const uint8_t bms_battery_center; /**< ID for the center battery BMS. */
 		static const uint8_t bms_battery_right;	 /**< ID for the right battery BMS. */
 	};
-	
+
 	static const rclcpp::Duration max_stm_sync_time; /**< Maximum time to wait for the STM32 to synchronize. */
 };
 #endif // ROS_CAN_CONSTANTS_HPP

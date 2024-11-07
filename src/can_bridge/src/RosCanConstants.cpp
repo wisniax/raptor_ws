@@ -11,6 +11,8 @@ const std::string RosCanConstants::RosTopics::can_vesc_status = "/CAN/RX/vesc_st
 const std::string RosCanConstants::RosTopics::can_manipulator_ctl = "/CAN/TX/manipulator_ctl";
 const std::string RosCanConstants::RosTopics::can_probe_status = "/CAN/RX/probe_status";
 
+const std::string RosCanConstants::RosTopics::mqtt_rover_status = "/MQTT/RX/ROVER_STATUS";
+
 const uint8_t RosCanConstants::VescIds::ros_can_host = 0x20; /**< ID for the computer that interconnects ROS and CAN BUS. */
 
 const uint8_t RosCanConstants::VescIds::front_left_vesc = 0x50;	 /**< ID for the front left VESC. */

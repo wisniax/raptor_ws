@@ -12,7 +12,7 @@ StatusMessage::StatusMessage(rclcpp::Node::SharedPtr &nh, bool sendOnUpdate) : m
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 	mRawCanPub = nh->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
 	mStatusMessageSub = nh->create_subscription<can_bridge::msg::RoverStatus>(
-		RosCanConstants::RosTopics::can_vesc_status, qos,
+		RosCanConstants::RosTopics::mqtt_rover_status, qos,
 		std::bind(&StatusMessage::handleStatusMessage, this, std::placeholders::_1));
 }
 
