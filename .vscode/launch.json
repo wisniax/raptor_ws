@@ -1,0 +1,50 @@
+{
+    "configurations": [
+
+        // master-launch
+
+        {
+            "name": "ROS: Launch <ALL> (RelWithDebInfo)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <ALL> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <ALL> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+        },
+
+        // can_bridge
+        
+        {
+            "name": "ROS: Launch <can_bridge> (RelWithDebInfo)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <can_bridge> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <can_bridge> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+        },
+    ]
+}
