@@ -1,0 +1,6 @@
+# one to launch them all!
+
+launch:
+
+- include:
+    file: "$(find-pkg-share can_bridge)/launch/can_bridge.yaml"
