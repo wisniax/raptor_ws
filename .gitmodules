@@ -3,6 +3,5 @@
 	url = git@github.com:Bitnut01/quad_rover_kinematics.git
 	branch = raptor_ws/master
 [submodule "src/libVescCan"]
-	path = src/can_bridge/libVescCan
+	path = src/libVescCan
 	url = https://github.com/AlvaroBajceps/libVescCan.git
-
