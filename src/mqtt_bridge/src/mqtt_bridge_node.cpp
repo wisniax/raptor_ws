@@ -7,7 +7,7 @@
 #include <chrono>
 #include <sstream>
 #include <mqtt/async_client.h>
-#include <ros/console.h>
+#include <rcutils/logging.h>
 
 #define RAPIDJSON_HAS_STDSTRING 1
 class JsonAssertException : public std::exception
@@ -29,27 +29,26 @@ public:
 // TODO:
 // - rosdep (for paho)?
 
-ros::Time unixMillisecondsToROSTimestamp(unsigned long int msec)
+rclcpp::Time unixMillisecondsToROSTimestamp(unsigned long int msec)
 {
-	ros::Time timestamp;
-	timestamp.fromSec(msec / (double)1000.0);
+	rclcpp::Time timestamp((int64_t)(msec * (double)1000000.0));
 	return timestamp;
 }
 
-void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
 {
 	rapidjson::Document d;
 	rapidjson::ParseResult ok = d.Parse(payloadMsg);
 
 	if (!ok)
 	{
-		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
 	}
 	else
 	{
 		try
 		{
-			can_wrapper::Wheels msg;
+			can_bridge::msg::Wheels msg;
 
 			// msg.commandId = d["commandId"].GetUint();
 			// msg.frontLeft = d["frontLeft"].GetDouble();
@@ -63,30 +62,30 @@ void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHa
 		}
 		catch (JsonAssertException e)
 		{
-			ROS_WARN("JSON assert exception, discarding MQTT message.");
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
 		}
 	}
 }
 
-void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
 {
 	rapidjson::Document d;
 	rapidjson::ParseResult ok = d.Parse(payloadMsg);
 
 	if (!ok)
 	{
-		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
 	}
 	else
 	{
 		try
 		{
-			can_wrapper::RoverControl msg;
+			can_bridge::msg::RoverControl msg;
 
-			msg.Vel = d["Vel"].GetDouble();
-			msg.XAxis = d["XAxis"].GetDouble();
-			msg.YAxis = d["YAxis"].GetDouble();
-			msg.Mode = d["Mode"].GetUint();
+			msg.vel = d["Vel"].GetDouble();
+			msg.x_axis = d["XAxis"].GetDouble();
+			msg.y_axis = d["YAxis"].GetDouble();
+			msg.mode = d["Mode"].GetUint();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
@@ -94,33 +93,33 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 		}
 		catch (JsonAssertException e)
 		{
-			ROS_WARN("JSON assert exception, discarding MQTT message.");
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
 		}
 	}
 }
 
-void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
 {
 	rapidjson::Document d;
 	rapidjson::ParseResult ok = d.Parse(payloadMsg);
 
 	if (!ok)
 	{
-		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
 	}
 	else
 	{
 		try
 		{
-			mqtt_bridge::ManipulatorMessage msg;
+			mqtt_bridge::msg::ManipulatorMessage msg;
 
-			msg.Axis1 = d["Axis1"].GetDouble();
-			msg.Axis2 = d["Axis2"].GetDouble();
-			msg.Axis3 = d["Axis3"].GetDouble();
-			msg.Axis4 = d["Axis4"].GetDouble();
-			msg.Axis5 = d["Axis5"].GetDouble();
-			msg.Axis6 = d["Axis6"].GetDouble();
-			msg.Gripper = d["Gripper"].GetDouble();
+			msg.axis1 = d["Axis1"].GetDouble();
+			msg.axis2 = d["Axis2"].GetDouble();
+			msg.axis3 = d["Axis3"].GetDouble();
+			msg.axis4 = d["Axis4"].GetDouble();
+			msg.axis5 = d["Axis5"].GetDouble();
+			msg.axis6 = d["Axis6"].GetDouble();
+			msg.gripper = d["Gripper"].GetDouble();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
@@ -128,30 +127,30 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 		}
 		catch (JsonAssertException e)
 		{
-			ROS_WARN("JSON assert exception, discarding MQTT message.");
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
 		}
 	}
 }
 
 //TODO
-void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth)
+void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
 {
 	rapidjson::Document d;
 	rapidjson::ParseResult ok = d.Parse(payloadMsg);
 
 	if (!ok)
 	{
-		ROS_WARN_STREAM("JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
 	}
 	else
 	{
 		try
 		{
-			can_wrapper::RoverStatus msg;
+			can_bridge::msg::RoverStatus msg;
 
-			msg.CommunicationState = d["CommunicationState"].GetInt();
-			msg.PadConnected = d["PadConnected"].GetBool();
-			msg.ControlMode = d["ControlMode"].GetInt();
+			msg.communication_state = d["CommunicationState"].GetInt();
+			msg.pad_connected = d["PadConnected"].GetBool();
+			msg.control_mode = d["ControlMode"].GetInt();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
@@ -159,26 +158,27 @@ void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTo
 		}
 		catch (JsonAssertException e)
 		{
-			ROS_WARN("JSON assert exception, discarding MQTT message.");
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
 		}
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "mqtt_bridge_node");
+	rclcpp::init(argc, argv);
+    auto node = rclcpp::Node::make_shared("mqtt_bridge_node");
 
 	// set ROS console logger level to INFO
-	if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
+	/*if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
 	{
 		ros::console::notifyLoggerLevelsChanged();
-	}
+	}*/
 
 	// ### MQTT configuration ###
 	const std::string SERVER_ADDRESS("mqtt://192.168.1.20:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const int MQTT_VERSION = MQTTVERSION_5;
-	const int SESSION_EXPIRY = 604800;
+	//const int SESSION_EXPIRY = 604800;
 	const int PUBLISHER_QOS = 0;
 	const int KEEP_ALIVE = 20;
 	const std::chrono::seconds RECONNECT_MIN_RETRY_INTERVAL{1};
@@ -194,34 +194,34 @@ int main(int argc, char *argv[])
 
 
 	auto connOpts = mqtt::connect_options_builder()
-						.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})
+						//.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})
 						.clean_start(CLEAN_START)
 						.keep_alive_interval(std::chrono::seconds(KEEP_ALIVE))
 						.automatic_reconnect(RECONNECT_MIN_RETRY_INTERVAL, RECONNECT_MAX_RETRY_INTERVAL)
 						.finalize();
 
-	std::shared_ptr<ROSTopicHandler> rth = std::make_shared<ROSTopicHandler>(cli, PUBLISHER_QOS);
+	std::shared_ptr<ROSTopicHandler> rth = std::make_shared<ROSTopicHandler>(cli, PUBLISHER_QOS, node);
 
 	// callback for connection lost to MQTT broker
-	cli->set_connection_lost_handler([](const std::string &)
-									 { ROS_ERROR("Connection to MQTT server lost. Trying to reconnect..."); });
+	cli->set_connection_lost_handler([node](const std::string &)
+									 { RCLCPP_ERROR(node->get_logger(), "Connection to MQTT server lost. Trying to reconnect..."); });
 
 	// callback for incoming MQTT messages
-	cli->set_message_callback([rth](mqtt::const_message_ptr mqtt_msg) {
+	cli->set_message_callback([rth, node](mqtt::const_message_ptr mqtt_msg) {
 		auto messageTopic = mqtt_msg->get_topic();
 
-		ROS_DEBUG("I received (MQTT): [%s] on topic: [%s]", mqtt_msg->get_payload_str().c_str(), messageTopic.c_str());
+		RCLCPP_DEBUG(node->get_logger(), "I received (MQTT): [%s] on topic: [%s]", mqtt_msg->get_payload_str().c_str(), messageTopic.c_str());
 
 		if (messageTopic == "RappTORS/Wheels") {
-			processMqttWheelsMessage(mqtt_msg->get_payload_str().c_str(), rth);
+			processMqttWheelsMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/RoverControl") {
-			processMqttRoverControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
+			processMqttRoverControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/ManipulatorControl") {
-			processMqttManipulatorControlMessage(mqtt_msg->get_payload_str().c_str(), rth);
+			processMqttManipulatorControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/RoverStatus") {
-			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth);
+			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else {
-			ROS_WARN_STREAM("Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
+			RCLCPP_WARN_STREAM(node->get_logger(), "Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });
 
 	// loop for connecting to MQTT broker (repeat on failure)
@@ -229,27 +229,27 @@ int main(int argc, char *argv[])
 		// Start the MQTT connection, subscribe to MQTT topics.
 		try
 		{
-			ROS_INFO("Trying to connect to MQTT server...");
+			RCLCPP_INFO(node->get_logger(), "Trying to connect to MQTT server...");
 			auto tok = cli->connect(connOpts);
 			tok->wait();
-			ROS_INFO("Successfully connected to MQTT server.");
+			RCLCPP_INFO(node->get_logger(), "Successfully connected to MQTT server.");
 
 			cli->subscribe(SUBSCRIBED_TOPICS_NAMES, SUBSCRIBED_TOPICS_QOS);
 			break;
 		}
 		catch (const mqtt::exception &exc)
 		{
-			ROS_ERROR_STREAM("Error connecting to MQTT server: " << exc.what() << ", retrying in 5 seconds...");
-			ros::Duration(5).sleep();
-			if (ros::isShuttingDown()) {
-				ros::waitForShutdown();
+			RCLCPP_ERROR_STREAM(node->get_logger(), "Error connecting to MQTT server: " << exc.what() << ", retrying in 5 seconds...");
+			rclcpp::sleep_for(std::chrono::seconds(5));
+			if (!rclcpp::ok()) {
+				rclcpp::shutdown();
 				return 1;
 			}
 		}
 	}
 
 
-	ros::spin();
+	rclcpp::spin(node);
 
 	// Disconnect from MQTT broker
 	try

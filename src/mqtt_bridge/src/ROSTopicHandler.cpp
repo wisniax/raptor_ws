@@ -4,29 +4,30 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/error/en.h"
 
-ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS)
+ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node::SharedPtr node)
 {
 	mCli = mqttClient;
 	mQOS = mqttQOS;
+	n = node;
 
-	ros::NodeHandle n;
+	timer_cb_group = n->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-	mSub_VescStatus = n.subscribe("/CAN/RX/vesc_status", 100, &ROSTopicHandler::callback_VescStatus, this);
-	mTimer_VescStatus = n.createTimer(ros::Duration(mInterval_VescStatus), &ROSTopicHandler::fire_VescStatus, this);
+	mSub_VescStatus = n->create_subscription<can_bridge::msg::VescStatus>("/CAN/RX/vesc_status", 100, std::bind(&ROSTopicHandler::callback_VescStatus, this, std::placeholders::_1));
+	mTimer_VescStatus = n->create_timer(std::chrono::milliseconds(mInterval_VescStatus), std::bind(&ROSTopicHandler::fire_VescStatus, this), timer_cb_group);
 
-	mMsg_ZedImuData = std::make_shared<sensor_msgs::Imu>();
-	mSub_ZedImuData = n.subscribe("/zed2/zed_node/imu/data", 100, &ROSTopicHandler::callback_ZedImuData, this);
-	mTimer_ZedImuData = n.createTimer(ros::Duration(mInterval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
+	mMsg_ZedImuData = std::make_shared<sensor_msgs::msg::Imu>();
+	mSub_ZedImuData = n->create_subscription<sensor_msgs::msg::Imu>("/zed2/zed_node/imu/data", 100, std::bind(&ROSTopicHandler::callback_ZedImuData, this, std::placeholders::_1));
+	mTimer_ZedImuData = n->create_timer(std::chrono::milliseconds(mInterval_ZedImuData), std::bind(&ROSTopicHandler::fire_ZedImuData, this), timer_cb_group);
 
-	mPub_Wheels = n.advertise<can_wrapper::Wheels>("/CAN/TX/set_motor_vel", 1000);
-	mPub_RoverControl = n.advertise<can_wrapper::RoverControl>("/MQTT/RoverControl", 1000);
-	mPub_ManipulatorControl = n.advertise<mqtt_bridge::ManipulatorMessage>("/manipulator_joints", 1000);
-	mPub_RoverStatus = n.advertise<can_wrapper::RoverStatus>("/MQTT/RoverStatus", 1000);
+	mPub_Wheels = n->create_publisher<can_bridge::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
+	mPub_RoverControl = n->create_publisher<can_bridge::msg::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_ManipulatorControl = n->create_publisher<mqtt_bridge::msg::ManipulatorMessage>("/manipulator_joints", 1000);
+	mPub_RoverStatus = n->create_publisher<can_bridge::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
 {
-	ROS_DEBUG("Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
+	//RCLCPP_DEBUG(node->get_logger(), "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
 	mqtt::message_ptr pubmsg = mqtt::make_message(topicName, message);
 	pubmsg->set_qos(mQOS);
 	mCli->publish(pubmsg);
@@ -34,11 +35,11 @@ void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char
 
 // ###### json operations ######
 
-void ROSTopicHandler::addTimestampToJSON(rapidjson::Document &doc, long int nsec)
+void ROSTopicHandler::addTimestampToJSON(rapidjson::Document &doc, long int msec)
 {
 	rapidjson::Value k("Timestamp", doc.GetAllocator());
 	rapidjson::Value v;
-	v.SetUint64(nsec / 1000000);
+	v.SetUint64(msec);
 	doc.AddMember(k, v, doc.GetAllocator());
 }
 
@@ -61,9 +62,9 @@ void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document &doc, const st
 
 // ###### VescStatus ######
 
-void ROSTopicHandler::fire_VescStatus(const ros::TimerEvent &event)
+void ROSTopicHandler::fire_VescStatus()
 {
-	//ROS_DEBUG("VescStatus timer fired");
+	//RCLCPP_WARN(n->get_logger(), "VescStatus timer fired");
 
 	for (auto msgPair : mMsgMap_VescStatus)
 	{
@@ -73,79 +74,79 @@ void ROSTopicHandler::fire_VescStatus(const ros::TimerEvent &event)
 	mMsgMap_VescStatus.clear();
 }
 
-void ROSTopicHandler::callback_VescStatus(const can_wrapper::VescStatus::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_VescStatus(const can_bridge::msg::VescStatus::ConstPtr &receivedMsg)
 {
 	//ROS_DEBUG("I received (ROS): a message (VescStatus)");
 
-	std::map<int, std::shared_ptr<can_wrapper::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->VescId);
+	std::map<int, std::shared_ptr<can_bridge::msg::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
 	if (it != mMsgMap_VescStatus.end())
 	{
-		// if message for received VescId exists, then average the received msg with that message
-		std::shared_ptr<can_wrapper::VescStatus> msg = it->second;
+		// if message for received vesc_id exists, then average the received msg with that message
+		std::shared_ptr<can_bridge::msg::VescStatus> msg = it->second;
 		msg->header.stamp = receivedMsg->header.stamp;
-		msg->ERPM = (msg->ERPM + receivedMsg->ERPM) / 2;
-		msg->Current = (msg->Current + receivedMsg->Current) / 2;
-		msg->DutyCycle = (msg->DutyCycle + receivedMsg->DutyCycle) / 2;
-		msg->AhUsed = (msg->AhUsed + receivedMsg->AhUsed) / 2;
-		msg->AhCharged = (msg->AhCharged + receivedMsg->AhCharged) / 2;
-		msg->WhUsed = (msg->WhUsed + receivedMsg->WhUsed) / 2;
-		msg->WhCharged = (msg->WhCharged + receivedMsg->WhCharged) / 2;
-		msg->TempFet = (msg->TempFet + receivedMsg->TempFet) / 2;
-		msg->TempMotor = (msg->TempMotor + receivedMsg->TempMotor) / 2;
-		msg->CurrentIn = (msg->CurrentIn + receivedMsg->CurrentIn) / 2;
-		msg->PidPos = (msg->PidPos + receivedMsg->PidPos) / 2;
-		msg->Tachometer = (msg->Tachometer + receivedMsg->Tachometer) / 2;
-		msg->VoltsIn = (msg->VoltsIn + receivedMsg->VoltsIn) / 2;
-		msg->ADC1 = (msg->ADC1 + receivedMsg->ADC1) / 2;
-		msg->ADC2 = (msg->ADC2 + receivedMsg->ADC2) / 2;
-		msg->ADC3 = (msg->ADC3 + receivedMsg->ADC3) / 2;
-		msg->PPM = (msg->PPM + receivedMsg->PPM) / 2;
-		msg->PrecisePos = (msg->PrecisePos + receivedMsg->PrecisePos) / 2;
+		msg->erpm = (msg->erpm + receivedMsg->erpm) / 2;
+		msg->current = (msg->current + receivedMsg->current) / 2;
+		msg->duty_cycle = (msg->duty_cycle + receivedMsg->duty_cycle) / 2;
+		msg->ah_used = (msg->ah_used + receivedMsg->ah_used) / 2;
+		msg->ah_charged = (msg->ah_charged + receivedMsg->ah_charged) / 2;
+		msg->wh_used = (msg->wh_used + receivedMsg->wh_used) / 2;
+		msg->wh_charged = (msg->wh_charged + receivedMsg->wh_charged) / 2;
+		msg->temp_fet = (msg->temp_fet + receivedMsg->temp_fet) / 2;
+		msg->temp_motor = (msg->temp_motor + receivedMsg->temp_motor) / 2;
+		msg->current_in = (msg->current_in + receivedMsg->current_in) / 2;
+		msg->pid_pos = (msg->pid_pos + receivedMsg->pid_pos) / 2;
+		msg->tachometer = (msg->tachometer + receivedMsg->tachometer) / 2;
+		msg->volts_in = (msg->volts_in + receivedMsg->volts_in) / 2;
+		msg->adc1 = (msg->adc1 + receivedMsg->adc1) / 2;
+		msg->adc2 = (msg->adc2 + receivedMsg->adc2) / 2;
+		msg->adc3 = (msg->adc3 + receivedMsg->adc3) / 2;
+		msg->ppm = (msg->ppm + receivedMsg->ppm) / 2;
+		msg->precise_pos = (msg->precise_pos + receivedMsg->precise_pos) / 2;
 		return;
 	}
 
-	// if message for received VescId does not exist, then make a new message and insert it into the map
-	std::shared_ptr<can_wrapper::VescStatus> msg = std::make_shared<can_wrapper::VescStatus>();
+	// if message for received vesc_id does not exist, then make a new message and insert it into the map
+	std::shared_ptr<can_bridge::msg::VescStatus> msg = std::make_shared<can_bridge::msg::VescStatus>();
 
 	msg->header.stamp = receivedMsg->header.stamp;
-	msg->VescId = receivedMsg->VescId;
-	msg->ERPM = receivedMsg->ERPM;
-	msg->Current = receivedMsg->Current;
-	msg->DutyCycle = receivedMsg->DutyCycle;
-	msg->AhUsed = receivedMsg->AhUsed;
-	msg->AhCharged = receivedMsg->AhCharged;
-	msg->WhUsed = receivedMsg->WhUsed;
-	msg->WhCharged = receivedMsg->WhCharged;
-	msg->TempFet = receivedMsg->TempFet;
-	msg->TempMotor = receivedMsg->TempMotor;
-	msg->CurrentIn = receivedMsg->CurrentIn;
-	msg->PidPos = receivedMsg->PidPos;
-	msg->Tachometer = receivedMsg->Tachometer;
-	msg->VoltsIn = receivedMsg->VoltsIn;
-	msg->ADC1 = receivedMsg->ADC1;
-	msg->ADC2 = receivedMsg->ADC2;
-	msg->ADC3 = receivedMsg->ADC3;
-	msg->PPM = receivedMsg->PPM;
-	msg->PrecisePos = receivedMsg->PrecisePos;
+	msg->vesc_id = receivedMsg->vesc_id;
+	msg->erpm = receivedMsg->erpm;
+	msg->current = receivedMsg->current;
+	msg->duty_cycle = receivedMsg->duty_cycle;
+	msg->ah_used = receivedMsg->ah_used;
+	msg->ah_charged = receivedMsg->ah_charged;
+	msg->wh_used = receivedMsg->wh_used;
+	msg->wh_charged = receivedMsg->wh_charged;
+	msg->temp_fet = receivedMsg->temp_fet;
+	msg->temp_motor = receivedMsg->temp_motor;
+	msg->current_in = receivedMsg->current_in;
+	msg->pid_pos = receivedMsg->pid_pos;
+	msg->tachometer = receivedMsg->tachometer;
+	msg->volts_in = receivedMsg->volts_in;
+	msg->adc1 = receivedMsg->adc1;
+	msg->adc2 = receivedMsg->adc2;
+	msg->adc3 = receivedMsg->adc3;
+	msg->ppm = receivedMsg->ppm;
+	msg->precise_pos = receivedMsg->precise_pos;
 
-	mMsgMap_VescStatus.insert({receivedMsg->VescId, msg});
+	mMsgMap_VescStatus.insert({receivedMsg->vesc_id, msg});
 }
 
-void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper::VescStatus> msg)
+void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_bridge::msg::VescStatus> msg)
 {
 	rapidjson::Document d;
 	d.SetObject();
 
-	std::map<std::string, int> jsonIntFieldsMap{{"VescId", msg->VescId}, {"ERPM", msg->ERPM}};
+	std::map<std::string, int> jsonIntFieldsMap{{"VescId", msg->vesc_id}, {"ERPM", msg->erpm}};
 
 	std::map<std::string, double> jsonDoubleFieldsMap{
-		{"Current", msg->Current}, {"DutyCycle", msg->DutyCycle}, {"AhUsed", msg->AhUsed}, {"AhCharged", msg->AhCharged}, {"WhUsed", msg->WhUsed}, {"WhCharged", msg->WhCharged}, {"TempFet", msg->TempFet}, {"TempMotor", msg->TempMotor}, {"CurrentIn", msg->CurrentIn}, {"PidPos", msg->PidPos}, {"Tachometer", msg->Tachometer}, {"VoltsIn", msg->VoltsIn}, {"ADC1", msg->ADC1}, {"ADC2", msg->ADC2}, {"ADC3", msg->ADC3}, {"PPM", msg->PPM}, {"PrecisePos", msg->PrecisePos}};
+		{"Current", msg->current}, {"DutyCycle", msg->duty_cycle}, {"AhUsed", msg->ah_used}, {"AhCharged", msg->ah_charged}, {"WhUsed", msg->wh_used}, {"WhCharged", msg->wh_charged}, {"TempFet", msg->temp_fet}, {"TempMotor", msg->temp_motor}, {"CurrentIn", msg->current_in}, {"PidPos", msg->pid_pos}, {"Tachometer", msg->tachometer}, {"VoltsIn", msg->volts_in}, {"ADC1", msg->adc1}, {"ADC2", msg->adc2}, {"ADC3", msg->adc3}, {"PPM", msg->ppm}, {"PrecisePos", msg->precise_pos}};
 
 	addMembersFromMapToJSON(d, jsonIntFieldsMap);
 
 	addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
 
-	addTimestampToJSON(d, msg->header.stamp.toNSec());
+	addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
 
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -156,7 +157,7 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper:
 
 // ###### ZedImuData ######
 
-void ROSTopicHandler::fire_ZedImuData(const ros::TimerEvent &event)
+void ROSTopicHandler::fire_ZedImuData()
 {
 	//ROS_DEBUG("Imu timer fired");
 	if (!mFirst_ZedImuData)
@@ -166,7 +167,7 @@ void ROSTopicHandler::fire_ZedImuData(const ros::TimerEvent &event)
 	}
 }
 
-void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::msg::Imu::ConstPtr &receivedMsg)
 {
 	//ROS_DEBUG("I received (ROS): a message (Imu)");
 
@@ -206,7 +207,7 @@ void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &rece
 	mFirst_ZedImuData = false;
 }
 
-void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg)
+void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::msg::Imu> msg)
 {
 	rapidjson::Document d;
 	d.SetObject();
@@ -215,11 +216,11 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 	int jsonVector3Fields = 2;
 
 	std::string jsonDoubleArray9FieldNames[jsonDoubleArray9Fields] = {"orientation_covariance", "angular_velocity_covariance", "linear_acceleration_covariance"};
-	boost::array<double, 9> jsonDoubleArray9FieldValues[jsonDoubleArray9Fields] = {msg->orientation_covariance,
+	std::array<double, 9> jsonDoubleArray9FieldValues[jsonDoubleArray9Fields] = {msg->orientation_covariance,
 																				   msg->angular_velocity_covariance, msg->linear_acceleration_covariance};
 
 	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
-	geometry_msgs::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {msg->angular_velocity, msg->linear_acceleration};
+	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {msg->angular_velocity, msg->linear_acceleration};
 
 	// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
 	for (int i = 0; i < jsonDoubleArray9Fields; i++)
@@ -294,7 +295,7 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 		d.AddMember(k, v, d.GetAllocator());
 	}
 
-	this->addTimestampToJSON(d, msg->header.stamp.toNSec());
+	addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
 
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -305,32 +306,32 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 
 // ###### Wheels ######
 
-void ROSTopicHandler::publishMessage_Wheels(can_wrapper::Wheels message)
+void ROSTopicHandler::publishMessage_Wheels(can_bridge::msg::Wheels message)
 {
-	mPub_Wheels.publish(message);
-	ROS_DEBUG("I published (ROS): a message (Wheels)");
+	mPub_Wheels->publish(message);
+	//ROS_DEBUG("I published (ROS): a message (Wheels)");
 }
 
 // ###### RoverControl ######
 
-void ROSTopicHandler::publishMessage_RoverControl(can_wrapper::RoverControl message)
+void ROSTopicHandler::publishMessage_RoverControl(can_bridge::msg::RoverControl message)
 {
-	mPub_RoverControl.publish(message);
-	ROS_DEBUG("I published (ROS): a message (RoverControl)");
+	mPub_RoverControl->publish(message);
+	//ROS_DEBUG("I published (ROS): a message (RoverControl)");
 }
 
 // ##### ManipulatorControl ######
 
-void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::ManipulatorMessage message)
+void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::msg::ManipulatorMessage message)
 {
-	mPub_ManipulatorControl.publish(message);
-	ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
+	mPub_ManipulatorControl->publish(message);
+	//ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
 }
 
 // ##### RoverStatus ######
 
-void ROSTopicHandler::publishMessage_RoverStatus(can_wrapper::RoverStatus message)
+void ROSTopicHandler::publishMessage_RoverStatus(can_bridge::msg::RoverStatus message)
 {
-	mPub_RoverStatus.publish(message);
-	ROS_DEBUG("I published (ROS): a message (RoverStatus)");
+	mPub_RoverStatus->publish(message);
+	//ROS_DEBUG("I published (ROS): a message (RoverStatus)");
 }
