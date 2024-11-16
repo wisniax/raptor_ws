@@ -8,6 +8,7 @@
 #include "can_bridge/msg/rover_control.hpp"
 #include "can_bridge/msg/rover_status.hpp"
 #include "mqtt_bridge/msg/manipulator_message.hpp"
+#include "mqtt_bridge/msg/sampler_message.hpp"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -25,6 +26,7 @@ public:
   void publishMessage_Wheels(can_bridge::msg::Wheels message);
   void publishMessage_RoverControl(can_bridge::msg::RoverControl message);
   void publishMessage_ManipulatorControl(mqtt_bridge::msg::ManipulatorMessage message);
+  void publishMessage_SamplerControl(mqtt_bridge::msg::SamplerMessage message);
   void publishMessage_RoverStatus(can_bridge::msg::RoverStatus message);
 
 private:
@@ -61,6 +63,7 @@ private:
   rclcpp::Publisher<can_bridge::msg::Wheels>::SharedPtr mPub_Wheels;
   rclcpp::Publisher<can_bridge::msg::RoverControl>::SharedPtr mPub_RoverControl;
   rclcpp::Publisher<mqtt_bridge::msg::ManipulatorMessage>::SharedPtr mPub_ManipulatorControl;
+  rclcpp::Publisher<mqtt_bridge::msg::SamplerMessage>::SharedPtr mPub_SamplerControl;
   rclcpp::Publisher<can_bridge::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
 
   rclcpp::CallbackGroup::SharedPtr timer_cb_group;

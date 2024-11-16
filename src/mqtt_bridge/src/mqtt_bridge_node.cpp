@@ -132,6 +132,39 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 	}
 }
 
+void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			mqtt_bridge::msg::SamplerMessage msg;
+
+			msg.drill_movement = d["DrillMovement"].GetDouble();
+			msg.platform_movement = d["PlatformMovement"].GetDouble();
+			msg.drill_action = d["DrillAction"].GetDouble();
+			msg.container_degrees_0 = d["ContainerDegrees0"].GetDouble();
+			msg.container_degrees_1 = d["ContainerDegrees1"].GetDouble();
+			msg.container_degrees_2 = d["ContainerDegrees2"].GetDouble();
+
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+			rth->publishMessage_SamplerControl(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 //TODO
 void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
 {
@@ -185,8 +218,8 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/RoverStatus"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
 
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
@@ -218,6 +251,8 @@ int main(int argc, char *argv[])
 			processMqttRoverControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/ManipulatorControl") {
 			processMqttManipulatorControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
+		} else if (messageTopic == "RappTORS/SamplerControl") {
+			processMqttSamplerControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/RoverStatus") {
 			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else {

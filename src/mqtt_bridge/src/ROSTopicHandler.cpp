@@ -22,6 +22,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mPub_Wheels = n->create_publisher<can_bridge::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
 	mPub_RoverControl = n->create_publisher<can_bridge::msg::RoverControl>("/MQTT/RoverControl", 1000);
 	mPub_ManipulatorControl = n->create_publisher<mqtt_bridge::msg::ManipulatorMessage>("/manipulator_joints", 1000);
+	mPub_SamplerControl = n->create_publisher<mqtt_bridge::msg::SamplerMessage>("/MQTT/SamplerControl", 1000);
 	mPub_RoverStatus = n->create_publisher<can_bridge::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
 }
 
@@ -326,6 +327,14 @@ void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::msg::Manipu
 {
 	mPub_ManipulatorControl->publish(message);
 	//ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
+}
+
+// ##### SamplerControl ######
+
+void ROSTopicHandler::publishMessage_SamplerControl(mqtt_bridge::msg::SamplerMessage message)
+{
+	mPub_SamplerControl->publish(message);
+	//ROS_DEBUG("I published (ROS): a message (SamplerControl)");
 }
 
 // ##### RoverStatus ######

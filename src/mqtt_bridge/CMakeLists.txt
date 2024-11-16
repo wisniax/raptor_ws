@@ -46,6 +46,7 @@ find_library(PahoMqttCpp_LIBRARY libpaho-mqttpp3.so.1 REQUIRED)
 ## Generate messages in the 'msg' folder
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ManipulatorMessage.msg"
+  "msg/SamplerMessage.msg"
   DEPENDENCIES std_msgs
 )
 
