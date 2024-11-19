@@ -32,6 +32,11 @@ void ProbeControl::handleProbeCtl(const can_bridge::msg::ProbeControl::ConstShar
 	
 	publish(vesc_container,3);
 
+#warning Only for tests. Requesting status should be requestable from app.
+	if(probeCtlMsg->drill_movement >= 1.0f)
+	{
+		requestProbeStatus();
+	}
 
 }
 
