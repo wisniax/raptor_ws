@@ -45,6 +45,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/MotorControl.cpp
 	src/ManipulatorControl.cpp
 	src/ProbeStatusForwarder.cpp
+  src/ProbeControl.cpp
  )
 
 target_include_directories(can_bridge_node PUBLIC
