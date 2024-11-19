@@ -30,7 +30,8 @@ private:
 	void warnRotten(int statusNum);
 	void infoNotRotten();
 
-	const uint8_t ROTTEN_THRESHOLD = 10;
+#warning ROTTEN_THRESHOLD is set to 0. ProbeStatus will be sent immediately after receiving status 8 or 9.
+	const uint8_t ROTTEN_THRESHOLD = 0;
 
 	rclcpp::Node::SharedPtr mNh;
 
