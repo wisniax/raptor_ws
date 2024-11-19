@@ -1,0 +1,7 @@
+launch:
+
+- node:
+    pkg: "mqtt_bridge"
+    exec: "mqtt_bridge_node"
+    name: "mqtt_bridge_node"
+    namespace: "raptor"
