@@ -25,6 +25,7 @@ find_package(libVescCan REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VescMotorCommand.msg"
   "msg/ManipulatorControl.msg"
+  "msg/ProbeControl.msg"
   "msg/ProbeStatus.msg"
   "msg/RoverControl.msg"
   "msg/RoverStatus.msg"
