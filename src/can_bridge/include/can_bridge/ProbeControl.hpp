@@ -23,6 +23,7 @@ private:
 
 	void handleProbeCtl(const can_bridge::msg::ProbeControl::ConstSharedPtr &probeCtlMsg);
 	void requestProbeStatus();
+	void doStuff();
 	void publish(const VESC_CommandFrame* arr, int arr_size);
 
 	const VESC_Id_t ID_C1_C2 = 0x83;
@@ -32,6 +33,10 @@ private:
 
 	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
 	rclcpp::Subscription<can_bridge::msg::ProbeControl>::SharedPtr mProbeCtlSub;		 /**< ROS subscriber for ProbeControl messages. */
+
+	rclcpp::TimerBase::SharedPtr mTimerXd;
+
+	can_bridge::msg::ProbeControl::ConstSharedPtr mProbeCtlMsgLast;
 };
 
 #endif // ProbeControl_h_
