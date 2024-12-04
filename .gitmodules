@@ -1,3 +1,6 @@
 [submodule "src/libVescCan"]
 	path = src/libVescCan
 	url = https://github.com/AlvaroBajceps/libVescCan.git
+[submodule "src/quad_rover_kinematics"]
+	path = src/quad_rover_kinematics
+	url = git@github.com:Bitnut01/quad_rover_kinematics.git
