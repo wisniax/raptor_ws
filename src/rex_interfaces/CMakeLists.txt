@@ -11,6 +11,9 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 
 set(msg_files
+  "msg/ManipulatorControl.msg"
+  "msg/ProbeControl.msg"
+  "msg/ProbeStatus.msg"
   "msg/RoverControl.msg"
   "msg/Wheels.msg"
   "msg/VescStatus.msg"

@@ -16,14 +16,14 @@
   <build_depend>rclcpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>can_bridge</build_depend>
+  <build_depend>rex_interfaces</build_depend>
   <build_export_depend>rclcpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>can_bridge</exec_depend>
+  <exec_depend>rex_interfaces</exec_depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>

@@ -1,0 +1,3 @@
+std_msgs/Header header
+rex_interfaces/VescMotorCommand[6] axes
+rex_interfaces/VescMotorCommand gripper

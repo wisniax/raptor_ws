@@ -5,15 +5,15 @@ MotorControl::MotorControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
 	mRawCanPub = mNh->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
-	mSetMotorVelSub = mNh->create_subscription<can_bridge::msg::Wheels>(RosCanConstants::RosTopics::can_set_motor_vel, qos, std::bind(&MotorControl::handleSetMotorVel, this, std::placeholders::_1));
+	mSetMotorVelSub = mNh->create_subscription<rex_interfaces::msg::Wheels>(RosCanConstants::RosTopics::can_set_motor_vel, qos, std::bind(&MotorControl::handleSetMotorVel, this, std::placeholders::_1));
 }
 
-void MotorControl::handleSetMotorVel(const can_bridge::msg::Wheels::ConstSharedPtr &msg)
+void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
 {
 	sendMotorVel(msg);
 }
 
-void MotorControl::sendMotorVel(const can_bridge::msg::Wheels::ConstSharedPtr &msg)
+void MotorControl::sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
 {
 	//8 since there are 4 wheels, each being vesc + stepper combo
 	std::array<can_msgs::msg::Frame, 8> sendQueue;

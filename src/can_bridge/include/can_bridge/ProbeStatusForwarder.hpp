@@ -8,7 +8,7 @@
 #include <can_bridge/VescInterop.hpp>
 
 #include <can_msgs/msg/frame.hpp>
-#include <can_bridge/msg/probe_status.hpp>
+#include <rex_interfaces/msg/probe_status.hpp>
 
 extern "C"
 {
@@ -46,7 +46,7 @@ private:
 	uint8_t mStatus9Staleness = 0;
 
 	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mProbeStatusGrabber;
-	rclcpp::Publisher<can_bridge::msg::ProbeStatus>::SharedPtr mProbeStatusPublisher;
+	rclcpp::Publisher<rex_interfaces::msg::ProbeStatus>::SharedPtr mProbeStatusPublisher;
 };
 
 #endif // ProbeStatusForwarder_h_

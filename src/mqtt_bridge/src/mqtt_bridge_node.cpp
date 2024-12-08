@@ -48,7 +48,7 @@ void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHa
 	{
 		try
 		{
-			can_bridge::msg::Wheels msg;
+			rex_interfaces::msg::Wheels msg;
 
 			// msg.commandId = d["commandId"].GetUint();
 			// msg.frontLeft = d["frontLeft"].GetDouble();
@@ -80,7 +80,7 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 	{
 		try
 		{
-			can_bridge::msg::RoverControl msg;
+			rex_interfaces::msg::RoverControl msg;
 
 			msg.vel = d["Vel"].GetDouble();
 			msg.x_axis = d["XAxis"].GetDouble();
@@ -145,7 +145,7 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 	{
 		try
 		{
-			can_bridge::msg::ProbeControl msg;
+			rex_interfaces::msg::ProbeControl msg;
 
 			msg.drill_movement = d["DrillMovement"].GetDouble();
 			msg.platform_movement = d["PlatformMovement"].GetDouble();
@@ -179,7 +179,7 @@ void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTo
 	{
 		try
 		{
-			can_bridge::msg::RoverStatus msg;
+			rex_interfaces::msg::RoverStatus msg;
 
 			msg.communication_state = d["CommunicationState"].GetInt();
 			msg.pad_connected = d["PadConnected"].GetBool();

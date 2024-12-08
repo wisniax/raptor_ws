@@ -7,3 +7,6 @@ launch:
     
 - include:
     file: "$(find-pkg-share mqtt_bridge)/launch/mqtt_bridge.yaml"
+
+- include:
+    file: "$(find-pkg-share quad_rover_kinematics)/launch/qrk.yaml"

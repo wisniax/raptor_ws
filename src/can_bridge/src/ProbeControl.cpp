@@ -5,13 +5,13 @@ ProbeControl::ProbeControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
 	mRawCanPub = mNh->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
-	mProbeCtlSub = mNh->create_subscription<can_bridge::msg::ProbeControl>(
+	mProbeCtlSub = mNh->create_subscription<rex_interfaces::msg::ProbeControl>(
 		"/MQTT/SamplerControl", qos, 
 		std::bind(&ProbeControl::handleProbeCtl, this, std::placeholders::_1)
 	);
 	mTimerXd = mNh->create_timer(std::chrono::milliseconds(50), std::bind(&ProbeControl::doStuff, this));
 
-	can_bridge::msg::ProbeControl temp;
+	rex_interfaces::msg::ProbeControl temp;
 	temp.container_degrees_0 = 0;
 	temp.container_degrees_1 = 0;
 	temp.container_degrees_2 = 0;
@@ -19,10 +19,10 @@ ProbeControl::ProbeControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 	temp.drill_movement = 0;
 	temp.platform_movement = 0;
 
-	mProbeCtlMsgLast = std::make_shared<const can_bridge::msg::ProbeControl>(temp);
+	mProbeCtlMsgLast = std::make_shared<const rex_interfaces::msg::ProbeControl>(temp);
 }
 
-void ProbeControl::handleProbeCtl(const can_bridge::msg::ProbeControl::ConstSharedPtr& probeCtlMsg)
+void ProbeControl::handleProbeCtl(const rex_interfaces::msg::ProbeControl::ConstSharedPtr& probeCtlMsg)
 {
     mProbeCtlMsgLast = probeCtlMsg;
 }

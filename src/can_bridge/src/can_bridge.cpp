@@ -10,7 +10,7 @@
 #include "can_bridge/MotorControl.hpp"
 #include "can_bridge/RosCanConstants.hpp"
 #include "can_bridge/VescStatusHandler.hpp"
-#include "can_bridge/msg/rover_control.hpp"
+#include "rex_interfaces/msg/rover_control.hpp"
 #include "can_bridge/StatusMessage.hpp"
 #include "can_bridge/ManipulatorControl.hpp"
 #include "can_bridge/ProbeStatusForwarder.hpp"
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
 	while (rclcpp::ok())
 	{
-		can_bridge::msg::Wheels vel;
+		rex_interfaces::msg::Wheels vel;
 		switch (canNodeMode)
 		{
 		case CanNodeMode::Created:

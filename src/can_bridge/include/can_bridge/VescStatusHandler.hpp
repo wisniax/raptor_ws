@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/shared_ptr.hpp>
-#include <can_bridge/msg/vesc_status.hpp>
+#include <rex_interfaces/msg/vesc_status.hpp>
 #include <can_bridge/RosCanConstants.hpp>
 #include <can_bridge/VescInterop.hpp>
 #include <can_msgs/msg/frame.hpp>
@@ -70,7 +70,7 @@ private:
 
 	rclcpp::Node::SharedPtr mNh;
 	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mStatusGrabber;
-	rclcpp::Publisher<can_bridge::msg::VescStatus>::SharedPtr mStatusPublisher;
+	rclcpp::Publisher<rex_interfaces::msg::VescStatus>::SharedPtr mStatusPublisher;
 	rclcpp::TimerBase::SharedPtr mMotorCommandTimer;
 };
 

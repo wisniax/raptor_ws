@@ -21,21 +21,22 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(libVescCan REQUIRED)
+find_package(rex_interfaces REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/VescMotorCommand.msg"
-  "msg/ManipulatorControl.msg"
-  "msg/ProbeControl.msg"
-  "msg/ProbeStatus.msg"
-  "msg/RoverControl.msg"
-  "msg/RoverStatus.msg"
-  "msg/VescStatus.msg"
-  "msg/Wheel.msg"
-  "msg/Wheels.msg"
-  DEPENDENCIES std_msgs
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "msg/VescMotorCommand.msg"
+#   "msg/ManipulatorControl.msg"
+#   "msg/ProbeControl.msg"
+#   "msg/ProbeStatus.msg"
+#   "msg/RoverControl.msg"
+#   "msg/RoverStatus.msg"
+#   "msg/VescStatus.msg"
+#   "msg/Wheel.msg"
+#   "msg/Wheels.msg"
+#   DEPENDENCIES std_msgs
+# )
 
-rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+#rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
 add_executable(can_bridge_node src/can_bridge.cpp 
 	src/RosCanConstants.cpp
@@ -50,9 +51,8 @@ add_executable(can_bridge_node src/can_bridge.cpp
 
 target_include_directories(can_bridge_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libVescCan/include>
-  )
+  $<INSTALL_INTERFACE:include>
+)
 
 target_link_libraries(can_bridge_node PUBLIC
   ament_index_cpp::ament_index_cpp
@@ -60,6 +60,7 @@ target_link_libraries(can_bridge_node PUBLIC
   ${std_msgs_TARGETS}
   ${can_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  ${rex_interfaces_TARGETS}
   ${rcl_interfaces_TARGETS}
   rclcpp::rclcpp
   libVescCan::libVescCan
