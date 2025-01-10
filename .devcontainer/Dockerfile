@@ -45,5 +45,5 @@ RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNA
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
-RUN apt install -y ros-jazzy-ros2-socketcan
+RUN apt install -y ros-jazzy-ros2-socketcan libceres-dev
 # RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
