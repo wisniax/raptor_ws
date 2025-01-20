@@ -9,7 +9,6 @@
     "--privileged",
     "--network=host",
     "--shm-size=2g",
-    "--net=host",
     "--pid=host",
     "--ipc=host",
     "-e", "DISPLAY=${env:DISPLAY}"
