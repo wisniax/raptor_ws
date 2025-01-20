@@ -37,11 +37,11 @@ private:
   template<typename T>
   void addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T>& m);
 
-  void callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstPtr &receivedMsg);
+  void callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg);
   void fire_VescStatus();
   void publishMqttMessage_VescStatus(std::shared_ptr<rex_interfaces::msg::VescStatus> msg);
 
-  void callback_ZedImuData(const sensor_msgs::msg::Imu::ConstPtr &receivedMsg);
+  void callback_ZedImuData(const sensor_msgs::msg::Imu::ConstSharedPtr &receivedMsg);
   void fire_ZedImuData();
   void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::msg::Imu> msg);
 

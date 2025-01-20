@@ -28,7 +28,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
 {
-	//RCLCPP_DEBUG(node->get_logger(), "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
+	RCLCPP_DEBUG_THROTTLE(n->get_logger(), *n->get_clock(), 500, "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
 	mqtt::message_ptr pubmsg = mqtt::make_message(topicName, message);
 	pubmsg->set_qos(mQOS);
 	mCli->publish(pubmsg);
@@ -66,7 +66,6 @@ void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document &doc, const st
 void ROSTopicHandler::fire_VescStatus()
 {
 	//RCLCPP_WARN(n->get_logger(), "VescStatus timer fired");
-
 	for (auto msgPair : mMsgMap_VescStatus)
 	{
 		publishMqttMessage_VescStatus(msgPair.second);
@@ -75,10 +74,8 @@ void ROSTopicHandler::fire_VescStatus()
 	mMsgMap_VescStatus.clear();
 }
 
-void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg)
 {
-	//ROS_DEBUG("I received (ROS): a message (VescStatus)");
-
 	std::map<int, std::shared_ptr<rex_interfaces::msg::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
 	if (it != mMsgMap_VescStatus.end())
 	{
@@ -160,7 +157,6 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<rex_interfac
 
 void ROSTopicHandler::fire_ZedImuData()
 {
-	//ROS_DEBUG("Imu timer fired");
 	if (!mFirst_ZedImuData)
 	{
 		publishMqttMessage_ZedImuData(mMsg_ZedImuData);
@@ -168,10 +164,8 @@ void ROSTopicHandler::fire_ZedImuData()
 	}
 }
 
-void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::msg::Imu::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::msg::Imu::ConstSharedPtr &receivedMsg)
 {
-	//ROS_DEBUG("I received (ROS): a message (Imu)");
-
 	if (!mFirst_ZedImuData) {
 		mMsg_ZedImuData->header.stamp = receivedMsg->header.stamp;
 		mMsg_ZedImuData->orientation.x = (mMsg_ZedImuData->orientation.x + receivedMsg->orientation.x) / 2;
@@ -221,7 +215,9 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 																				   msg->angular_velocity_covariance, msg->linear_acceleration_covariance};
 
 	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
-	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {msg->angular_velocity, msg->linear_acceleration};
+	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields];
+	jsonVector3FieldValues[0] = msg->angular_velocity;
+	jsonVector3FieldValues[1] = msg->linear_acceleration;
 
 	// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
 	for (int i = 0; i < jsonDoubleArray9Fields; i++)
@@ -310,7 +306,6 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 void ROSTopicHandler::publishMessage_Wheels(rex_interfaces::msg::Wheels message)
 {
 	mPub_Wheels->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (Wheels)");
 }
 
 // ###### RoverControl ######
@@ -318,7 +313,6 @@ void ROSTopicHandler::publishMessage_Wheels(rex_interfaces::msg::Wheels message)
 void ROSTopicHandler::publishMessage_RoverControl(rex_interfaces::msg::RoverControl message)
 {
 	mPub_RoverControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (RoverControl)");
 }
 
 // ##### ManipulatorControl ######
@@ -326,7 +320,6 @@ void ROSTopicHandler::publishMessage_RoverControl(rex_interfaces::msg::RoverCont
 void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::msg::ManipulatorMessage message)
 {
 	mPub_ManipulatorControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
 }
 
 // ##### SamplerControl ######
@@ -334,7 +327,6 @@ void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::msg::Manipu
 void ROSTopicHandler::publishMessage_ProbeControl(rex_interfaces::msg::ProbeControl message)
 {
 	mPub_ProbeControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (SamplerControl)");
 }
 
 // ##### RoverStatus ######
@@ -342,5 +334,4 @@ void ROSTopicHandler::publishMessage_ProbeControl(rex_interfaces::msg::ProbeCont
 void ROSTopicHandler::publishMessage_RoverStatus(rex_interfaces::msg::RoverStatus message)
 {
 	mPub_RoverStatus->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (RoverStatus)");
 }
