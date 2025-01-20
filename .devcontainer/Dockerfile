@@ -39,11 +39,12 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}
 # RUN echo "\nexport ROS_MASTER_URI=http://127.0.0.1:11311\nexport ROS_HOSTNAME=127.0.0.1\n" >> /home/${USERNAME}/.bashrc
 # RUN echo "\nsource /opt/ros/jazzy/setup.bash\nsource /home/rex/raptor_ws/devel/setup.bash\n" >> /home/${USERNAME}/.bashrc
 RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=1\n" >> /home/${USERNAME}/.bashrc
+RUN echo "source ~/raptor_ws/install/setup.bash\n" >> /home/${USERNAME}/.bashrc
 
 # Add alias vnc to start the vnc lmao
 RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
-RUN apt install -y ros-jazzy-ros2-socketcan libceres-dev
+RUN apt install -y ros-jazzy-ros2-socketcan ros-jazzy-realtime-tools libceres-dev
 # RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
