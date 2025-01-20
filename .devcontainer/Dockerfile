@@ -44,7 +44,12 @@ RUN echo "source ~/raptor_ws/install/setup.bash\n" >> /home/${USERNAME}/.bashrc
 # Add alias vnc to start the vnc lmao
 RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
+RUN apt update && apt upgrade -y
+
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
-RUN apt install -y ros-jazzy-ros2-socketcan ros-jazzy-realtime-tools libceres-dev
+RUN apt install -y ros-jazzy-ros2-socketcan libasio-dev libceres-dev ros-jazzy-diagnostic-updater ros-jazzy-diagnostic-updater ros-jazzy-rtcm-msgs ros-jazzy-nmea-msgs
 # RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
+#ros-jazzy-realtime-tools
+
+RUN usermod -a -G dialout ${USERNAME}

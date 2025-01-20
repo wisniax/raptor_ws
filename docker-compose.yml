@@ -7,14 +7,12 @@ services:
     stdin_open: true
     container_name: ros-jazzy
     tty: true
-    #network_mode: "host"
+    network_mode: "host"
     pid: "host"
     ipc: "host"
     environment:
       - ROS_DOMAIN_ID
       - TZ=Europe/Warsaw
-    ports:
-      - "11811:11811"
     volumes:
       - type: bind
         source: ./
@@ -27,6 +25,9 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
     
   mosquitto:
     image: eclipse-mosquitto
