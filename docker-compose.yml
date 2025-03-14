@@ -3,7 +3,7 @@ services:
     build:
       context: ./.devcontainer
     image: ros-jazzy
-    command: /bin/bash -c 'service ssh start && service rex start && tail -f /dev/null'
+    command: /bin/bash -c 'rm -f /tmp/rexlaunch.pgid && service ssh start && service rex start && tail -f /dev/null'
     stdin_open: true
     container_name: ros-jazzy
     tty: true
