@@ -27,3 +27,6 @@ launch:
         name: "to_can_bus_topic"
         value: "/CAN/TX/raw"
 
+#  - include:
+#     file: "$(find-pkg-share ublox_gps)/launch/ublox_gps_node-launch.py"
+
