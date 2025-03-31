@@ -46,5 +46,28 @@
             "request": "launch",
             "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
         },
+
+        // mqtt_bridge
+
+        {
+            "name": "ROS: Launch <mqtt_bridge> (RelWithDebInfo)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <mqtt_bridge> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <mqtt_bridge> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+        },
     ]
 }

@@ -145,7 +145,7 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 	{
 		try
 		{
-			mqtt_bridge::msg::SamplerMessage msg;
+			can_bridge::msg::ProbeControl msg;
 
 			msg.drill_movement = d["DrillMovement"].GetDouble();
 			msg.platform_movement = d["PlatformMovement"].GetDouble();
@@ -156,7 +156,7 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
-			rth->publishMessage_SamplerControl(msg);
+			rth->publishMessage_ProbeControl(msg);
 		}
 		catch (JsonAssertException e)
 		{

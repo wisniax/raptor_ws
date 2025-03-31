@@ -7,7 +7,9 @@ can_msgs::msg::Frame VescInterop::vescToRos(const VESC_RawFrame& vescf)
 
     can_msgs::msg::Frame rosf;
 
-    rosf.id = canf->can_id;
+
+
+    rosf.id = canf->can_id & CAN_EFF_MASK;
     rosf.is_extended = (canf->can_id & CAN_EFF_FLAG) == CAN_EFF_FLAG;
     rosf.is_rtr = (canf->can_id & CAN_RTR_FLAG) == CAN_RTR_FLAG;
     rosf.is_error = (canf->can_id & CAN_ERR_FLAG) == CAN_ERR_FLAG;

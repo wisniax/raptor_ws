@@ -25,6 +25,7 @@ find_package(libVescCan REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VescMotorCommand.msg"
   "msg/ManipulatorControl.msg"
+  "msg/ProbeControl.msg"
   "msg/ProbeStatus.msg"
   "msg/RoverControl.msg"
   "msg/RoverStatus.msg"
@@ -44,6 +45,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/MotorControl.cpp
 	src/ManipulatorControl.cpp
 	src/ProbeStatusForwarder.cpp
+  src/ProbeControl.cpp
  )
 
 target_include_directories(can_bridge_node PUBLIC

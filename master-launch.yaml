@@ -4,3 +4,6 @@ launch:
 
 - include:
     file: "$(find-pkg-share can_bridge)/launch/can_bridge.yaml"
+    
+- include:
+    file: "$(find-pkg-share mqtt_bridge)/launch/mqtt_bridge.yaml"

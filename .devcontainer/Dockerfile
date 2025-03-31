@@ -18,7 +18,7 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 
 # Create user
-RUN useradd -m -s /bin/bash ${USERNAME}
+RUN useradd -m -s /bin/bash -g 1000 ${USERNAME}
 RUN echo "${USERNAME}:${PASSWORD}" | chpasswd
 RUN usermod -aG sudo ${USERNAME}
 

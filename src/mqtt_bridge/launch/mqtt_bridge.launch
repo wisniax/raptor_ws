@@ -1,3 +1,0 @@
-<launch>
-<node name="mqtt_bridge_node" exec="mqtt_bridge_node" pkg="mqtt_bridge" output="screen" />
-</launch>

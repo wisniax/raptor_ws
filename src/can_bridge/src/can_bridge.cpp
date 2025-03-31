@@ -14,6 +14,7 @@
 #include "can_bridge/StatusMessage.hpp"
 #include "can_bridge/ManipulatorControl.hpp"
 #include "can_bridge/ProbeStatusForwarder.hpp"
+#include "can_bridge/ProbeControl.hpp"
 
 #include <std_srvs/srv/set_bool.hpp>
 
@@ -50,6 +51,7 @@ int main(int argc, char *argv[])
 	StatusMessage mStatusMessage(n, true);
 	ManipulatorControl mManipulatorCtl(n);
 	ProbeStatusForwarder mProbeStatusForwarder(n);
+	ProbeControl mProbeCtl(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	rclcpp::Rate rate(100);
