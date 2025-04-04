@@ -8,7 +8,7 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 		RosCanConstants::RosTopics::can_raw_RX, qos,
 		std::bind(&VescStatusHandler::statusGrabber, this, std::placeholders::_1));
 
-	mStatusPublisher = nh->create_publisher<can_bridge::msg::VescStatus>(
+	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
 }
 
@@ -36,7 +36,7 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 {
 	MotorStatusKey key;
 
-	can_bridge::msg::VescStatus status;
+	rex_interfaces::msg::VescStatus status;
 
 	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_1);
 	if (mMotorStatus.find(key) != mMotorStatus.cend())

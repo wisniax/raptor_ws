@@ -12,23 +12,23 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
 	timer_cb_group = n->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-	mSub_VescStatus = n->create_subscription<can_bridge::msg::VescStatus>("/CAN/RX/vesc_status", 100, std::bind(&ROSTopicHandler::callback_VescStatus, this, std::placeholders::_1));
+	mSub_VescStatus = n->create_subscription<rex_interfaces::msg::VescStatus>("/CAN/RX/vesc_status", 100, std::bind(&ROSTopicHandler::callback_VescStatus, this, std::placeholders::_1));
 	mTimer_VescStatus = n->create_timer(std::chrono::milliseconds(mInterval_VescStatus), std::bind(&ROSTopicHandler::fire_VescStatus, this), timer_cb_group);
 
 	mMsg_ZedImuData = std::make_shared<sensor_msgs::msg::Imu>();
 	mSub_ZedImuData = n->create_subscription<sensor_msgs::msg::Imu>("/zed2/zed_node/imu/data", 100, std::bind(&ROSTopicHandler::callback_ZedImuData, this, std::placeholders::_1));
 	mTimer_ZedImuData = n->create_timer(std::chrono::milliseconds(mInterval_ZedImuData), std::bind(&ROSTopicHandler::fire_ZedImuData, this), timer_cb_group);
 
-	mPub_Wheels = n->create_publisher<can_bridge::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
-	mPub_RoverControl = n->create_publisher<can_bridge::msg::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_Wheels = n->create_publisher<rex_interfaces::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
+	mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
 	mPub_ManipulatorControl = n->create_publisher<mqtt_bridge::msg::ManipulatorMessage>("/manipulator_joints", 1000);
-	mPub_ProbeControl = n->create_publisher<can_bridge::msg::ProbeControl>("/MQTT/SamplerControl", 1000);
-	mPub_RoverStatus = n->create_publisher<can_bridge::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
+	mPub_ProbeControl = n->create_publisher<rex_interfaces::msg::ProbeControl>("/MQTT/SamplerControl", 1000);
+	mPub_RoverStatus = n->create_publisher<rex_interfaces::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
 {
-	//RCLCPP_DEBUG(node->get_logger(), "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
+	RCLCPP_DEBUG_THROTTLE(n->get_logger(), *n->get_clock(), 500, "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
 	mqtt::message_ptr pubmsg = mqtt::make_message(topicName, message);
 	pubmsg->set_qos(mQOS);
 	mCli->publish(pubmsg);
@@ -66,7 +66,6 @@ void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document &doc, const st
 void ROSTopicHandler::fire_VescStatus()
 {
 	//RCLCPP_WARN(n->get_logger(), "VescStatus timer fired");
-
 	for (auto msgPair : mMsgMap_VescStatus)
 	{
 		publishMqttMessage_VescStatus(msgPair.second);
@@ -75,15 +74,13 @@ void ROSTopicHandler::fire_VescStatus()
 	mMsgMap_VescStatus.clear();
 }
 
-void ROSTopicHandler::callback_VescStatus(const can_bridge::msg::VescStatus::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg)
 {
-	//ROS_DEBUG("I received (ROS): a message (VescStatus)");
-
-	std::map<int, std::shared_ptr<can_bridge::msg::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
+	std::map<int, std::shared_ptr<rex_interfaces::msg::VescStatus>>::iterator it = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
 	if (it != mMsgMap_VescStatus.end())
 	{
 		// if message for received vesc_id exists, then average the received msg with that message
-		std::shared_ptr<can_bridge::msg::VescStatus> msg = it->second;
+		std::shared_ptr<rex_interfaces::msg::VescStatus> msg = it->second;
 		msg->header.stamp = receivedMsg->header.stamp;
 		msg->erpm = (msg->erpm + receivedMsg->erpm) / 2;
 		msg->current = (msg->current + receivedMsg->current) / 2;
@@ -107,7 +104,7 @@ void ROSTopicHandler::callback_VescStatus(const can_bridge::msg::VescStatus::Con
 	}
 
 	// if message for received vesc_id does not exist, then make a new message and insert it into the map
-	std::shared_ptr<can_bridge::msg::VescStatus> msg = std::make_shared<can_bridge::msg::VescStatus>();
+	std::shared_ptr<rex_interfaces::msg::VescStatus> msg = std::make_shared<rex_interfaces::msg::VescStatus>();
 
 	msg->header.stamp = receivedMsg->header.stamp;
 	msg->vesc_id = receivedMsg->vesc_id;
@@ -133,7 +130,7 @@ void ROSTopicHandler::callback_VescStatus(const can_bridge::msg::VescStatus::Con
 	mMsgMap_VescStatus.insert({receivedMsg->vesc_id, msg});
 }
 
-void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_bridge::msg::VescStatus> msg)
+void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<rex_interfaces::msg::VescStatus> msg)
 {
 	rapidjson::Document d;
 	d.SetObject();
@@ -160,7 +157,6 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_bridge::
 
 void ROSTopicHandler::fire_ZedImuData()
 {
-	//ROS_DEBUG("Imu timer fired");
 	if (!mFirst_ZedImuData)
 	{
 		publishMqttMessage_ZedImuData(mMsg_ZedImuData);
@@ -168,10 +164,8 @@ void ROSTopicHandler::fire_ZedImuData()
 	}
 }
 
-void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::msg::Imu::ConstPtr &receivedMsg)
+void ROSTopicHandler::callback_ZedImuData(const sensor_msgs::msg::Imu::ConstSharedPtr &receivedMsg)
 {
-	//ROS_DEBUG("I received (ROS): a message (Imu)");
-
 	if (!mFirst_ZedImuData) {
 		mMsg_ZedImuData->header.stamp = receivedMsg->header.stamp;
 		mMsg_ZedImuData->orientation.x = (mMsg_ZedImuData->orientation.x + receivedMsg->orientation.x) / 2;
@@ -221,7 +215,9 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 																				   msg->angular_velocity_covariance, msg->linear_acceleration_covariance};
 
 	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
-	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields] = {msg->angular_velocity, msg->linear_acceleration};
+	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields];
+	jsonVector3FieldValues[0] = msg->angular_velocity;
+	jsonVector3FieldValues[1] = msg->linear_acceleration;
 
 	// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
 	for (int i = 0; i < jsonDoubleArray9Fields; i++)
@@ -307,18 +303,16 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 
 // ###### Wheels ######
 
-void ROSTopicHandler::publishMessage_Wheels(can_bridge::msg::Wheels message)
+void ROSTopicHandler::publishMessage_Wheels(rex_interfaces::msg::Wheels message)
 {
 	mPub_Wheels->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (Wheels)");
 }
 
 // ###### RoverControl ######
 
-void ROSTopicHandler::publishMessage_RoverControl(can_bridge::msg::RoverControl message)
+void ROSTopicHandler::publishMessage_RoverControl(rex_interfaces::msg::RoverControl message)
 {
 	mPub_RoverControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (RoverControl)");
 }
 
 // ##### ManipulatorControl ######
@@ -326,21 +320,18 @@ void ROSTopicHandler::publishMessage_RoverControl(can_bridge::msg::RoverControl 
 void ROSTopicHandler::publishMessage_ManipulatorControl(mqtt_bridge::msg::ManipulatorMessage message)
 {
 	mPub_ManipulatorControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
 }
 
 // ##### SamplerControl ######
 
-void ROSTopicHandler::publishMessage_ProbeControl(can_bridge::msg::ProbeControl message)
+void ROSTopicHandler::publishMessage_ProbeControl(rex_interfaces::msg::ProbeControl message)
 {
 	mPub_ProbeControl->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (SamplerControl)");
 }
 
 // ##### RoverStatus ######
 
-void ROSTopicHandler::publishMessage_RoverStatus(can_bridge::msg::RoverStatus message)
+void ROSTopicHandler::publishMessage_RoverStatus(rex_interfaces::msg::RoverStatus message)
 {
 	mPub_RoverStatus->publish(message);
-	//ROS_DEBUG("I published (ROS): a message (RoverStatus)");
 }

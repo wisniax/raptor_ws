@@ -5,11 +5,11 @@ ManipulatorControl::ManipulatorControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
 	mRawCanPub = mNh->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
-	mManipulatorCtlSub = mNh->create_subscription<can_bridge::msg::ManipulatorControl>(
+	mManipulatorCtlSub = mNh->create_subscription<rex_interfaces::msg::ManipulatorControl>(
 		RosCanConstants::RosTopics::can_manipulator_ctl, qos, 
 		std::bind(&ManipulatorControl::handleManipulatorCtl, this, std::placeholders::_1));
 }
-void ManipulatorControl::handleManipulatorCtl(const can_bridge::msg::ManipulatorControl::ConstSharedPtr& manipulatroCtlMsg)
+void ManipulatorControl::handleManipulatorCtl(const rex_interfaces::msg::ManipulatorControl::ConstSharedPtr& manipulatroCtlMsg)
 {
 	// 7 since there are 6 axes + 1 gripper
 	std::array<can_msgs::msg::Frame, 7> sendQueue;
@@ -27,7 +27,7 @@ void ManipulatorControl::handleManipulatorCtl(const can_bridge::msg::Manipulator
 		mRawCanPub->publish(*iter);
 }
 
-can_msgs::msg::Frame ManipulatorControl::encodeStepper(const can_bridge::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)
+can_msgs::msg::Frame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)
 {
 	VESC_CommandFrame vesc_cf;
 	VESC_ZeroMemory(&vesc_cf, sizeof(vesc_cf));

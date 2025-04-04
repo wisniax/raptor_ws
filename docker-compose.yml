@@ -3,12 +3,15 @@ services:
     build:
       context: ./.devcontainer
     image: ros-jazzy
-    command: /bin/bash -c 'service ssh start && service rex start && tail -f /dev/null'
+    command: /bin/bash -c 'rm -f /tmp/rexlaunch.pgid && service ssh start && service rex start && tail -f /dev/null'
     stdin_open: true
     container_name: ros-jazzy
     tty: true
     network_mode: "host"
+    pid: "host"
+    ipc: "host"
     environment:
+      - ROS_DOMAIN_ID
       - TZ=Europe/Warsaw
     volumes:
       - type: bind
@@ -22,6 +25,10 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto

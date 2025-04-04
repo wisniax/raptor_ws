@@ -10,7 +10,7 @@ ARG PASSWORD='changeme'
 RUN apt update && apt upgrade -y
 
 # Install random stuff
-RUN DEBIAN_FRONTEND=noninteractive apt install -y git gdb nano curl wget python3 python3-pip net-tools apt-utils nano can-utils ssh libpaho-mqttpp-dev libpaho-mqtt-dev
+RUN DEBIAN_FRONTEND=noninteractive apt install -y git gdb nano curl wget python3 python3-pip net-tools apt-utils nano can-utils ssh libpaho-mqttpp-dev libpaho-mqtt-dev less
 
 # Random Stuff
 ENV NOTVISIBLE "in users profile"
@@ -39,11 +39,17 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}
 # RUN echo "\nexport ROS_MASTER_URI=http://127.0.0.1:11311\nexport ROS_HOSTNAME=127.0.0.1\n" >> /home/${USERNAME}/.bashrc
 # RUN echo "\nsource /opt/ros/jazzy/setup.bash\nsource /home/rex/raptor_ws/devel/setup.bash\n" >> /home/${USERNAME}/.bashrc
 RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=1\n" >> /home/${USERNAME}/.bashrc
+RUN echo "source ~/raptor_ws/install/setup.bash\n" >> /home/${USERNAME}/.bashrc
 
 # Add alias vnc to start the vnc lmao
 RUN echo "\nalias vnc='sudo /usr/local/share/desktop-init.sh'" >> /home/${USERNAME}/.bashrc
 
+RUN apt update && apt upgrade -y
+
 # Environment setup
 RUN mkdir /home/${USERNAME}/raptor_ws
-RUN apt install -y ros-jazzy-ros2-socketcan
+RUN apt install -y ros-jazzy-ros2-socketcan libasio-dev libceres-dev ros-jazzy-diagnostic-updater ros-jazzy-diagnostic-updater ros-jazzy-rtcm-msgs ros-jazzy-nmea-msgs
 # RUN apt install -y ros-noetic-ros-canopen ros-noetic-realtime-tools ros-noetic-tf libyaml-cpp-dev
+#ros-jazzy-realtime-tools
+
+RUN usermod -a -G dialout ${USERNAME}

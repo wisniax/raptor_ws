@@ -2,7 +2,7 @@
 
 StatusMessage::StatusMessage(rclcpp::Node::SharedPtr &nh, bool sendOnUpdate) : mNh(nh)
 {
-	can_bridge::msg::RoverStatus zeroMsg;
+	rex_interfaces::msg::RoverStatus zeroMsg;
 	zeroMsg.communication_state = 0;
 	zeroMsg.control_mode = 0;
 	zeroMsg.pad_connected = false;
@@ -11,12 +11,12 @@ StatusMessage::StatusMessage(rclcpp::Node::SharedPtr &nh, bool sendOnUpdate) : m
 
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 	mRawCanPub = nh->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
-	mStatusMessageSub = nh->create_subscription<can_bridge::msg::RoverStatus>(
+	mStatusMessageSub = nh->create_subscription<rex_interfaces::msg::RoverStatus>(
 		RosCanConstants::RosTopics::mqtt_rover_status, qos,
 		std::bind(&StatusMessage::handleStatusMessage, this, std::placeholders::_1));
 }
 
-void StatusMessage::handleStatusMessage(const can_bridge::msg::RoverStatus::ConstSharedPtr &msg)
+void StatusMessage::handleStatusMessage(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg)
 {
 	mLastStatus = *msg;
 	if (mSendOnUpdate)
@@ -29,13 +29,13 @@ void StatusMessage::sendStatusMessage()
 	mRawCanPub->publish(rawFrame);
 }
 
-void StatusMessage::sendStatusMessage(const can_bridge::msg::RoverStatus::ConstSharedPtr &msg)
+void StatusMessage::sendStatusMessage(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg)
 {
 	can_msgs::msg::Frame rawFrame = encodeStatusMessage(*msg);
 	mRawCanPub->publish(rawFrame);
 }
 
-can_msgs::msg::Frame StatusMessage::encodeStatusMessage(const can_bridge::msg::RoverStatus &msg)
+can_msgs::msg::Frame StatusMessage::encodeStatusMessage(const rex_interfaces::msg::RoverStatus &msg)
 {
 	VESC_Status_10 msg_status_10;
 	VESC_ZeroMemory(&msg_status_10, sizeof(msg_status_10));

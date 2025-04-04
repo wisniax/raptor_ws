@@ -8,9 +8,12 @@
   "runArgs": [
     "--privileged",
     "--network=host",
-    "--shm-size=2g"
+    "--shm-size=2g",
+    "--pid=host",
+    "--ipc=host",
+    "-e", "DISPLAY=${env:DISPLAY}"
   ],
-  "forwardPorts": [6080],
+  "forwardPorts": [6080, 11811],
   "portsAttributes": {
     "6080": {
       "label": "desktop"
@@ -31,5 +34,9 @@
         "ms-iot.vscode-ros"
       ]
     }
+  },
+  "containerEnv": {
+    //"DISPLAY": "unix:0",
+    "ROS_DOMAIN_ID": "1"
   }
 }

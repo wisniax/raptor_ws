@@ -6,7 +6,7 @@ ProbeStatusForwarder::ProbeStatusForwarder(rclcpp::Node::SharedPtr &nh) : mNh(nh
 	mProbeStatusGrabber = mNh->create_subscription<can_msgs::msg::Frame>(
 		RosCanConstants::RosTopics::can_raw_RX, qos,
 		std::bind(&ProbeStatusForwarder::probeStatusGrabber, this, std::placeholders::_1));
-	mProbeStatusPublisher = mNh->create_publisher<can_bridge::msg::ProbeStatus>(
+	mProbeStatusPublisher = mNh->create_publisher<rex_interfaces::msg::ProbeStatus>(
 		RosCanConstants::RosTopics::can_probe_status, qos);
 }
 
@@ -86,7 +86,7 @@ void ProbeStatusForwarder::statusPublisher()
 	else if (!mStatus8Fresh || !mStatus9Fresh)
 		return;
 
-	can_bridge::msg::ProbeStatus status;
+	rex_interfaces::msg::ProbeStatus status;
 
 	status.weight_a = mStatus8.weightA;
 	status.distance = mStatus8.distance;

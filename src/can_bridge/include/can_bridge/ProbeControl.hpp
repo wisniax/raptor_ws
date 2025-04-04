@@ -7,7 +7,7 @@
 #include <array>
 #include <can_bridge/VescInterop.hpp>
 #include "can_bridge/RosCanConstants.hpp"
-#include "can_bridge/msg/probe_control.hpp"
+#include "rex_interfaces/msg/probe_control.hpp"
 extern "C"
 {
 #include <libVescCan/VESC.h>
@@ -21,7 +21,7 @@ public:
 private:
 
 
-	void handleProbeCtl(const can_bridge::msg::ProbeControl::ConstSharedPtr &probeCtlMsg);
+	void handleProbeCtl(const rex_interfaces::msg::ProbeControl::ConstSharedPtr &probeCtlMsg);
 	void requestProbeStatus();
 	void doStuff();
 	void publish(const VESC_CommandFrame* arr, int arr_size);
@@ -32,11 +32,11 @@ private:
 	rclcpp::Node::SharedPtr mNh;
 
 	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
-	rclcpp::Subscription<can_bridge::msg::ProbeControl>::SharedPtr mProbeCtlSub;		 /**< ROS subscriber for ProbeControl messages. */
+	rclcpp::Subscription<rex_interfaces::msg::ProbeControl>::SharedPtr mProbeCtlSub;		 /**< ROS subscriber for ProbeControl messages. */
 
 	rclcpp::TimerBase::SharedPtr mTimerXd;
 
-	can_bridge::msg::ProbeControl::ConstSharedPtr mProbeCtlMsgLast;
+	rex_interfaces::msg::ProbeControl::ConstSharedPtr mProbeCtlMsgLast;
 };
 
 #endif // ProbeControl_h_

@@ -7,7 +7,7 @@
 #include <array>
 #include <can_bridge/VescInterop.hpp>
 #include "can_bridge/RosCanConstants.hpp"
-#include "can_bridge/msg/manipulator_control.hpp"
+#include "rex_interfaces/msg/manipulator_control.hpp"
 extern "C"
 {
 #include <libVescCan/VESC.h>
@@ -19,14 +19,14 @@ public:
 	ManipulatorControl(rclcpp::Node::SharedPtr &nh);
 
 private:
-	void handleManipulatorCtl(const can_bridge::msg::ManipulatorControl::ConstSharedPtr &manipulatroCtlMsg);
+	void handleManipulatorCtl(const rex_interfaces::msg::ManipulatorControl::ConstSharedPtr &manipulatroCtlMsg);
 
-	can_msgs::msg::Frame encodeStepper(const can_bridge::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
+	can_msgs::msg::Frame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
 
 	rclcpp::Node::SharedPtr mNh;
 
 	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
-	rclcpp::Subscription<can_bridge::msg::ManipulatorControl>::SharedPtr mManipulatorCtlSub; /**< ROS subscriber for motor velocity messages. */
+	rclcpp::Subscription<rex_interfaces::msg::ManipulatorControl>::SharedPtr mManipulatorCtlSub; /**< ROS subscriber for motor velocity messages. */
 };
 
 #endif // ManipulatorControl_h_

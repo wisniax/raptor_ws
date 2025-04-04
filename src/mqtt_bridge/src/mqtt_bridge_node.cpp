@@ -26,9 +26,6 @@ public:
 #include "rapidjson/error/en.h"
 #include "mqtt_bridge/ROSTopicHandler.hpp"
 
-// TODO:
-// - rosdep (for paho)?
-
 rclcpp::Time unixMillisecondsToROSTimestamp(unsigned long int msec)
 {
 	rclcpp::Time timestamp((int64_t)(msec * (double)1000000.0));
@@ -48,7 +45,7 @@ void processMqttWheelsMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHa
 	{
 		try
 		{
-			can_bridge::msg::Wheels msg;
+			rex_interfaces::msg::Wheels msg;
 
 			// msg.commandId = d["commandId"].GetUint();
 			// msg.frontLeft = d["frontLeft"].GetDouble();
@@ -80,7 +77,7 @@ void processMqttRoverControlMessage(const char *payloadMsg, std::shared_ptr<ROST
 	{
 		try
 		{
-			can_bridge::msg::RoverControl msg;
+			rex_interfaces::msg::RoverControl msg;
 
 			msg.vel = d["Vel"].GetDouble();
 			msg.x_axis = d["XAxis"].GetDouble();
@@ -145,7 +142,7 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 	{
 		try
 		{
-			can_bridge::msg::ProbeControl msg;
+			rex_interfaces::msg::ProbeControl msg;
 
 			msg.drill_movement = d["DrillMovement"].GetDouble();
 			msg.platform_movement = d["PlatformMovement"].GetDouble();
@@ -179,7 +176,7 @@ void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTo
 	{
 		try
 		{
-			can_bridge::msg::RoverStatus msg;
+			rex_interfaces::msg::RoverStatus msg;
 
 			msg.communication_state = d["CommunicationState"].GetInt();
 			msg.pad_connected = d["PadConnected"].GetBool();
@@ -201,12 +198,6 @@ int main(int argc, char *argv[])
 	rclcpp::init(argc, argv);
     auto node = rclcpp::Node::make_shared("mqtt_bridge_node");
 
-	// set ROS console logger level to INFO
-	/*if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info))
-	{
-		ros::console::notifyLoggerLevelsChanged();
-	}*/
-
 	// ### MQTT configuration ###
 	const std::string SERVER_ADDRESS("mqtt://192.168.1.20:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
@@ -221,10 +212,16 @@ int main(int argc, char *argv[])
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
 	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
 
+	auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
+    param_desc.read_only = true;
 
-	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(SERVER_ADDRESS, CLIENT_ID,
+	node->declare_parameter("mqtt_server_address", SERVER_ADDRESS, param_desc);
+	node->declare_parameter("mqtt_client_id", CLIENT_ID, param_desc);
+
+	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(node->get_parameter("mqtt_server_address").as_string(), node->get_parameter("mqtt_client_id").as_string(),
 													 mqtt::create_options(MQTT_VERSION));
 
+	RCLCPP_DEBUG_STREAM(node->get_logger(), "Taking rosparam into account, assuming MQTT broker address: " << node->get_parameter("mqtt_server_address").as_string() << ", client id: " << node->get_parameter("mqtt_client_id").as_string());
 
 	auto connOpts = mqtt::connect_options_builder()
 						//.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})

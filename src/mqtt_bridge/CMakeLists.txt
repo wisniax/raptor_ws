@@ -10,7 +10,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(can_bridge REQUIRED)
+find_package(rex_interfaces REQUIRED)
 
 # MQTT client library
 find_library(PahoMqttC_LIBRARY libpaho-mqtt3as.so.1 REQUIRED)
@@ -120,7 +120,7 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typ
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node PUBLIC
   rclcpp::rclcpp
-  ${can_bridge_TARGETS}
+  ${rex_interfaces_TARGETS}
   ${std_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
   ${PahoMqttC_LIBRARY}
