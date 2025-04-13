@@ -25,9 +25,6 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
-    privileged: true
-    devices:
-      - /dev/ttyACM0:/dev/ttyACM0
     
   mosquitto:
     image: eclipse-mosquitto
