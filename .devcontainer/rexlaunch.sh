@@ -10,5 +10,3 @@ echo "Launched ROS2 master-launch in process group $PGID"
 PIDFILE="/tmp/rexlaunch.pgid"
 echo $PGID > $PIDFILE
 
-sudo chmod a+rw /dev/ttyACM0
-
