@@ -53,3 +53,7 @@ RUN apt install -y ros-jazzy-ros2-socketcan libasio-dev libceres-dev ros-jazzy-d
 #ros-jazzy-realtime-tools
 
 RUN usermod -a -G dialout ${USERNAME}
+
+USER ${USERNAME}
+RUN git config --global --add safe.directory /home/rex/raptor_ws
+USER root
