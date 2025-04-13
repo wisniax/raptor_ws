@@ -9,9 +9,6 @@ launch:
     file: "$(find-pkg-share mqtt_bridge)/launch/mqtt_bridge.yaml"
 
  - include:
-    file: "$(find-pkg-share quad_rover_kinematics)/launch/qrk.yaml"
-
- - include:
     file: "$(find-pkg-share ros2_socketcan)/launch/socket_can_bridge.launch.xml"
     arg:
       -
@@ -26,7 +23,3 @@ launch:
       -
         name: "to_can_bus_topic"
         value: "/CAN/TX/raw"
-
-#  - include:
-#     file: "$(find-pkg-share ublox_gps)/launch/ublox_gps_node-launch.py"
-
