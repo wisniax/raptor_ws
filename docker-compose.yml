@@ -1,3 +1,9 @@
+networks:
+  default:
+    name: ros2-jazzy-network
+    driver_opts:
+      com.docker.network.bridge.name: br-ros2-jazzy
+
 services:
   ros-jazzy:
     build:
@@ -7,9 +13,10 @@ services:
     stdin_open: true
     container_name: ros-jazzy
     tty: true
-    network_mode: "host"
     pid: "host"
     ipc: "host"
+    ports:
+      - "2122:22"
     environment:
       - ROS_DOMAIN_ID
       - TZ=Europe/Warsaw
@@ -25,7 +32,7 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
-    
+
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
