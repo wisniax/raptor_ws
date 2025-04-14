@@ -44,25 +44,6 @@ case "$1" in
 		stop_rex
 		;;
 
-	docker-entrypoint)
-		# this is a special case for the docker entrypoint
-		# it will be called by the docker container when it starts
-		# and will start the REX ROS2 stuff
-
-		echo "Wakey wakey, eggs and bakey! Hello on rex startup!" "rex"
-
-		# Do some logs shenanigans
-		if [ -f /tmp/rex_launch.log ]; then
-			rm -rf /tmp/rex_launch.log
-			echo "Successfully removed old log file" "rex"
-		fi
-		touch /tmp/rex_launch.log
-		chown rex:1000 /tmp/rex_launch.log
-		chmod 664 /tmp/rex_launch.log
-		
-		tail -f -n 169 /tmp/rex_launch.log &
-		;;
-
 	# start and restart do the same; could potentially be split into 2 cases
 	try-restart|condrestart|reload|force-reload|restart|start)
 		echo "(Re)starting REX ROS2 stuff..." "rex"

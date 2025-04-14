@@ -43,3 +43,15 @@ RUN usermod -a -G dialout ${USERNAME}
 USER ${USERNAME}
 RUN git config --global --add safe.directory /home/rex/raptor_ws
 USER root
+
+# Add Tini - its cool I think
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# CMD ["/bin/bash", "-c", "rm -f /tmp/rexlaunch.pgid && service ssh start && exec service rex docker-entrypoint"]
+CMD [ "/usr/local/bin/docker-entrypoint.sh" ]
