@@ -1,8 +1,11 @@
 # Use the official image as a parent image
 FROM ros:jazzy-perception
 
-# Dockerfile for ROS-JAZZY
+# Default configuration
+ENV ROS_ENABLE_AUTOSTART=1
+ENV ROS_BUILD_ON_STARTUP=1
 
+# Dockerfile for ROS-JAZZY
 ARG USERNAME='rex'
 ARG PASSWORD='changeme'
 
