@@ -15,6 +15,7 @@ services:
     tty: true
     pid: "host"
     ipc: "host"
+    init: true
     ports:
       - "2122:22"
     environment:
