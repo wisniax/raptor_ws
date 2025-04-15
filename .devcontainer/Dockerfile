@@ -25,6 +25,9 @@ RUN useradd -m -s /bin/bash -g 1000 ${USERNAME}
 RUN echo "${USERNAME}:${PASSWORD}" | chpasswd
 RUN usermod -aG sudo ${USERNAME}
 
+# Disable sudo password auth
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # Colorful prompts ah yee
 RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}/.bashrc
 
@@ -40,12 +43,20 @@ RUN apt install -y ros-jazzy-ros2-socketcan libasio-dev libceres-dev ros-jazzy-d
 
 RUN usermod -a -G dialout ${USERNAME}
 
+# Fix github 'unsafe' directory
 USER ${USERNAME}
 RUN git config --global --add safe.directory /home/rex/raptor_ws
-USER root
+# Manage public ssh keys
+RUN rm -rf /home/${USERNAME}/.ssh
+RUN mkdir -m 0700 /home/${USERNAME}/.ssh
+RUN touch /home/${USERNAME}/.ssh/authorized_keys
+RUN chmod 640 /home/${USERNAME}/.ssh/authorized_keys
+ADD --chown=${USERNAME}:${USERNAME} public_keys.d /home/${USERNAME}/.ssh/public_keys.d
+RUN cat /home/${USERNAME}/.ssh/public_keys.d/*.pub >> /home/${USERNAME}/.ssh/authorized_keys
+RUN rm -rf /home/${USERNAME}/.ssh/public_keys.d
 
+USER root
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# CMD ["/bin/bash", "-c", "rm -f /tmp/rexlaunch.pgid && service ssh start && exec service rex docker-entrypoint"]
 CMD [ "/usr/local/bin/docker-entrypoint.sh" ]
