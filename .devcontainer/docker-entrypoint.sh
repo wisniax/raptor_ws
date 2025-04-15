@@ -16,7 +16,16 @@ echo 'o888o  o888o o88o     o8888o o888o            o888o      `Y8bood8P`  o888o
 echo "--------------------------------------------------------------------"
 echo "Wakey wakey, eggs and bakey! Hello on rex startup!"
 echo "--------------------------------------------------------------------"
-rm -f /tmp/rexlaunch.pgid
+
+echo "Loaded configuration:"
+echo " - ROS_ENABLE_AUTOSTART:  ${ROS_ENABLE_AUTOSTART}"
+echo " - ROS_BUILD_ON_STARTUP:  ${ROS_BUILD_ON_STARTUP}"
+echo " - ROS_ENABLE_CAN_BRIDGE: ${ROS_ENABLE_CAN_BRIDGE}"
+
+echo "--------------------------------------------------------------------"
+
+
+rm -f /tmp/rexlaunch.pgid # remove old PGID file
 
 service ssh start
 echo "--------------------------------------------------------------------"
