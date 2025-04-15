@@ -53,7 +53,7 @@ RUN mkdir -m 0700 /home/${USERNAME}/.ssh
 RUN touch /home/${USERNAME}/.ssh/authorized_keys
 RUN chmod 640 /home/${USERNAME}/.ssh/authorized_keys
 ADD --chown=${USERNAME}:${USERNAME} public_keys.d /home/${USERNAME}/.ssh/public_keys.d
-RUN cat /home/${USERNAME}/.ssh/public_keys.d/*.pub >> /home/${USERNAME}/.ssh/authorized_keys
+RUN cat /home/${USERNAME}/.ssh/public_keys.d/*.pub >> /home/${USERNAME}/.ssh/authorized_keys || true
 RUN rm -rf /home/${USERNAME}/.ssh/public_keys.d
 
 USER root
