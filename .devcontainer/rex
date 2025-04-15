@@ -63,7 +63,7 @@ case "$1" in
 		fi
 		;;
 
-	status)
+	logs)
 		less +G /tmp/rex_launch.log
 		;;
 
