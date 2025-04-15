@@ -3,6 +3,12 @@
 # This script will be called by the docker container when it starts
 # and will start the REX ROS2 stuff
 
+# Capture start time to brag about startup times later
+start_time=`date +%s.%N`
+
+# Stop script on errors
+set -e
+
 # Most important thing: logo ;)
 echo "--------------------------------------------------------------------"
 echo 'ooooooooo.         .o.       ooooooooo.   ooooooooooooo   .oooooo.   ooooooooo.    .oooooo..o  '
@@ -24,10 +30,12 @@ echo " - ROS_ENABLE_CAN_BRIDGE: ${ROS_ENABLE_CAN_BRIDGE}"
 
 echo "--------------------------------------------------------------------"
 
-
 rm -f /tmp/rexlaunch.pgid # remove old PGID file
 
-service ssh start
+if service ssh start; then
+    echo "To connect to the container, use ssh rex@localhost -p 2122"
+fi
+
 echo "--------------------------------------------------------------------"
 
 # Do some logs shenanigans
@@ -51,6 +59,9 @@ else
 fi
 
 echo "--------------------------------------------------------------------"
-echo "Container startup sequence complete. Tailing log file..."
+end_time=`date +%s.%N`
+# runtime=$( echo "$end_time - $start_time" | bc -l )
+runtime=$(printf '%.3f sec' "$(echo "scale=3;$end_time - $start_time" | bc)")
+echo "Container startup sequence took: $runtime. Tailing log file..."
 echo "--------------------------------------------------------------------"
 tail -f -n 169 /tmp/rex_launch.log
