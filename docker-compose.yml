@@ -1,16 +1,17 @@
 networks:
   default:
-    name: ros2-jazzy-network
+    name: ros-core-network
     driver_opts:
-      com.docker.network.bridge.name: br-ros2-jazzy
+      com.docker.network.bridge.name: br-ros-core
 
 services:
-  ros-jazzy:
+  ros-core:
     build:
       context: ./.devcontainer
-    image: ros-jazzy
+    image: ros-core
     stdin_open: true
-    container_name: ros-jazzy
+    container_name: ros-core
+    hostname: ros-core
     tty: true
     pid: "host"
     ipc: "host"
