@@ -9,7 +9,6 @@ services:
     build:
       context: ./.devcontainer
     image: ros-jazzy
-    # command: /bin/bash -c 'rm -f /tmp/rexlaunch.pgid && service ssh start && service rex docker-entrypoint'
     stdin_open: true
     container_name: ros-jazzy
     tty: true
@@ -35,9 +34,9 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
-    depends_on:
-      mosquitto:
-        condition: service_healthy
+    # depends_on:
+    #   mosquitto:
+    #     condition: service_healthy
 
 
   mosquitto:
