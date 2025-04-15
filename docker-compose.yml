@@ -21,7 +21,8 @@ services:
     environment:
       - TZ=Europe/Warsaw
       - ROS_ENABLE_AUTOSTART=1
-      - ROS_BUILD_ON_STARTUP=1
+      - ROS_BUILD_ON_STARTUP=on-failure
+      - ROS_ENABLE_CAN_BRIDGE=1
     volumes:
       - type: bind
         source: ./
