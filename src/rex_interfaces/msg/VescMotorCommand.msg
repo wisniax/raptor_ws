@@ -1,2 +1,0 @@
-uint8 command_id
-float32 set_value
