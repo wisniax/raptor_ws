@@ -2,8 +2,8 @@
 FROM ros:jazzy-perception
 
 # Default configuration
-ENV ROS_ENABLE_AUTOSTART=1
-ENV ROS_BUILD_ON_STARTUP=1
+ENV ROS_ENABLE_AUTOSTART=0
+ENV ROS_BUILD_ON_STARTUP=0
 
 # Dockerfile for ROS-JAZZY
 ARG USERNAME='rex'
