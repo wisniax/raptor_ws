@@ -47,6 +47,41 @@ touch /tmp/rex_launch.log
 chown rex:1000 /tmp/rex_launch.log
 chmod 664 /tmp/rex_launch.log
 
+# Trigger and wait for can bridge creation on host's side
+if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
+    touch /home/rex/raptor_ws/.can_bridge_rex_waiting
+    chown rex:1000 /home/rex/raptor_ws/.can_bridge_rex_waiting
+    chmod 664 /home/rex/raptor_ws/.can_bridge_rex_waiting
+    echo "rex is waiting for host system to create a network"
+
+    # Total duration to check (seconds)
+    canb_timeout=5
+    # Interval between checks (seconds)
+    canb_interval=0.5
+    canb_end_time=$(( $(date +%s) + canb_timeout ))
+    canb_interface_up=0
+
+    echo "Rex: Waiting for vxcan1 to come up (max ${canb_timeout} seconds)..."
+
+    while [[ $(date +%s) -lt $canb_end_time ]]; do
+        sleep $canb_interval
+        if [[ -d /sys/class/net/vxcan1 ]] && [[ $(cat /sys/class/net/vxcan1/operstate) == "up" ]]; then
+            echo "Rex: vxcan1 is UP after $(( $(date +%s) - (canb_end_time - canb_timeout) )) seconds"
+            canb_interface_up=1
+            break
+        fi
+    done
+
+    if [[ $canb_interface_up -eq 0 ]]; then
+        echo "REX ERROR: vxcan1 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
+    fi
+
+    rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting
+
+else
+    echo "Rex can bridge setup disabled - skipping"
+fi
+
 if [[ ${ROS_ENABLE_AUTOSTART} == "1" ]]; then
     echo "Rex autostart enabled - starting REX ROS2 ..."
     if service rex start; then
