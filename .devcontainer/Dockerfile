@@ -4,7 +4,7 @@ FROM ros:jazzy-perception
 # Default configuration
 ENV ROS_ENABLE_AUTOSTART=0
 ENV ROS_BUILD_ON_STARTUP=on-failure
-ENV ROS_ENABLE_CAN_BRIDGE=1
+ENV ROS_ENABLE_CAN_BRIDGE=0
 
 # Dockerfile for ROS-JAZZY
 ARG USERNAME='rex'
