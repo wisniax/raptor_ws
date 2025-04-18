@@ -83,6 +83,12 @@ sudo vim /etc/systemd/system/can-bridge.path
 ```
 Change `PathExists=/path/to/raptor_ws/.can_bridge_rex_waiting` to correct `raptor_ws` path for your system.
 
+Then:
+```
+sudo vim /etc/systemd/system/can-bridge.service
+```
+Change `ExecStartPost=/bin/rm -f /path/to/raptor_ws/.can_bridge_rex_waiting` to correct `raptor_ws` path for your system.
+
 #### Setup correct permissions for executable
 ```
 sudo chmod +x /usr/local/bin/can-bridge-setup.sh
