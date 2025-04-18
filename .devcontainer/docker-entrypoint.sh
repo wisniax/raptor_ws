@@ -66,7 +66,7 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
     while [[ $(date +%s) -lt $canb_end_time ]]; do
         sleep $canb_interval
         if [[ -d /sys/class/net/vxcan1 ]] && [[ $(cat /sys/class/net/vxcan1/operstate) == "up" ]]; then
-            echo "Rex: vxcan1 is UP after $(( $(date +%s) - (canb_end_time - canb_timeout) )) seconds"
+            echo "Rex: vxcan1 is UP!"
             canb_interface_up=1
             break
         fi
