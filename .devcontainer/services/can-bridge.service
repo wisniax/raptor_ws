@@ -6,3 +6,4 @@ Requires=docker.service
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/can-bridge-setup.sh
+ExecStartPost=/bin/rm -f /path/to/raptor_ws/.can_bridge_rex_waiting

@@ -74,9 +74,9 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
 
     if [[ $canb_interface_up -eq 0 ]]; then
         echo "REX ERROR: vxcan1 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
+        rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting || true
     fi
 
-    rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting
 
 else
     echo "Rex can bridge setup disabled - skipping"
