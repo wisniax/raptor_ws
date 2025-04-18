@@ -1,0 +1,9 @@
+[Unit]
+Description=CAN Bridge Setup for ROS Core
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/can-bridge-setup.sh
+ExecStartPost=/bin/rm -f /home/wisnia/ros2-jazzy/raptor_ws/.can_bridge_rex_waiting

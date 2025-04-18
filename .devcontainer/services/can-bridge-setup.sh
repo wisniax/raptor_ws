@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Exit on error and show commands
+set -ex
+
+# # Cleanup function
+# cleanup() {
+#     echo "Cleaning up..."
+#     ip link delete vxcan0 2>/dev/null || true
+#     cangw -D -s can0 -d vxcan0 2>/dev/null || true
+#     cangw -D -s vxcan0 -d can0 2>/dev/null || true
+# }
+
+# # Register cleanup trap
+# trap cleanup EXIT
+
+# Get Docker PID with retries
+for i in {1..5}; do
+    DOCKERPID=$(docker inspect -f '{{.State.Pid}}' ros-core 2>/dev/null) && break
+    sleep 1
+done
+
+if [ -z "$DOCKERPID" ]; then
+    echo "ERROR: ros-core container not found!"
+    exit 1
+fi
+
+# Create virtual CAN pair
+ip link add vxcan0 type vxcan peer name vxcan1 netns "$DOCKERPID"
+
+# Bring up interfaces
+nsenter -t "$DOCKERPID" -n ip link set vxcan1 up
+ip link set vxcan0 up
+
+# Set up CAN gateway
+cangw -A -s can0 -d vxcan0 -e
+cangw -A -s vxcan0 -d can0 -e
+
+echo "CAN bridge setup completed successfully"
