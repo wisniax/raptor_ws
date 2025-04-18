@@ -13,7 +13,7 @@ launch:
     arg:
       -
         name: "interface"
-        value: "can0"
+        value: "vxcan1"
       -
         name: "enable_can_fd"
         value: "false"
