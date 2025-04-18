@@ -83,7 +83,7 @@ sudo vim /etc/systemd/system/can-bridge.path
 ```
 Change `PathExists=/path/to/raptor_ws/.can_bridge_rex_waiting` to correct `raptor_ws` path for your system.
 
-Then:
+#### Then edit path in `can-bridge.service` service to `raptor_ws` directory
 ```
 sudo vim /etc/systemd/system/can-bridge.service
 ```
