@@ -30,8 +30,9 @@
     - `always` - Always build on startup. \
     Very high boot performance impact.
 - `ROS_ENABLE_CAN_BRIDGE` *(to be implemented)*
-    - `0`  - CAN bridge node isn't started
-    - **`1`** (default)- CAN bridge node is started
+    - **`0`** (default) - Do not trigger can bridge to set-up, nor wait for it
+    - `1` - Trigger *host* to set-up can bridge. Requires additional configuration on host side (extra services) to work. \
+    When configured properly: low boot performance impact (0.4 sec). Will delay startup by 5 sec when this is enabled but not configured!
 
 # Container features
 ## SSH into the container
@@ -56,3 +57,41 @@ e.g. `ssh rex@localhost -p 2122`
 
 ### Tail logfile
 `sudo service rex logs`
+
+## Setting up can bridge to autostart properly
+Can bridge setup is a feature related to `ROS_ENABLE_CAN_BRIDGE` docker flag. 
+For can interface to work properly inside docker that does not have *network: "host"* defined we need to get creative and reach for... virtual interfaces!. Specifically, we use vxcan for this. This is also included in the Linux kernel. Vxcan allows to create virtual CAN interfaces and to set up tunnels between them. This makes it relatively easy to communicate across network namespaces. For example, between two or more Docker containers. ([source](https://www.systec-electronic.com/en/demo/blog/article/news-socketcan-docker-the-solution))
+
+> **Warn!** Hot-swapping physical can-interfaces is currently **NOT** supported. *(TODO Task)*
+
+### Physical can interface auto bringup
+TBD
+
+### Virtual can bridge setup
+First make sure your shell is in *raptor_ws* directory.
+
+#### Now copy necessary services and executables to system:
+```
+sudo cp .devcontainer/services/can-bridge.* /etc/systemd/system/
+sudo cp .devcontainer/services/can-bridge-setup.sh /usr/local/bin/
+```
+> **Note!** Those services are responsible for detecting a file in raptor_ws (.path one) which triggers (together with .service file) a can bridge creation.
+
+#### Edit path in `can-bridge.path` service to `raptor_ws` directory
+```
+sudo vim /etc/systemd/system/can-bridge.path
+```
+Change `PathExists=/path/to/raptor_ws/.can_bridge_rex_waiting` to correct `raptor_ws` path for your system.
+
+#### Setup correct permissions for executable
+```
+sudo chmod +x /usr/local/bin/can-bridge-setup.sh
+```
+
+#### Reload `systemd` and start the service
+```
+sudo systemctl daemon-reload
+sudo systemctl enable can-bridge.path
+sudo systemctl start can-bridge.path
+```
+> **Note!** Do not skip *.path* above. This results in improper setup!

@@ -2,7 +2,7 @@
 Description=Watch for CAN bridge trigger file
 
 [Path]
-PathExists=/home/wisnia/ros2-jazzy/raptor_ws/.can_bridge_rex_waiting
+PathExists=/path/to/raptor_ws/.can_bridge_rex_waiting
 MakeDirectory=no
 Unit=can-bridge.service
 
