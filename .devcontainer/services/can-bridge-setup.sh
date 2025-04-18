@@ -3,17 +3,6 @@
 # Exit on error and show commands
 set -ex
 
-# # Cleanup function
-# cleanup() {
-#     echo "Cleaning up..."
-#     ip link delete vxcan0 2>/dev/null || true
-#     cangw -D -s can0 -d vxcan0 2>/dev/null || true
-#     cangw -D -s vxcan0 -d can0 2>/dev/null || true
-# }
-
-# # Register cleanup trap
-# trap cleanup EXIT
-
 # Get Docker PID with retries
 for i in {1..5}; do
     DOCKERPID=$(docker inspect -f '{{.State.Pid}}' ros-core 2>/dev/null) && break
