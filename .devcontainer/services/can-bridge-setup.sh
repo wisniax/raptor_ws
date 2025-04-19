@@ -4,7 +4,7 @@
 set -ex
 
 # Get Docker PID with retries
-for i in {1..5}; do
+for i in {1..15}; do
     DOCKERPID=$(docker inspect -f '{{.State.Pid}}' ros-core 2>/dev/null) && break
     sleep 1
 done
@@ -20,6 +20,9 @@ ip link add vxcan0 type vxcan peer name vxcan1 netns "$DOCKERPID"
 # Bring up interfaces
 nsenter -t "$DOCKERPID" -n ip link set vxcan1 up
 ip link set vxcan0 up
+
+# Load can-gw module
+modprobe can-gw
 
 # Set up CAN gateway
 cangw -A -s can0 -d vxcan0 -e
