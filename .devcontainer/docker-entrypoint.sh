@@ -77,6 +77,10 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
         rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting || true
     fi
 
+    if [ -f /home/rex/raptor_ws/.can_bridge_rex_waiting ]; then
+        rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting
+        echo "REX WARN: vxcan1 setup service might fail - network probably is created but not bridged - please check the configuration"
+    fi
 
 else
     echo "Rex can bridge setup disabled - skipping"
