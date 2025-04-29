@@ -8,9 +8,9 @@
             "includePath": [
                 "/opt/ros/jazzy/include/**",
                 "/usr/include/**",
-                "${workspaceFolder}/src/can_bridge/include",
-                "${workspaceFolder}/src/libVescCan/include",
-                "${workspaceFolder}/src/can_bridge/libVescCan/include"
+                "${workspaceFolder}/src/can_bridge/include/**",
+                "${workspaceFolder}/src/libVescCan/include/**",
+                "${workspaceFolder}/src/can_bridge/libVescCan/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
