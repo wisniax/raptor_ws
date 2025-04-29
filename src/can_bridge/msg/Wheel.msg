@@ -1,2 +1,0 @@
-can_bridge/VescMotorCommand drive
-can_bridge/VescMotorCommand turn
