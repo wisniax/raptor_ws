@@ -67,26 +67,6 @@ int main(int argc, char *argv[])
 		switch (canNodeMode)
 		{
 		case CanNodeMode::Created:
-			// if (!ros::service::waitForService("/CAN/ros_can_integration/check_status", 15))
-			// {
-			// 	ROS_WARN("Service /CAN/ros_can_integration/check_status is not yet available. Retrying...");
-			// 	canNodeMode = CanNodeMode::Faulted;
-			// 	break;
-			// }
-
-			// if (!ros::service::call("/CAN/ros_can_integration/check_status", req, res))
-			// {
-			// 	ROS_WARN("Service /CAN/ros_can_integration/check_status call failed. Retrying...");
-			// 	canNodeMode = CanNodeMode::Faulted;
-			// 	break;
-			// }
-
-			// if (res.success != 0)
-			// {
-			// 	ROS_WARN("Package ros_can_integration is not yet ready... Retrying...");
-			// 	canNodeMode = CanNodeMode::Faulted;
-			// 	break;
-			// }
 			
 			canNodeMode = CanNodeMode::Opening;
 			break;
