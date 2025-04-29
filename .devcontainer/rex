@@ -40,36 +40,36 @@ stop_rex() {
 }
 
 case "$1" in
-  stop)
-        stop_rex
-        ;;
+	stop)
+		stop_rex
+		;;
 
-  # start and restart do the same; could potentially be split into 2 cases
-  try-restart|condrestart|reload|force-reload|restart|start)
-        log_daemon_msg "(Re)starting REX ROS2 stuff..." "rex" || true
-        # try to stop already running instance (if any)
-        stop_rex
-        # start rexlaunch.sh, with user rex and GID 1000, in the context of raptor_ws
-        if start-stop-daemon --start --oknodo --chuid rex:1000 --user rex --group 1000 -d /home/rex/raptor_ws/ --exec /bin/sh .devcontainer/rexlaunch.sh; then
-        	log_daemon_msg "Started REX ROS2 stuff!" "rex" || true
-        	# log success
-        	log_end_msg 0 || true
-        else
-        	log_daemon_msg "Starting REX ROS2 stuff failed!" "rex" || true
-        	# remove the PGID file
-        	su - rex -c 'rm /tmp/rexlaunch.pgid' || true
-        	# log failure
-        	log_end_msg 1 || true
-        fi
-        ;;
+	# start and restart do the same; could potentially be split into 2 cases
+	try-restart|condrestart|reload|force-reload|restart|start)
+		echo "(Re)starting REX ROS2 stuff..." "rex"
+		# try to stop already running instance (if any)
+		stop_rex
+		# start rexlaunch.sh, with user rex and GID 1000, in the context of raptor_ws
+		if start-stop-daemon --start --oknodo --chuid rex:1000 --user rex --group 1000 -d /home/rex/raptor_ws/ --exec /bin/sh .devcontainer/rexlaunch.sh; then
+			log_daemon_msg "Started REX ROS2 stuff!" "rex" || true
+			# log success
+			log_end_msg 0 || true
+		else
+ 			log_daemon_msg "Starting REX ROS2 stuff failed!" "rex" || true
+			# remove the PGID file
+			su - rex -c 'rm /tmp/rexlaunch.pgid' || true
+			# log failure
+			log_end_msg 1 || true
+		fi
+		;;
 
-  status)
-        less +G /home/rex/.ros/log/latest/launch.log
-        ;;
+	logs)
+		less +G /tmp/rex_launch.log
+		;;
 
-  *)
-        log_action_msg "Usage: /etc/init.d/rex {start|stop|reload|force-reload|restart|try-restart|condrestart|status}" || true
-        exit 1
+	*)
+		log_action_msg "Usage: /etc/init.d/rex {start|stop|reload|force-reload|restart|try-restart|condrestart|status}" || true
+		exit 1
 esac
 
 exit 0

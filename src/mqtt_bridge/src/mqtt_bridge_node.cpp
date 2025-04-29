@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
     auto node = rclcpp::Node::make_shared("mqtt_bridge_node");
 
 	// ### MQTT configuration ###
-	const std::string SERVER_ADDRESS("mqtt://192.168.1.20:1883");
+	const std::string SERVER_ADDRESS("mqtt://mosquitto:1883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	//const int SESSION_EXPIRY = 604800;

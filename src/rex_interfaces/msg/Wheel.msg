@@ -1,2 +1,0 @@
-rex_interfaces/VescMotorCommand drive
-rex_interfaces/VescMotorCommand turn

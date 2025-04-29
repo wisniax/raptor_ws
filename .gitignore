@@ -68,3 +68,6 @@ CATKIN_IGNORE
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Temporary rex can bridge file
+.can_bridge_rex_waiting

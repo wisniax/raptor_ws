@@ -1,7 +1,0 @@
-std_msgs/Header header
-float32 drill_movement
-float32 platform_movement
-float32 drill_action
-float32 container_degrees_0
-float32 container_degrees_1
-float32 container_degrees_2
