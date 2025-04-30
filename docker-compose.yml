@@ -35,10 +35,6 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
-    # depends_on:
-    #   mosquitto:
-    #     condition: service_healthy
-
 
   mosquitto:
     image: eclipse-mosquitto
