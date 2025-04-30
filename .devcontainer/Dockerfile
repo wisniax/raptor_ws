@@ -42,11 +42,12 @@ RUN apt update && apt upgrade -y
 RUN mkdir /home/${USERNAME}/raptor_ws
 RUN apt install -y ros-jazzy-ros2-socketcan libasio-dev libceres-dev ros-jazzy-diagnostic-updater ros-jazzy-diagnostic-updater ros-jazzy-rtcm-msgs ros-jazzy-nmea-msgs
 
-RUN usermod -a -G dialout ${USERNAME}
-
 # Fix github 'unsafe' directory
 USER ${USERNAME}
 RUN git config --global --add safe.directory /home/rex/raptor_ws
+RUN git config --global --add safe.directory /home/rex/raptor_ws/src/rex_interfaces
+RUN git config --global --add safe.directory /home/rex/raptor_ws/src/libVescCan
+
 # Manage public ssh keys
 RUN rm -rf /home/${USERNAME}/.ssh
 RUN mkdir -m 0700 /home/${USERNAME}/.ssh
