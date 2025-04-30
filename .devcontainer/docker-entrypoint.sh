@@ -34,6 +34,8 @@ rm -f /tmp/rexlaunch.pgid # remove old PGID file
 
 if service ssh start; then
     echo "To connect to the container, use ssh rex@localhost -p 2122"
+else
+    echo "SSH service failed to start"
 fi
 
 echo "--------------------------------------------------------------------"
@@ -46,6 +48,9 @@ fi
 touch /tmp/rex_launch.log
 chown rex:1000 /tmp/rex_launch.log
 chmod 664 /tmp/rex_launch.log
+
+# Make raptor_ws directory writable
+chmod g+rw -R /home/rex/raptor_ws
 
 # Trigger and wait for can bridge creation on host's side
 if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
@@ -81,7 +86,6 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
         rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting
         echo "REX WARN: vxcan1 setup service might fail - network probably is created but not bridged - please check the configuration"
     fi
-
 else
     echo "Rex can bridge setup disabled - skipping"
 fi
