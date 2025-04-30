@@ -1,21 +1,73 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
     "configurations": [
+
+        // master-launch
+
         {
-            "name": "ROS: Launch",
-            "request": "launch",
-            "target": "/home/rex/raptor_ws/master.launch",
-            "launch": [
-                "rviz",
-                "gz",
-                "gzclient",
-                "gzserver"
-            ],
+            "name": "ROS: Launch <ALL> (RelWithDebInfo)",
             "type": "ros",
-            "preLaunchTask": "build"
-        }
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <ALL> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <ALL> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/master-launch.yaml",
+        },
+
+        // can_bridge
+        
+        {
+            "name": "ROS: Launch <can_bridge> (RelWithDebInfo)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <can_bridge> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <can_bridge> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/can_bridge/launch/can_bridge.yaml",
+        },
+
+        // mqtt_bridge
+
+        {
+            "name": "ROS: Launch <mqtt_bridge> (RelWithDebInfo)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (RelWithDebInfo)"
+        },
+        {
+            "name": "ROS: Launch <mqtt_bridge> (Debug)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+            "preLaunchTask": "Colcon: Build (Debug)"
+        },
+        {
+            "name": "ROS: Launch <mqtt_bridge> (no-rebuild)",
+            "type": "ros",
+            "request": "launch",
+            "target": "${workspaceFolder}/src/mqtt_bridge/launch/mqtt_bridge.yaml",
+        },
     ]
 }

@@ -1,15 +1,28 @@
+networks:
+  default:
+    name: ros-core-network
+    driver_opts:
+      com.docker.network.bridge.name: br-ros-core
+
 services:
-  ros-noetic:
+  ros-core:
     build:
       context: ./.devcontainer
-    image: ros-noetic
-    command: /bin/bash -c 'service ssh start && service rex start && tail -f /dev/null'
+    image: ros-core
     stdin_open: true
-    container_name: ros-noetic
+    container_name: ros-core
+    hostname: ros-core
     tty: true
-    network_mode: "host"
+    pid: "host"
+    ipc: "host"
+    init: true
+    ports:
+      - "2122:22"
     environment:
       - TZ=Europe/Warsaw
+      - ROS_ENABLE_AUTOSTART=1
+      - ROS_BUILD_ON_STARTUP=on-failure
+      - ROS_ENABLE_CAN_BRIDGE=1
     volumes:
       - type: bind
         source: ./
@@ -22,6 +35,7 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
+
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
@@ -33,3 +47,9 @@ services:
       - /var/opt/mosquitto/data:/mosquitto/data
       - /var/opt/mosquitto/log:/mosquitto/log
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

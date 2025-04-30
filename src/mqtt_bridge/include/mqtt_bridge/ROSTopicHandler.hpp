@@ -1,13 +1,14 @@
 #ifndef ROS_TOPIC_HANDLER_H
 #define ROS_TOPIC_HANDLER_H
 
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-#include "can_wrapper/Wheels.h"
-#include "can_wrapper/VescStatus.h"
-#include "can_wrapper/RoverControl.h"
-#include "can_wrapper/RoverStatus.h"
-#include "mqtt_bridge/ManipulatorMessage.h"
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include "rex_interfaces/msg/wheels.hpp"
+#include "rex_interfaces/msg/vesc_status.hpp"
+#include "rex_interfaces/msg/rover_control.hpp"
+#include "rex_interfaces/msg/rover_status.hpp"
+#include "rex_interfaces/msg/probe_control.hpp"
+#include "mqtt_bridge/msg/manipulator_message.hpp"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -20,48 +21,54 @@ namespace mqtt
 class ROSTopicHandler
 {
 public:
-  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS);
+  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node::SharedPtr node);
 
-  void publishMessage_Wheels(can_wrapper::Wheels message);
-  void publishMessage_RoverControl(can_wrapper::RoverControl message);
-  void publishMessage_ManipulatorControl(mqtt_bridge::ManipulatorMessage message);
-  void publishMessage_RoverStatus(can_wrapper::RoverStatus message);
+  void publishMessage_Wheels(rex_interfaces::msg::Wheels message);
+  void publishMessage_RoverControl(rex_interfaces::msg::RoverControl message);
+  void publishMessage_ManipulatorControl(mqtt_bridge::msg::ManipulatorMessage message);
+  void publishMessage_ProbeControl(rex_interfaces::msg::ProbeControl message);
+  void publishMessage_RoverStatus(rex_interfaces::msg::RoverStatus message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
-  void addTimestampToJSON(rapidjson::Document &doc, long int nsec);
+  void addTimestampToJSON(rapidjson::Document &doc, long int msec);
   template<typename T>
   void addMemberToJSON(rapidjson::Document &doc, std::string name, T value);
   template<typename T>
   void addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T>& m);
 
-  void callback_VescStatus(const can_wrapper::VescStatus::ConstPtr &receivedMsg);
-  void fire_VescStatus(const ros::TimerEvent& event);
-  void publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper::VescStatus> msg);
+  void callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg);
+  void fire_VescStatus();
+  void publishMqttMessage_VescStatus(std::shared_ptr<rex_interfaces::msg::VescStatus> msg);
 
-  void callback_ZedImuData(const sensor_msgs::Imu::ConstPtr &receivedMsg);
-  void fire_ZedImuData(const ros::TimerEvent& event);
-  void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::Imu> msg);
+  void callback_ZedImuData(const sensor_msgs::msg::Imu::ConstSharedPtr &receivedMsg);
+  void fire_ZedImuData();
+  void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::msg::Imu> msg);
 
 
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
 
-  const double mInterval_VescStatus = 0.05;
-  ros::Subscriber mSub_VescStatus;
-  ros::Timer mTimer_VescStatus;
-  std::map<int, std::shared_ptr<can_wrapper::VescStatus>> mMsgMap_VescStatus;
+  const int32_t mInterval_VescStatus = 50;
+  rclcpp::Subscription<rex_interfaces::msg::VescStatus>::SharedPtr mSub_VescStatus;
+  rclcpp::TimerBase::SharedPtr mTimer_VescStatus;
+  std::map<int, std::shared_ptr<rex_interfaces::msg::VescStatus>> mMsgMap_VescStatus;
 
-  const double mInterval_ZedImuData = 0.05;
-  ros::Subscriber mSub_ZedImuData;
-  ros::Timer mTimer_ZedImuData;
-  std::shared_ptr<sensor_msgs::Imu> mMsg_ZedImuData;
+  const int32_t mInterval_ZedImuData = 50;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr mSub_ZedImuData;
+  rclcpp::TimerBase::SharedPtr mTimer_ZedImuData;
+  std::shared_ptr<sensor_msgs::msg::Imu> mMsg_ZedImuData;
   bool mFirst_ZedImuData = true;
 
-  ros::Publisher mPub_Wheels;
-  ros::Publisher mPub_RoverControl;
-  ros::Publisher mPub_ManipulatorControl;
-  ros::Publisher mPub_RoverStatus;
+  rclcpp::Publisher<rex_interfaces::msg::Wheels>::SharedPtr mPub_Wheels;
+  rclcpp::Publisher<rex_interfaces::msg::RoverControl>::SharedPtr mPub_RoverControl;
+  rclcpp::Publisher<mqtt_bridge::msg::ManipulatorMessage>::SharedPtr mPub_ManipulatorControl;
+  rclcpp::Publisher<rex_interfaces::msg::ProbeControl>::SharedPtr mPub_ProbeControl;
+  rclcpp::Publisher<rex_interfaces::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
+
+  rclcpp::CallbackGroup::SharedPtr timer_cb_group;
+
+  rclcpp::Node::SharedPtr n;
 };
 
 #endif // ROS_TOPIC_HANDLER_H

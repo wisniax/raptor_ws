@@ -1,8 +1,8 @@
-Header header
-float32 Axis1
-float32 Axis2
-float32 Axis3
-float32 Axis4
-float32 Axis5
-float32 Axis6
-float32 Gripper
+std_msgs/Header header
+float32 axis1
+float32 axis2
+float32 axis3
+float32 axis4
+float32 axis5
+float32 axis6
+float32 gripper

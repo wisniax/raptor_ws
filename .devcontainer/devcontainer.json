@@ -8,9 +8,12 @@
   "runArgs": [
     "--privileged",
     "--network=host",
-    "--shm-size=2g"
+    "--shm-size=2g",
+    "--pid=host",
+    "--ipc=host",
+    "-e", "DISPLAY=${env:DISPLAY}"
   ],
-  "forwardPorts": [6080],
+  "forwardPorts": [6080, 11811],
   "portsAttributes": {
     "6080": {
       "label": "desktop"
@@ -26,14 +29,14 @@
         "ms-vscode.cpptools",
         "ms-vscode.cpptools-extension-pack",
         "ms-vscode.cpptools-themes",
-        "betwo.b2-catkin-tools",
-        "twxs.cmake",
-        "ms-vscode.cmake-tools",
-        "cschlosser.doxdocgen",
-        "ms-python.vscode-pylance",
-        "ms-python.python",
+        // "ms-python.vscode-pylance",
+        // "ms-python.python",
         "ms-iot.vscode-ros"
       ]
     }
+  },
+  "containerEnv": {
+    //"DISPLAY": "unix:0",
+    "ROS_DOMAIN_ID": "1"
   }
 }
