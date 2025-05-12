@@ -34,7 +34,7 @@ struct MotorStatusValue
 	VESC_RawFrame vescFrame;
 	rclcpp::Time receivedTime;
 	MotorStatusValue() = default;
-	inline MotorStatusValue(VESC_RawFrame vescFrame, rclcpp::Time recivedTime) : vescFrame(vescFrame), receivedTime(receivedTime)
+	inline MotorStatusValue(VESC_RawFrame vescFrame, rclcpp::Time recivedFrameTime) : vescFrame(vescFrame), receivedTime(recivedFrameTime)
 	{
 	}
 };
