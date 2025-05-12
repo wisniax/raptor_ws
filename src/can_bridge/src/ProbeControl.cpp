@@ -85,6 +85,9 @@ void ProbeControl::requestProbeStatus()
 
 void ProbeControl::publish(const VESC_CommandFrame* arr, int arr_size)
 {
+#warning ProbeControl publishnig disabled!
+	return;
+
 	VESC_RawFrame rf;
 	for(int i = 0; i < arr_size; i++)
 	{
