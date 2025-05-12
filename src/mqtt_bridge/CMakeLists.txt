@@ -6,7 +6,6 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -44,10 +43,10 @@ find_library(PahoMqttCpp_LIBRARY libpaho-mqttpp3.so.1 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/ManipulatorMessage.msg"
-  DEPENDENCIES std_msgs
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "msg/ManipulatorMessage.msg"
+#   DEPENDENCIES std_msgs
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -114,8 +113,6 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node PUBLIC
