@@ -55,7 +55,7 @@ void ProbeControl::doStuff()
 	vesc_container[4].command = VESC_COMMAND_SET_DUTY;
 	vesc_container[4].commandData = mProbeCtlMsgLast->drill_movement;
 		
-	vesc_container[5].vescID = 0x72;
+	vesc_container[5].vescID = 0x80;
 	vesc_container[5].command = VESC_COMMAND_SET_DUTY;
 	vesc_container[5].commandData = mProbeCtlMsgLast->platform_movement;
 
@@ -85,8 +85,6 @@ void ProbeControl::requestProbeStatus()
 
 void ProbeControl::publish(const VESC_CommandFrame* arr, int arr_size)
 {
-#warning ProbeControl publishnig disabled!
-	return;
 
 	VESC_RawFrame rf;
 	for(int i = 0; i < arr_size; i++)
