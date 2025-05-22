@@ -2,23 +2,12 @@
 {
   "name": "Raptor ROS desktop-full",
   "dockerFile": "Dockerfile",
-  "features": {
-    "ghcr.io/devcontainers/features/desktop-lite:1": {}
-  },
   "runArgs": [
-    "--privileged",
-    "--network=host",
-    "--shm-size=2g",
-    "--pid=host",
-    "--ipc=host",
-    "-e", "DISPLAY=${env:DISPLAY}"
+    // "--privileged",
+    // "--network=host",
+    // "--pid=host",
+    // "--ipc=host"
   ],
-  "forwardPorts": [6080, 11811],
-  "portsAttributes": {
-    "6080": {
-      "label": "desktop"
-    }
-  },
   "remoteUser": "rex",
   "containerUser": "rex",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/rex/${localWorkspaceFolderBasename},type=bind",
@@ -36,7 +25,6 @@
     }
   },
   "containerEnv": {
-    //"DISPLAY": "unix:0",
     "ROS_DOMAIN_ID": "1"
   }
 }

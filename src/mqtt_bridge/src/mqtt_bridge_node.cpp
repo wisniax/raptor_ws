@@ -108,7 +108,7 @@ void processMqttManipulatorControlMessage(const char *payloadMsg, std::shared_pt
 	{
 		try
 		{
-			mqtt_bridge::msg::ManipulatorMessage msg;
+			rex_interfaces::msg::ManipulatorMqttMessage msg;
 
 			msg.axis1 = d["Axis1"].GetDouble();
 			msg.axis2 = d["Axis2"].GetDouble();
