@@ -27,7 +27,7 @@ public:
 	void sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg);
 
 private:
-	can_msgs::msg::Frame encodeMotorVel(const float msg, const VESC_Command command, const VESC_Id_t vescId);
+	can_msgs::msg::Frame encodeMotorVel(const rex_interfaces::msg::VescMotorCommand &vescMotorCommand, const VESC_Id_t vescId);
 
 	void handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg);
 
