@@ -51,7 +51,6 @@ COPY --chown=${USERNAME}:${USERNAME} . /home/${USERNAME}/raptor_ws
 RUN rm -rf /home/${USERNAME}/raptor_ws/build
 RUN rm -rf /home/${USERNAME}/raptor_ws/log
 RUN rm -rf /home/${USERNAME}/raptor_ws/install
-RUN ls -al
 
 # Fix github 'unsafe' directory
 RUN git config --global --add safe.directory /home/rex/raptor_ws
