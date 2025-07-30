@@ -1,13 +1,13 @@
 name: Build and publish Raptor Ros Core Docker Image
 
 on:
-  push:
-    branches: [ "master" ]
-    tags: # This makes tags a filter for the push event.
-      - 'v*.*.*' # Trigger on pushes that are also new tags like v1.0.0
-  pull_request:
-    branches: [ "master" ]
-  workflow_dispatch: # This correctly defines a manual trigger for the workflow
+  # push:
+  #   branches: [ "master" ]
+  #   tags: # This makes tags a filter for the push event.
+  #     - 'v*.*.*' # Trigger on pushes that are also new tags like v1.0.0
+  # pull_request:
+  #   branches: [ "master" ]
+  workflow_dispatch:
 jobs:
 
   build-and-publish-image:
