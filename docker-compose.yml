@@ -7,7 +7,8 @@ networks:
 services:
   ros-core:
     build:
-      context: ./.devcontainer
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile
     image: ros-core
     stdin_open: true
     container_name: ros-core
@@ -24,11 +25,6 @@ services:
       - ROS_BUILD_ON_STARTUP=on-failure
       - ROS_ENABLE_CAN_BRIDGE=1
     volumes:
-      - type: bind
-        source: ./
-        target: /home/rex/raptor_ws
-        bind:
-          create_host_path: true
       - type: bind
         source: ./.devcontainer/rex
         target: /etc/init.d/rex
