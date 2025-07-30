@@ -5,12 +5,6 @@
 ## Get the submodules
 `git submodule update --init`
 
-## Build the container
-`docker compose build`
-> To enable passwordless ssh into rex: \
-> Copy your public ssh files to .devcontainer/public_keys.d \
-> **Note!** Do this step before building the container or rebuild after!
-
 ## Start the container
 `docker compose up -d`
 
@@ -101,3 +95,16 @@ sudo systemctl enable can-bridge.path
 sudo systemctl start can-bridge.path
 ```
 > **Note!** Do not skip *.path* above. This results in improper setup!
+
+# Build using GH actions runner
+Make `.secrets` file in project directory with contents:
+```
+DOCKERHUB_TOKEN=<docker-hub-token>
+DOCKERHUB_USERNAME=<username>
+GITHUB_TOKEN=<github-token>
+```
+then run
+```
+act
+```
+> Note! This will build the container locally and push it to dockerhub!
