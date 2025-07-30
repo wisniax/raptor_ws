@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <fstream>
 #include <cstring>
 #include <cctype>
 #include <thread>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <mqtt/async_client.h>
 #include <rcutils/logging.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #define RAPIDJSON_HAS_STDSTRING 1
 class JsonAssertException : public std::exception
@@ -199,8 +201,13 @@ int main(int argc, char *argv[])
     auto node = rclcpp::Node::make_shared("mqtt_bridge_node");
 
 	// ### MQTT configuration ###
-	const std::string SERVER_ADDRESS("mqtt://mosquitto:1883");
+	const std::string SERVER_ADDRESS("ssl://mosquitto:8883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
+	const std::string MQTT_USERNAME("raptors");
+	const std::string MQTT_PASSWORD("changeme");
+	const std::string SSL_TRUST_STORE("ca.crt");
+	const std::string SSL_KEY_STORE("client.crt");
+	const std::string SSL_PRIVATE_KEY("client.key");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	//const int SESSION_EXPIRY = 604800;
 	const int PUBLISHER_QOS = 0;
@@ -208,6 +215,28 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MIN_RETRY_INTERVAL{1};
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
+
+	std::string ssl_certs_dir = ament_index_cpp::get_package_share_directory("mqtt_bridge") + "/ssl-certs/";
+
+	{
+		std::ifstream tstore(ssl_certs_dir + SSL_TRUST_STORE);
+		if (!tstore) {
+			RCLCPP_ERROR_STREAM(node->get_logger(), "The trust store file does not exist: " << SSL_TRUST_STORE);
+			return 1;
+		}
+
+		std::ifstream kstore(ssl_certs_dir + SSL_KEY_STORE);
+		if (!kstore) {
+			RCLCPP_ERROR_STREAM(node->get_logger(), "The key store file does not exist: " << SSL_KEY_STORE);
+			return 1;
+		}
+
+		std::ifstream privkey(ssl_certs_dir + SSL_PRIVATE_KEY);
+		if (!privkey) {
+			RCLCPP_ERROR_STREAM(node->get_logger(), "The private key file does not exist: " << SSL_PRIVATE_KEY);
+			return 1;
+		}
+	}
 
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
 	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
@@ -218,6 +247,18 @@ int main(int argc, char *argv[])
 	node->declare_parameter("mqtt_server_address", SERVER_ADDRESS, param_desc);
 	node->declare_parameter("mqtt_client_id", CLIENT_ID, param_desc);
 
+	auto sslopts = mqtt::ssl_options_builder()
+						.trust_store(ssl_certs_dir + SSL_TRUST_STORE)
+						.key_store(ssl_certs_dir + SSL_KEY_STORE)
+						.private_key(ssl_certs_dir + SSL_PRIVATE_KEY)
+						//.enable_server_cert_auth(false)
+						.error_handler([/*node*/](const std::string& msg) {
+							//RCLCPP_ERROR_STREAM(node->get_logger(), "SSL Error: " << msg);
+							std::cout << "SSL Error: " << msg << std::endl;
+							return 1;
+						})
+						.finalize();
+
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(node->get_parameter("mqtt_server_address").as_string(), node->get_parameter("mqtt_client_id").as_string(),
 													 mqtt::create_options(MQTT_VERSION));
 
@@ -225,6 +266,9 @@ int main(int argc, char *argv[])
 
 	auto connOpts = mqtt::connect_options_builder()
 						//.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})
+						.user_name(MQTT_USERNAME)
+						.password(MQTT_PASSWORD)
+						.ssl(std::move(sslopts))
 						.clean_start(CLEAN_START)
 						.keep_alive_interval(std::chrono::seconds(KEEP_ALIVE))
 						.automatic_reconnect(RECONNECT_MIN_RETRY_INTERVAL, RECONNECT_MAX_RETRY_INTERVAL)

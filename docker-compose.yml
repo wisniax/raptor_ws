@@ -17,12 +17,12 @@ services:
     ipc: "host"
     init: true
     ports:
-      - "2122:22"
+      - "127.0.0.1:2122:22"
     environment:
       - TZ=Europe/Warsaw
-      - ROS_ENABLE_AUTOSTART=1
+      - ROS_ENABLE_AUTOSTART=0
       - ROS_BUILD_ON_STARTUP=on-failure
-      - ROS_ENABLE_CAN_BRIDGE=1
+      - ROS_ENABLE_CAN_BRIDGE=0
     volumes:
       - type: bind
         source: ./
@@ -40,15 +40,18 @@ services:
     image: eclipse-mosquitto
     container_name: mosquitto
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "127.0.0.1:8883:8883"
+      - "127.0.0.1:9001:9001"
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - /var/opt/mosquitto/data:/mosquitto/data
-      - /var/opt/mosquitto/log:/mosquitto/log
+      - ./.devcontainer/mosquitto_passwd:/mosquitto/mosquitto_passwd
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+      - ./.devcontainer/mqtt-server-certs:/mosquitto/certs
+      - ./.devcontainer/mqtt-client-certs:/mosquitto/client-certs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      test: ["CMD", "mosquitto_sub", "-h", "mosquitto", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/client-certs/ca.crt", "--cert", "/mosquitto/client-certs/client.crt", "--key", "/mosquitto/client-certs/client.key", "-u", "raptors", "-P", "changeme", "-C", "1", "-i", "healthcheck", "-W", "3"]
       interval: 30s
       timeout: 10s
       retries: 3
