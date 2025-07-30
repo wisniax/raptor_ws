@@ -17,7 +17,7 @@ RUN apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y git gdb nano curl wget python3 python3-pip net-tools apt-utils nano can-utils ssh libpaho-mqttpp-dev libpaho-mqtt-dev less iputils-ping bc rapidjson-dev iproute2
 
 # Random Stuff
-ENV NOTVISIBLE "in users profile"
+ENV NOTVISIBLE="in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
 RUN ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 
