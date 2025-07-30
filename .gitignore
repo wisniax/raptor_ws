@@ -71,3 +71,6 @@ CATKIN_IGNORE
 
 # Temporary rex can bridge file
 .can_bridge_rex_waiting
+
+# Github local actions builder 'act' secrets
+.secrets
