@@ -62,7 +62,7 @@ RUN git config --global --add safe.directory /home/rex/raptor_ws/src/libVescCan
 RUN git submodule update --init --recursive
 
 # Build the workspace
-RUN bash -c "source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"
+RUN bash -c "source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_start_end+ console_direct+ --executor parallel"
 
 # Manage public ssh keys
 RUN rm -rf /home/${USERNAME}/.ssh
