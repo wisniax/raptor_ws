@@ -8,6 +8,7 @@
             "includePath": [
                 "/opt/ros/jazzy/include/**",
                 "/usr/include/**",
+                "${workspaceFolder}/src/rex_interfaces/include/**",
                 "${workspaceFolder}/src/can_bridge/include/**",
                 "${workspaceFolder}/src/libVescCan/include/**",
                 "${workspaceFolder}/src/can_bridge/libVescCan/include/**"
