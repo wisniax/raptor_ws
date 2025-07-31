@@ -26,6 +26,11 @@ services:
       - ROS_ENABLE_CAN_BRIDGE=1
     volumes:
       - type: bind
+        source: ./
+        target: /mnt/local
+        bind:
+          create_host_path: true
+      - type: bind
         source: ./.devcontainer/rex
         target: /etc/init.d/rex
         bind:
