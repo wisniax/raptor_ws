@@ -27,6 +27,13 @@ fi
 echo "Attempting to reset USB-CAN device..."
 usbreset "PCAN-USB" || usbreset "Kvaser Leaf v3" || true
 
+# Load neccessary kernel modules. If it fails here... welp ;) You might want to rebuild your kernel.
+modprobe can
+modprobe can_raw
+modprobe can_dev
+modprobe vxcan
+modprobe kvaser_usb || true # Needed for manually installed kvaser socket can drivers
+
 # Wait for up to 5 seconds for can0 interface to become available
 for i in {1..5}; do
   if ip link show can0 &>/dev/null; then
