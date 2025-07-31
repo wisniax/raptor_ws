@@ -206,8 +206,9 @@ int main(int argc, char *argv[])
 	const std::string MQTT_USERNAME("raptors");
 	const std::string MQTT_PASSWORD("changeme");
 	const std::string SSL_TRUST_STORE("ca.crt");
-	const std::string SSL_KEY_STORE("client.crt");
-	const std::string SSL_PRIVATE_KEY("client.key");
+	const bool ENABLE_SERVER_CERT_AUTH = true;
+	//const std::string SSL_KEY_STORE("client.crt");
+	//const std::string SSL_PRIVATE_KEY("client.key");
 	const int MQTT_VERSION = MQTTVERSION_5;
 	//const int SESSION_EXPIRY = 604800;
 	const int PUBLISHER_QOS = 0;
@@ -225,17 +226,17 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::ifstream kstore(ssl_certs_dir + SSL_KEY_STORE);
-		if (!kstore) {
-			RCLCPP_ERROR_STREAM(node->get_logger(), "The key store file does not exist: " << SSL_KEY_STORE);
-			return 1;
-		}
+		// std::ifstream kstore(ssl_certs_dir + SSL_KEY_STORE);
+		// if (!kstore) {
+		// 	RCLCPP_ERROR_STREAM(node->get_logger(), "The key store file does not exist: " << SSL_KEY_STORE);
+		// 	return 1;
+		// }
 
-		std::ifstream privkey(ssl_certs_dir + SSL_PRIVATE_KEY);
-		if (!privkey) {
-			RCLCPP_ERROR_STREAM(node->get_logger(), "The private key file does not exist: " << SSL_PRIVATE_KEY);
-			return 1;
-		}
+		// std::ifstream privkey(ssl_certs_dir + SSL_PRIVATE_KEY);
+		// if (!privkey) {
+		// 	RCLCPP_ERROR_STREAM(node->get_logger(), "The private key file does not exist: " << SSL_PRIVATE_KEY);
+		// 	return 1;
+		// }
 	}
 
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
@@ -249,9 +250,9 @@ int main(int argc, char *argv[])
 
 	auto sslopts = mqtt::ssl_options_builder()
 						.trust_store(ssl_certs_dir + SSL_TRUST_STORE)
-						.key_store(ssl_certs_dir + SSL_KEY_STORE)
-						.private_key(ssl_certs_dir + SSL_PRIVATE_KEY)
-						//.enable_server_cert_auth(false)
+						//.key_store(ssl_certs_dir + SSL_KEY_STORE)
+						//.private_key(ssl_certs_dir + SSL_PRIVATE_KEY)
+						.enable_server_cert_auth(ENABLE_SERVER_CERT_AUTH)
 						.error_handler([/*node*/](const std::string& msg) {
 							//RCLCPP_ERROR_STREAM(node->get_logger(), "SSL Error: " << msg);
 							std::cout << "SSL Error: " << msg << std::endl;
