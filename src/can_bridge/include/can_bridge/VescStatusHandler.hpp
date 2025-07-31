@@ -61,17 +61,19 @@ public:
 
 	void statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame);
 	void sendUpdate(uint8_t vescId);
+	void timer_method();
 	void clear();
 
 private:
 	rclcpp::Time lastSendTime;
 
 	std::unordered_map<MotorStatusKey, MotorStatusValue, MyHash<MotorStatusKey>> mMotorStatus;
+	std::unordered_map<uint8_t, rclcpp::Time> mMotorLastUpdates;
 
 	rclcpp::Node::SharedPtr mNh;
 	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mStatusGrabber;
 	rclcpp::Publisher<rex_interfaces::msg::VescStatus>::SharedPtr mStatusPublisher;
-	rclcpp::TimerBase::SharedPtr mMotorCommandTimer;
+	rclcpp::TimerBase::SharedPtr mSendTimer;
 };
 
 #endif // VescMotorController_h_

@@ -10,6 +10,8 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 
 	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
+
+	mSendTimer = nh->create_timer(std::chrono::milliseconds(250), std::bind(&VescStatusHandler::timer_method, this));
 }
 
 void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
@@ -26,9 +28,18 @@ void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr
 	}
 	else
 	{
-		if (key.commandId == VESC_COMMAND_STATUS_1)
-			sendUpdate(key.vescId);
 		mMotorStatus[key] = value;
+	}
+
+	auto updateFindResult = mMotorLastUpdates.find(key.vescId);
+
+	if(updateFindResult == mMotorLastUpdates.cend())
+	{
+		mMotorLastUpdates.insert(std::pair<uint8_t, rclcpp::Time>(key.vescId, mNh->get_clock()->now()));
+	}
+	else
+	{
+		mMotorLastUpdates[key.vescId] = mNh->get_clock()->now();
 	}
 }
 
@@ -116,14 +127,33 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus7(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.precise_pos = statusData.precisePos;
+		status.pid_pos = statusData.position;
+		status.erpm = statusData.speed;
+		status.current = statusData.current;
+		status.temp_motor = statusData.motorTemp;
 	}
 
 	status.vesc_id = key.vescId;
 	status.header.stamp = rclcpp::Clock().now();
-	RCLCPP_DEBUG(mNh->get_logger(), "Publishing status for VESC %d", key.vescId);
 	lastSendTime = status.header.stamp;
 	mStatusPublisher->publish(status);
+}
+
+void VescStatusHandler::timer_method()
+{
+	auto time_now = mNh->get_clock()->now();
+
+	for(auto kvp : mMotorLastUpdates)
+	{
+		if(time_now - kvp.second < rclcpp::Duration(1, 0))
+		{
+			sendUpdate(kvp.first);
+		}
+		else
+		{
+			RCLCPP_WARN_THROTTLE(mNh->get_logger(), *mNh->get_clock(), 30000, "VescStatus for motor %d is stale", kvp.first);
+		}
+	}
 }
 
 void VescStatusHandler::clear()
