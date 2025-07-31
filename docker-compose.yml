@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: ./.devcontainer/Dockerfile
-    image: wisniax/ros-core:latest
+    image: wisniax/ros-core:pr-38
     stdin_open: true
     container_name: ros-core
     hostname: ros-core
@@ -46,8 +46,8 @@ services:
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./.devcontainer/mosquitto_passwd:/mosquitto/mosquitto_passwd
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
+      - ./.mosquitto/data:/mosquitto/data
+      - ./.mosquitto/log:/mosquitto/log
       - ./.devcontainer/mqtt-server-certs:/mosquitto/certs
       - ./.devcontainer/mqtt-client-certs:/mosquitto/client-certs
     restart: unless-stopped

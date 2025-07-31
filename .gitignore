@@ -74,3 +74,6 @@ CATKIN_IGNORE
 
 # Github local actions builder 'act' secrets
 .secrets
+
+# Mosquitto MQTT logs
+.mosquitto/
