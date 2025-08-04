@@ -20,27 +20,9 @@ void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr
 	auto key = MotorStatusKey(vescFrame.vescID, (VESC_Command)vescFrame.command);
 	auto value = MotorStatusValue(vescFrame, frame->header.stamp);
 
-	auto findResult = mMotorStatus.find(key);
+	mMotorStatus[key] = value;
 
-	if (findResult == mMotorStatus.cend())
-	{
-		mMotorStatus.insert(std::pair<MotorStatusKey, MotorStatusValue>(key, value));
-	}
-	else
-	{
-		mMotorStatus[key] = value;
-	}
-
-	auto updateFindResult = mMotorLastUpdates.find(key.vescId);
-
-	if(updateFindResult == mMotorLastUpdates.cend())
-	{
-		mMotorLastUpdates.insert(std::pair<uint8_t, rclcpp::Time>(key.vescId, mNh->get_clock()->now()));
-	}
-	else
-	{
-		mMotorLastUpdates[key.vescId] = mNh->get_clock()->now();
-	}
+	mMotorLastUpdates[key.vescId] = mNh->get_clock()->now();
 }
 
 void VescStatusHandler::sendUpdate(uint8_t vescId)
@@ -127,7 +109,17 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus7(&statusData, &mMotorStatus[key].vescFrame);
 
-		status.pid_pos = statusData.position;
+		status.precise_pos = statusData.precisePos;
+	}
+
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_11);
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
+	{
+		VESC_Status_11 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus11(&statusData, &mMotorStatus[key].vescFrame);
+
+		status.precise_pos = statusData.position;
 		status.erpm = statusData.speed;
 		status.current = statusData.current;
 		status.temp_motor = statusData.motorTemp;
