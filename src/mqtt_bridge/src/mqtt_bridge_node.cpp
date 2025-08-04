@@ -205,6 +205,7 @@ int main(int argc, char *argv[])
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const std::string MQTT_USERNAME("raptors");
 	const std::string MQTT_PASSWORD("changeme");
+	// Specify empty string ("") if you don't want to provide a trust store
 	const std::string SSL_TRUST_STORE("ca.crt");
 	const bool ENABLE_SERVER_CERT_AUTH = true;
 	//const std::string SSL_KEY_STORE("client.crt");
@@ -220,10 +221,12 @@ int main(int argc, char *argv[])
 	std::string ssl_certs_dir = ament_index_cpp::get_package_share_directory("mqtt_bridge") + "/ssl-certs/";
 
 	{
-		std::ifstream tstore(ssl_certs_dir + SSL_TRUST_STORE);
-		if (!tstore) {
-			RCLCPP_ERROR_STREAM(node->get_logger(), "The trust store file does not exist: " << SSL_TRUST_STORE);
-			return 1;
+		if (SSL_TRUST_STORE != "") {
+			std::ifstream tstore(ssl_certs_dir + SSL_TRUST_STORE);
+			if (!tstore) {
+				RCLCPP_FATAL_STREAM(node->get_logger(), "The trust store file does not exist: " << SSL_TRUST_STORE << ", stopping mqtt-bridge!");
+				return 1;
+			}
 		}
 
 		// std::ifstream kstore(ssl_certs_dir + SSL_KEY_STORE);
@@ -248,17 +251,17 @@ int main(int argc, char *argv[])
 	node->declare_parameter("mqtt_server_address", SERVER_ADDRESS, param_desc);
 	node->declare_parameter("mqtt_client_id", CLIENT_ID, param_desc);
 
-	auto sslopts = mqtt::ssl_options_builder()
-						.trust_store(ssl_certs_dir + SSL_TRUST_STORE)
+	auto sslopts_builder = mqtt::ssl_options_builder()
 						//.key_store(ssl_certs_dir + SSL_KEY_STORE)
 						//.private_key(ssl_certs_dir + SSL_PRIVATE_KEY)
 						.enable_server_cert_auth(ENABLE_SERVER_CERT_AUTH)
 						.error_handler([/*node*/](const std::string& msg) {
 							//RCLCPP_ERROR_STREAM(node->get_logger(), "SSL Error: " << msg);
-							std::cout << "SSL Error: " << msg << std::endl;
+							std::cout << "SSL Error: " << msg << ", stopping mqtt-bridge!" << std::endl;
 							return 1;
-						})
-						.finalize();
+						});
+	if (SSL_TRUST_STORE != "") sslopts_builder = sslopts_builder.trust_store(ssl_certs_dir + SSL_TRUST_STORE);
+	auto sslopts = sslopts_builder.finalize();
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(node->get_parameter("mqtt_server_address").as_string(), node->get_parameter("mqtt_client_id").as_string(),
 													 mqtt::create_options(MQTT_VERSION));

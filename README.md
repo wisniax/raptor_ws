@@ -11,8 +11,27 @@
 > Copy your public ssh files to .devcontainer/public_keys.d \
 > **Note!** Do this step before building the container or rebuild after!
 
+## Generate TLS keys and certificates for Mosquitto
+A helper script is included, which allows to easily generate a CA, server certificate and server keys for Mosquitto; it also automatically sets the correct file permissions and ownership, and copies the files into the right locations. `openssl` package and sudo access are required to run this script. The syntax is as follows:
+`./mqtt_certs_gen.sh <CA Common Name> <Server SAN>`
+where `CA Common Name` should be a name which identifies the Certificate Authority, and `Server SAN` should be the IP address by which clients should be able to reach the MQTT broker (`mosquitto` is already included for in-docker access). Example:
+`./mqtt_certs_gen.sh RaptorsCA 192.168.1.20`
+
+**Beware that a production setup definitely requires a more thorough SSL configuration than this script can provide!**
+
 ## Start the container
 `docker compose up -d`
+
+**If mosquitto healthcheck fails - see next section below.**
+
+## Generate MQTT credentials file for Mosquitto
+This repository ships with an empty mosquitto_passwd file, which makes Mosquitto **reject all** MQTT username and password combinations. To set the username and password for MQTT, one can use the following command (while the container is running):
+`docker compose exec mosquitto mosquitto_passwd -b -c /mosquitto/mosquitto_passwd <username> <password>`
+e.g.
+`docker compose exec mosquitto mosquitto_passwd -b -c /mosquitto/mosquitto_passwd raptors changeme`
+(warnings about ownership and permissions can be ignored). Then, the `mosquitto` container needs to be restarted.
+
+**Remember to set the correct MQTT username+password in docker-compose.yml (healthcheck) and in mqtt_bridge. The pre-defined values in both those places are `raptors`/`changeme`.**
 
 ### To stop the container
 `docker compose down`
