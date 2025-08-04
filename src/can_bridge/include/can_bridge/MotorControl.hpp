@@ -26,6 +26,8 @@ public:
 
 	void sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg);
 
+	rex_interfaces::msg::Wheels::ConstSharedPtr GetLastSentFrame() const;
+
 private:
 	can_msgs::msg::Frame encodeMotorVel(const rex_interfaces::msg::VescMotorCommand &vescMotorCommand, const VESC_Id_t vescId);
 
@@ -35,6 +37,8 @@ private:
 
 	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub; /**< ROS2 publisher for raw CAN messages. */
 	rclcpp::Subscription<rex_interfaces::msg::Wheels>::SharedPtr mSetMotorVelSub; /**< ROS2 subscriber for motor velocity messages. */
+
+	rex_interfaces::msg::Wheels::ConstSharedPtr mLastSentFrame;
 };
 
 #endif // MOTOR_CONTROL_H

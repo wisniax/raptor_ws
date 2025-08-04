@@ -7,6 +7,7 @@
 #include <boost/shared_ptr.hpp>
 #include <rex_interfaces/msg/vesc_status.hpp>
 #include <can_bridge/RosCanConstants.hpp>
+#include <can_bridge/MotorControl.hpp>
 #include <can_bridge/VescInterop.hpp>
 #include <can_msgs/msg/frame.hpp>
 extern "C"
@@ -57,7 +58,7 @@ public:
 class VescStatusHandler
 {
 public:
-	VescStatusHandler(rclcpp::Node::SharedPtr &nh);
+	VescStatusHandler(rclcpp::Node::SharedPtr &nh, const MotorControl* motorControlPtr);
 
 	void statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame);
 	void sendUpdate(uint8_t vescId);
@@ -71,6 +72,8 @@ private:
 	std::unordered_map<uint8_t, rclcpp::Time> mMotorLastUpdates;
 
 	rclcpp::Node::SharedPtr mNh;
+	const MotorControl* mMotorControl;
+	
 	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mStatusGrabber;
 	rclcpp::Publisher<rex_interfaces::msg::VescStatus>::SharedPtr mStatusPublisher;
 	rclcpp::TimerBase::SharedPtr mSendTimer;

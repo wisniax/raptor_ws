@@ -1,6 +1,6 @@
 #include "can_bridge/VescStatusHandler.hpp"
 
-VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
+VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh, const MotorControl* motorControl) : mNh(nh), mMotorControl(motorControl)
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
@@ -138,10 +138,32 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 		VESC_ZeroMemory(&statusData, sizeof(statusData));
 		VESC_convertRawToStatus11(&statusData, &mMotorStatus[key].vescFrame);
 
+		rex_interfaces::msg::VescMotorCommand lastSentFrame;
+		
+		if(mMotorControl->GetLastSentFrame() == nullptr)
+			//placeholder in case no data is sent.
+			lastSentFrame.command_id = VESC_COMMAND_STATUS_11;
+		else if(key.vescId == RosCanConstants::VescIds::front_left_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->front_left.turn;
+		else if(key.vescId == RosCanConstants::VescIds::front_right_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->front_right.turn;
+		else if(key.vescId == RosCanConstants::VescIds::rear_right_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->rear_right.turn;
+		else if(key.vescId == RosCanConstants::VescIds::rear_left_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->rear_left.turn;
+		
 		status.precise_pos = statusData.position;
+		status.pid_pos = statusData.position;
 		status.erpm = statusData.speed;
 		status.current = statusData.current;
 		status.temp_motor = statusData.motorTemp;
+
+		if (lastSentFrame.command_id == VESC_COMMAND_SET_POS)
+			status.pid_pos = lastSentFrame.set_value * 100; //libVescCan bug regarding Cubemars and SET_POS
+		else if (lastSentFrame.command_id == VESC_COMMAND_SET_POS_SPEED_LOOP)
+			status.pid_pos = lastSentFrame.set_pos_speed_loop_position;
+		else if(lastSentFrame.command_id != VESC_COMMAND_STATUS_11)
+			RCLCPP_WARN_ONCE(mNh->get_logger(), "Turn motor is not operated with SET_POS. Ghost wheel in RCA will be disabled.");
 	}
 
 	status.vesc_id = key.vescId;

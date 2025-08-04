@@ -10,6 +10,7 @@ MotorControl::MotorControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 
 void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
 {
+	mLastSentFrame = msg;
 	sendMotorVel(msg);
 }
 
@@ -108,4 +109,9 @@ can_msgs::msg::Frame MotorControl::encodeMotorVel(const rex_interfaces::msg::Ves
 	fr.header.stamp = rclcpp::Clock().now();
 
 	return fr;
+}
+
+rex_interfaces::msg::Wheels::ConstSharedPtr MotorControl::GetLastSentFrame() const
+{
+	return mLastSentFrame;
 }
