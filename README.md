@@ -120,3 +120,16 @@ sudo systemctl enable can-bridge.path
 sudo systemctl start can-bridge.path
 ```
 > **Note!** Do not skip *.path* above. This results in improper setup!
+
+# Build using GH actions runner
+Make `.secrets` file in project directory with contents:
+```
+DOCKERHUB_TOKEN=<docker-hub-token>
+DOCKERHUB_USERNAME=<username>
+GITHUB_TOKEN=<github-token>
+```
+then run
+```
+act
+```
+> Note! This will build the container locally and push it to dockerhub!

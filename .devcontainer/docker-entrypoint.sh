@@ -51,12 +51,13 @@ chmod 664 /tmp/rex_launch.log
 
 # Make raptor_ws directory writable
 chmod g+rw -R /home/rex/raptor_ws
+chmod g+rw -R /mnt/local
 
 # Trigger and wait for can bridge creation on host's side
 if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
-    touch /home/rex/raptor_ws/.can_bridge_rex_waiting
-    chown rex:1000 /home/rex/raptor_ws/.can_bridge_rex_waiting
-    chmod 664 /home/rex/raptor_ws/.can_bridge_rex_waiting
+    touch /mnt/local/.can_bridge_rex_waiting
+    chown rex:1000 /mnt/local/.can_bridge_rex_waiting
+    chmod 664 /mnt/local/.can_bridge_rex_waiting
     echo "rex is waiting for host system to create a network"
 
     # Total duration to check (seconds)
@@ -79,11 +80,11 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
 
     if [[ $canb_interface_up -eq 0 ]]; then
         echo "REX ERROR: vxcan1 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
-        rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting || true
+        rm -rf /mnt/local/.can_bridge_rex_waiting || true
     fi
 
-    if [ -f /home/rex/raptor_ws/.can_bridge_rex_waiting ]; then
-        rm -rf /home/rex/raptor_ws/.can_bridge_rex_waiting
+    if [ -f /mnt/local/.can_bridge_rex_waiting ]; then
+        rm -rf /mnt/local/.can_bridge_rex_waiting
         echo "REX WARN: vxcan1 setup service might fail - network probably is created but not bridged - please check the configuration"
     fi
 else

@@ -7,8 +7,9 @@ networks:
 services:
   ros-core:
     build:
-      context: ./.devcontainer
-    image: ros-core
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile
+    image: wisniax/ros-core:pr-38
     stdin_open: true
     container_name: ros-core
     hostname: ros-core
@@ -26,7 +27,7 @@ services:
     volumes:
       - type: bind
         source: ./
-        target: /home/rex/raptor_ws
+        target: /mnt/local
         bind:
           create_host_path: true
       - type: bind
@@ -44,8 +45,8 @@ services:
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./.devcontainer/mosquitto_passwd:/mosquitto/mosquitto_passwd
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
+      - ./.mosquitto/data:/mosquitto/data
+      - ./.mosquitto/log:/mosquitto/log
       - ./.devcontainer/mqtt-server-certs:/mosquitto/certs
     restart: unless-stopped
     healthcheck:
