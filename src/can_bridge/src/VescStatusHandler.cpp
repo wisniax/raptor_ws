@@ -11,12 +11,31 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
 
-	mSendTimer = nh->create_timer(std::chrono::milliseconds(250), std::bind(&VescStatusHandler::timer_method, this));
+	mSendTimer = nh->create_timer(std::chrono::milliseconds(125), std::bind(&VescStatusHandler::timer_method, this));
 }
 
 void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
 {
 	auto vescFrame = VescInterop::rosToVesc(*frame);
+
+	//whitelist for bldc and cupamars
+	switch(vescFrame.vescID)
+	{
+		//cupamars-es
+		case 0x50:
+		case 0x51:
+		case 0x52:
+		case 0x53:
+		//bldc-s
+		case 0x60:
+		case 0x61:
+		case 0x62:
+		case 0x63:
+			break;
+		default:
+			return;
+	}
+
 	auto key = MotorStatusKey(vescFrame.vescID, (VESC_Command)vescFrame.command);
 	auto value = MotorStatusValue(vescFrame, frame->header.stamp);
 
