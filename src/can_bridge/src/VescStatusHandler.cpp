@@ -11,7 +11,7 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh, const MotorCon
 	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
 
-	mSendTimer = nh->create_timer(std::chrono::milliseconds(125), std::bind(&VescStatusHandler::timer_method, this));
+	mSendTimer = nh->create_timer(std::chrono::milliseconds(200), std::bind(&VescStatusHandler::timer_method, this));
 }
 
 void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
