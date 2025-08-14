@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# Check that 2 parameters were passed
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <CA Common Name> <Server SAN>"
+# Check that 4 parameters were passed
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <CA Common Name> <Server SAN> <MQTT Username> <MQTT Password>"
     exit 1
 fi
 
 CA_CN="$1"
 SERVER_SAN="$2"
+MQTT_USERNAME="$3"
+MQTT_PASSWORD="$4"
 
 # Clear any existing certs (if they exist)
 sudo rm -r .devcontainer/mqtt-server-certs/
@@ -24,12 +26,22 @@ openssl x509 -req -in .devcontainer/mqtt-server-certs/server.csr -CA .devcontain
 rm .devcontainer/mqtt-server-certs/server.csr
 
 # Permissions and ownership
-sudo chown -R 1883:1883 .devcontainer/mqtt-server-certs/
-sudo chmod -R 0700 .devcontainer/mqtt-server-certs/
+sudo chown 1883:1883 .devcontainer/mqtt-server-certs/ca.crt
+sudo chown 1883:1883 .devcontainer/mqtt-server-certs/ca.key
+sudo chown 1883:1883 .devcontainer/mqtt-server-certs/server.crt
+sudo chown 1883:1883 .devcontainer/mqtt-server-certs/server.key
+sudo chmod 0700 .devcontainer/mqtt-server-certs/ca.key
+sudo chmod 0700 .devcontainer/mqtt-server-certs/server.key
 
-# Copy CA cert to mqtt_bridge
-sudo cp -f .devcontainer/mqtt-server-certs/ca.crt src/mqtt_bridge/ssl-certs/
+# Copy CA cert for use with mqtt_bridge (reason: different permissions and ownership)
+sudo cp -f .devcontainer/mqtt-server-certs/ca.crt .devcontainer/ca.crt
 
 # More permissions and ownership...
-sudo chown 1001:1000 src/mqtt_bridge/ssl-certs/ca.crt
-sudo chmod 0744 src/mqtt_bridge/ssl-certs/ca.crt
+sudo chown 1001:1000 .devcontainer/ca.crt
+sudo chmod 0744 .devcontainer/ca.crt
+
+# Mosquitto password file
+sudo rm .devcontainer/mosquitto_passwd
+docker run --rm eclipse-mosquitto sh -c "mosquitto_passwd -b -c /tmp/mosquitto_passwd ${MQTT_USERNAME} ${MQTT_PASSWORD} && cat /tmp/mosquitto_passwd" > .devcontainer/mosquitto_passwd
+sudo chown 1883:1883 .devcontainer/mosquitto_passwd
+sudo chmod 0700 .devcontainer/mosquitto_passwd
