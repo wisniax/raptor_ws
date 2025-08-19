@@ -9,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: ./.devcontainer/Dockerfile
-    image: wisniax/ros-core:pr-38
+    image: wisniax/ros-core:latest
     stdin_open: true
     container_name: ros-core
     hostname: ros-core
