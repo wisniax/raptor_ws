@@ -6,6 +6,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -117,6 +118,7 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node PUBLIC
   rclcpp::rclcpp
+  ament_index_cpp::ament_index_cpp
   ${rex_interfaces_TARGETS}
   ${std_msgs_TARGETS}
   ${sensor_msgs_TARGETS}

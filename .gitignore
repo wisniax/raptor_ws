@@ -74,3 +74,12 @@ CATKIN_IGNORE
 
 # Github local actions builder 'act' secrets
 .secrets
+
+# Mosquitto MQTT logs
+.mosquitto/
+
+# MQTT TLS stuff and credentials (to be provided/generated on your own)
+.devcontainer/mqtt-server-certs/
+.devcontainer/ca.crt
+.devcontainer/mosquitto_passwd
+.env

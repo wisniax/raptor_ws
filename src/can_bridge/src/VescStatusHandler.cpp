@@ -1,6 +1,6 @@
 #include "can_bridge/VescStatusHandler.hpp"
 
-VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
+VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh, const MotorControl* motorControl) : mNh(nh), mMotorControl(motorControl)
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
@@ -10,26 +10,38 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 
 	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
+
+	mSendTimer = nh->create_timer(std::chrono::milliseconds(200), std::bind(&VescStatusHandler::timer_method, this));
 }
 
 void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
 {
 	auto vescFrame = VescInterop::rosToVesc(*frame);
+
+	//whitelist for bldc and cupamars
+	switch(vescFrame.vescID)
+	{
+		//cupamars-es
+		case 0x50:
+		case 0x51:
+		case 0x52:
+		case 0x53:
+		//bldc-s
+		case 0x60:
+		case 0x61:
+		case 0x62:
+		case 0x63:
+			break;
+		default:
+			return;
+	}
+
 	auto key = MotorStatusKey(vescFrame.vescID, (VESC_Command)vescFrame.command);
 	auto value = MotorStatusValue(vescFrame, frame->header.stamp);
 
-	auto findResult = mMotorStatus.find(key);
+	mMotorStatus[key] = value;
 
-	if (findResult == mMotorStatus.cend())
-	{
-		mMotorStatus.insert(std::pair<MotorStatusKey, MotorStatusValue>(key, value));
-	}
-	else
-	{
-		if (key.commandId == VESC_COMMAND_STATUS_1)
-			sendUpdate(key.vescId);
-		mMotorStatus[key] = value;
-	}
+	mMotorLastUpdates[key.vescId] = mNh->get_clock()->now();
 }
 
 void VescStatusHandler::sendUpdate(uint8_t vescId)
@@ -119,11 +131,62 @@ void VescStatusHandler::sendUpdate(uint8_t vescId)
 		status.precise_pos = statusData.precisePos;
 	}
 
+	key = MotorStatusKey(vescId, VESC_COMMAND_STATUS_11);
+	if (mMotorStatus.find(key) != mMotorStatus.cend())
+	{
+		VESC_Status_11 statusData;
+		VESC_ZeroMemory(&statusData, sizeof(statusData));
+		VESC_convertRawToStatus11(&statusData, &mMotorStatus[key].vescFrame);
+
+		rex_interfaces::msg::VescMotorCommand lastSentFrame;
+		
+		if(mMotorControl->GetLastSentFrame() == nullptr)
+			//placeholder in case no data is sent.
+			lastSentFrame.command_id = VESC_COMMAND_STATUS_11;
+		else if(key.vescId == RosCanConstants::VescIds::front_left_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->front_left.turn;
+		else if(key.vescId == RosCanConstants::VescIds::front_right_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->front_right.turn;
+		else if(key.vescId == RosCanConstants::VescIds::rear_right_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->rear_right.turn;
+		else if(key.vescId == RosCanConstants::VescIds::rear_left_stepper)
+			lastSentFrame = mMotorControl->GetLastSentFrame()->rear_left.turn;
+		
+		status.precise_pos = statusData.position;
+		status.pid_pos = statusData.position;
+		status.erpm = statusData.speed;
+		status.current = statusData.current;
+		status.temp_motor = statusData.motorTemp;
+
+		if (lastSentFrame.command_id == VESC_COMMAND_SET_POS)
+			status.pid_pos = lastSentFrame.set_value * 100; //libVescCan bug regarding Cubemars and SET_POS
+		else if (lastSentFrame.command_id == VESC_COMMAND_SET_POS_SPEED_LOOP)
+			status.pid_pos = lastSentFrame.set_pos_speed_loop_position;
+		else if(lastSentFrame.command_id != VESC_COMMAND_STATUS_11)
+			RCLCPP_WARN_ONCE(mNh->get_logger(), "Turn motor is not operated with SET_POS. Ghost wheel in RCA will be disabled.");
+	}
+
 	status.vesc_id = key.vescId;
 	status.header.stamp = rclcpp::Clock().now();
-	RCLCPP_DEBUG(mNh->get_logger(), "Publishing status for VESC %d", key.vescId);
 	lastSendTime = status.header.stamp;
 	mStatusPublisher->publish(status);
+}
+
+void VescStatusHandler::timer_method()
+{
+	auto time_now = mNh->get_clock()->now();
+
+	for(auto kvp : mMotorLastUpdates)
+	{
+		if(time_now - kvp.second < rclcpp::Duration(1, 0))
+		{
+			sendUpdate(kvp.first);
+		}
+		else
+		{
+			RCLCPP_WARN_THROTTLE(mNh->get_logger(), *mNh->get_clock(), 30000, "VescStatus for motor %d is stale", kvp.first);
+		}
+	}
 }
 
 void VescStatusHandler::clear()

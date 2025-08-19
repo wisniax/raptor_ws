@@ -10,6 +10,7 @@ MotorControl::MotorControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 
 void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
 {
+	mLastSentFrame = msg;
 	sendMotorVel(msg);
 }
 
@@ -24,29 +25,25 @@ void MotorControl::sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPt
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->front_left.turn.set_value,
-		static_cast<VESC_Command>(msg->front_left.turn.command_id),
+		msg->front_left.turn,
 		RosCanConstants::VescIds::front_left_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->front_right.turn.set_value,
-		static_cast<VESC_Command>(msg->front_right.turn.command_id),
+		msg->front_right.turn,
 		RosCanConstants::VescIds::front_right_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->rear_left.turn.set_value,
-		static_cast<VESC_Command>(msg->rear_left.turn.command_id),
+		msg->rear_left.turn,
 		RosCanConstants::VescIds::rear_left_stepper
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->rear_right.turn.set_value,
-		static_cast<VESC_Command>(msg->rear_right.turn.command_id),
+		msg->rear_right.turn,
 		RosCanConstants::VescIds::rear_right_stepper
 	);
 
@@ -54,29 +51,25 @@ void MotorControl::sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPt
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->front_left.drive.set_value,
-		static_cast<VESC_Command>(msg->front_left.drive.command_id),
+		msg->front_left.drive,
 		RosCanConstants::VescIds::front_left_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->front_right.drive.set_value,
-		static_cast<VESC_Command>(msg->front_right.drive.command_id),
+		msg->front_right.drive,
 		RosCanConstants::VescIds::front_right_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->rear_left.drive.set_value,
-		static_cast<VESC_Command>(msg->rear_left.drive.command_id),
+		msg->rear_left.drive,
 		RosCanConstants::VescIds::rear_left_vesc
 	);
 
 	*sendQueueIter++ = encodeMotorVel
 	(
-		msg->rear_right.drive.set_value,
-		static_cast<VESC_Command>(msg->rear_right.drive.command_id),
+		msg->rear_right.drive,
 		RosCanConstants::VescIds::rear_right_vesc
 	);
 
@@ -86,13 +79,26 @@ void MotorControl::sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPt
 		mRawCanPub->publish(*iter);
 }
 
-can_msgs::msg::Frame MotorControl::encodeMotorVel(const float msg, const VESC_Command command, const VESC_Id_t vescId)
+can_msgs::msg::Frame MotorControl::encodeMotorVel(const rex_interfaces::msg::VescMotorCommand &vescMotorCommand, const VESC_Id_t vescId)
 {
 	VESC_CommandFrame cmdf;
 	VESC_ZeroMemory(&cmdf, sizeof(cmdf));
 
-	cmdf.commandData = msg;
-	cmdf.command = command;
+	switch(vescMotorCommand.command_id)
+	{
+		case VESC_COMMAND_SET_ORIGIN:
+			cmdf.commandDataExB = vescMotorCommand.set_origin_data;
+			break;
+		case VESC_COMMAND_SET_POS_SPEED_LOOP:
+			cmdf.commandDataEx_0 = vescMotorCommand.set_pos_speed_loop_position;
+			cmdf.commandDataEx_1 = vescMotorCommand.set_pos_speed_loop_speed;
+			cmdf.commandDataEx_2 = vescMotorCommand.set_pos_speed_loop_acceleration;
+			break;
+		default:
+			cmdf.commandData = vescMotorCommand.set_value;
+	}
+
+	cmdf.command = vescMotorCommand.command_id;
 	cmdf.vescID = vescId;
 
 	VESC_RawFrame rf;
@@ -103,4 +109,9 @@ can_msgs::msg::Frame MotorControl::encodeMotorVel(const float msg, const VESC_Co
 	fr.header.stamp = rclcpp::Clock().now();
 
 	return fr;
+}
+
+rex_interfaces::msg::Wheels::ConstSharedPtr MotorControl::GetLastSentFrame() const
+{
+	return mLastSentFrame;
 }

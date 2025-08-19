@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <fstream>
 #include <cstring>
 #include <cctype>
 #include <thread>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <mqtt/async_client.h>
 #include <rcutils/logging.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #define RAPIDJSON_HAS_STDSTRING 1
 class JsonAssertException : public std::exception
@@ -199,8 +201,13 @@ int main(int argc, char *argv[])
     auto node = rclcpp::Node::make_shared("mqtt_bridge_node");
 
 	// ### MQTT configuration ###
-	const std::string SERVER_ADDRESS("mqtt://mosquitto:1883");
+	const std::string SERVER_ADDRESS("ssl://mosquitto:8883");
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
+	const std::string MQTT_USERNAME("raptors");
+	const std::string MQTT_PASSWORD("changeme");
+	const bool ENABLE_SERVER_CERT_AUTH = false;
+	// if ENABLE_SERVER_CERT_AUTH is true, but file at SSL_CA_PATH cannot be opened, system certificates are used
+	std::string SSL_CA_PATH = "/opt/share/raptor_ws_mqtt_certs/ca.crt";
 	const int MQTT_VERSION = MQTTVERSION_5;
 	//const int SESSION_EXPIRY = 604800;
 	const int PUBLISHER_QOS = 0;
@@ -208,6 +215,7 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MIN_RETRY_INTERVAL{1};
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
+
 
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
 	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
@@ -217,6 +225,30 @@ int main(int argc, char *argv[])
 
 	node->declare_parameter("mqtt_server_address", SERVER_ADDRESS, param_desc);
 	node->declare_parameter("mqtt_client_id", CLIENT_ID, param_desc);
+	node->declare_parameter("mqtt_enable_server_cert_auth", ENABLE_SERVER_CERT_AUTH, param_desc);
+
+	bool tstore_found = false;
+	if (node->get_parameter("mqtt_enable_server_cert_auth").as_bool()) {
+		std::ifstream tstore(SSL_CA_PATH);
+		if (!tstore) {
+			RCLCPP_WARN_STREAM(node->get_logger(), "The trust store cannot be opened: " << SSL_CA_PATH << ", not passing it as connection parameter!");
+		} else {
+			RCLCPP_INFO_STREAM(node->get_logger(), "Trust store found at: " << SSL_CA_PATH);
+			tstore_found = true;
+		}
+	} else {
+		RCLCPP_WARN_STREAM(node->get_logger(), "Verification of server certificate is disabled, consider adjusting your setup!");
+	}
+
+	auto sslopts_builder = mqtt::ssl_options_builder()
+						.enable_server_cert_auth(node->get_parameter("mqtt_enable_server_cert_auth").as_bool())
+						.error_handler([/*node*/](const std::string& msg) {
+							//RCLCPP_ERROR_STREAM(node->get_logger(), "SSL Error: " << msg);
+							std::cout << "SSL Error: " << msg << ", stopping mqtt-bridge!" << std::endl;
+							return 1;
+						});
+	if (tstore_found) sslopts_builder = sslopts_builder.trust_store(SSL_CA_PATH);
+	auto sslopts = sslopts_builder.finalize();
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(node->get_parameter("mqtt_server_address").as_string(), node->get_parameter("mqtt_client_id").as_string(),
 													 mqtt::create_options(MQTT_VERSION));
@@ -225,6 +257,9 @@ int main(int argc, char *argv[])
 
 	auto connOpts = mqtt::connect_options_builder()
 						//.properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, SESSION_EXPIRY}})
+						.user_name(MQTT_USERNAME)
+						.password(MQTT_PASSWORD)
+						.ssl(std::move(sslopts))
 						.clean_start(CLEAN_START)
 						.keep_alive_interval(std::chrono::seconds(KEEP_ALIVE))
 						.automatic_reconnect(RECONNECT_MIN_RETRY_INTERVAL, RECONNECT_MAX_RETRY_INTERVAL)

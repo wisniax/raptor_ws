@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	// 	ros::console::notifyLoggerLevelsChanged();
 
 	MotorControl motorControl(n);
-	VescStatusHandler mVescStatusHandler(n);
+	VescStatusHandler mVescStatusHandler(n, &motorControl);
 	StatusMessage mStatusMessage(n, true);
 	ManipulatorControl mManipulatorCtl(n);
 	ProbeStatusForwarder mProbeStatusForwarder(n);
