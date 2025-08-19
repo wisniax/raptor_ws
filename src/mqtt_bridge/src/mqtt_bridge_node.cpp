@@ -149,9 +149,10 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 			msg.drill_movement = d["DrillMovement"].GetDouble();
 			msg.platform_movement = d["PlatformMovement"].GetDouble();
 			msg.drill_action = d["DrillAction"].GetDouble();
-			msg.container_degrees_0 = d["ContainerDegrees0"].GetDouble();
 			msg.container_degrees_1 = d["ContainerDegrees1"].GetDouble();
 			msg.container_degrees_2 = d["ContainerDegrees2"].GetDouble();
+			msg.container_degrees_3 = d["ContainerDegrees3"].GetDouble();
+			msg.container_degrees_4 = d["ContainerDegrees4"].GetDouble();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
