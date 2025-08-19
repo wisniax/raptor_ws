@@ -82,3 +82,4 @@ CATKIN_IGNORE
 .devcontainer/mqtt-server-certs/
 .devcontainer/ca.crt
 .devcontainer/mosquitto_passwd
+.env

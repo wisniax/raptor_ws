@@ -18,7 +18,7 @@ where `CA Common Name` should be a name which identifies the Certificate Authori
 `./mqtt_certs_gen.sh RaptorsCA 192.168.1.20 raptors changeme`
 (for local development, `127.0.0.1` can be used)
 
-**Remember to set the correct MQTT username+password in docker-compose.yml (healthcheck) and in mqtt_bridge (`mqtt_bridge_node.cpp`). The pre-defined values in both those places are `raptors`/`changeme`. Also, for proper security you should enable server cert auth by setting `mqtt_enable_server_cert_auth` to `true` in `mqtt_bridge.yaml` launch file.** Of course, after changes to the cpp and yaml file, the mqtt_bridge package has to be re-built (see *Build the repo* section below).
+**Remember to set the correct MQTT username+password in mqtt_bridge (`mqtt_bridge_node.cpp`), and create a `.env` file with `MQTT_USERNAME` and `MQTT_PASSWORD` variables in the root of this repository (to override the defaults for Mosquitto healthcheck). The pre-defined values in both those places are `raptors`/`changeme`. Also, for proper security you should enable server cert auth by setting `mqtt_enable_server_cert_auth` to `true` in `mqtt_bridge.yaml` launch file.** Of course, after changes to the cpp and yaml file, the mqtt_bridge package has to be re-built (see *Build the repo* section below).
 
 **Beware that a production setup definitely requires a more thorough SSL configuration than this script can provide!**
 
