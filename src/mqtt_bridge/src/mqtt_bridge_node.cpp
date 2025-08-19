@@ -205,10 +205,9 @@ int main(int argc, char *argv[])
 	const std::string CLIENT_ID("mqtt_bridge_node_ros");
 	const std::string MQTT_USERNAME("raptors");
 	const std::string MQTT_PASSWORD("changeme");
-	const std::string SSL_TRUST_STORE("ca.crt");
-	const bool ENABLE_SERVER_CERT_AUTH = true;
-	//const std::string SSL_KEY_STORE("client.crt");
-	//const std::string SSL_PRIVATE_KEY("client.key");
+	const bool ENABLE_SERVER_CERT_AUTH = false;
+	// if ENABLE_SERVER_CERT_AUTH is true, but file at SSL_CA_PATH cannot be opened, system certificates are used
+	std::string SSL_CA_PATH = "/opt/share/raptor_ws_mqtt_certs/ca.crt";
 	const int MQTT_VERSION = MQTTVERSION_5;
 	//const int SESSION_EXPIRY = 604800;
 	const int PUBLISHER_QOS = 0;
@@ -217,27 +216,6 @@ int main(int argc, char *argv[])
 	const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
 	const bool CLEAN_START = false;
 
-	std::string ssl_certs_dir = ament_index_cpp::get_package_share_directory("mqtt_bridge") + "/ssl-certs/";
-
-	{
-		std::ifstream tstore(ssl_certs_dir + SSL_TRUST_STORE);
-		if (!tstore) {
-			RCLCPP_ERROR_STREAM(node->get_logger(), "The trust store file does not exist: " << SSL_TRUST_STORE);
-			return 1;
-		}
-
-		// std::ifstream kstore(ssl_certs_dir + SSL_KEY_STORE);
-		// if (!kstore) {
-		// 	RCLCPP_ERROR_STREAM(node->get_logger(), "The key store file does not exist: " << SSL_KEY_STORE);
-		// 	return 1;
-		// }
-
-		// std::ifstream privkey(ssl_certs_dir + SSL_PRIVATE_KEY);
-		// if (!privkey) {
-		// 	RCLCPP_ERROR_STREAM(node->get_logger(), "The private key file does not exist: " << SSL_PRIVATE_KEY);
-		// 	return 1;
-		// }
-	}
 
 	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
 	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
@@ -247,18 +225,30 @@ int main(int argc, char *argv[])
 
 	node->declare_parameter("mqtt_server_address", SERVER_ADDRESS, param_desc);
 	node->declare_parameter("mqtt_client_id", CLIENT_ID, param_desc);
+	node->declare_parameter("mqtt_enable_server_cert_auth", ENABLE_SERVER_CERT_AUTH, param_desc);
 
-	auto sslopts = mqtt::ssl_options_builder()
-						.trust_store(ssl_certs_dir + SSL_TRUST_STORE)
-						//.key_store(ssl_certs_dir + SSL_KEY_STORE)
-						//.private_key(ssl_certs_dir + SSL_PRIVATE_KEY)
-						.enable_server_cert_auth(ENABLE_SERVER_CERT_AUTH)
+	bool tstore_found = false;
+	if (node->get_parameter("mqtt_enable_server_cert_auth").as_bool()) {
+		std::ifstream tstore(SSL_CA_PATH);
+		if (!tstore) {
+			RCLCPP_WARN_STREAM(node->get_logger(), "The trust store cannot be opened: " << SSL_CA_PATH << ", not passing it as connection parameter!");
+		} else {
+			RCLCPP_INFO_STREAM(node->get_logger(), "Trust store found at: " << SSL_CA_PATH);
+			tstore_found = true;
+		}
+	} else {
+		RCLCPP_WARN_STREAM(node->get_logger(), "Verification of server certificate is disabled, consider adjusting your setup!");
+	}
+
+	auto sslopts_builder = mqtt::ssl_options_builder()
+						.enable_server_cert_auth(node->get_parameter("mqtt_enable_server_cert_auth").as_bool())
 						.error_handler([/*node*/](const std::string& msg) {
 							//RCLCPP_ERROR_STREAM(node->get_logger(), "SSL Error: " << msg);
-							std::cout << "SSL Error: " << msg << std::endl;
+							std::cout << "SSL Error: " << msg << ", stopping mqtt-bridge!" << std::endl;
 							return 1;
-						})
-						.finalize();
+						});
+	if (tstore_found) sslopts_builder = sslopts_builder.trust_store(SSL_CA_PATH);
+	auto sslopts = sslopts_builder.finalize();
 
 	std::shared_ptr<mqtt::async_client> cli = std::make_shared<mqtt::async_client>(node->get_parameter("mqtt_server_address").as_string(), node->get_parameter("mqtt_client_id").as_string(),
 													 mqtt::create_options(MQTT_VERSION));

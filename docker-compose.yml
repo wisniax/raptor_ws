@@ -35,6 +35,10 @@ services:
         target: /etc/init.d/rex
         bind:
           create_host_path: true
+      - type: bind
+        source: ./.devcontainer/ca.crt
+        target: /opt/share/raptor_ws_mqtt_certs/ca.crt
+        read_only: true
     restart: unless-stopped
 
   mosquitto:
@@ -42,17 +46,22 @@ services:
     container_name: mosquitto
     ports:
       - "8883:8883"
-      - "9001:9001"
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - ./.devcontainer/mosquitto_passwd:/mosquitto/mosquitto_passwd
+      # read-only bind mounts make compose fail when the source path doesn't exist - and this is our intention here
+      - type: bind
+        source: ./.devcontainer/mosquitto_passwd
+        target: /mosquitto/mosquitto_passwd
+        read_only: true
       - ./.mosquitto/data:/mosquitto/data
       - ./.mosquitto/log:/mosquitto/log
-      - ./.devcontainer/mqtt-server-certs:/mosquitto/certs
-      - ./.devcontainer/mqtt-client-certs:/mosquitto/client-certs
+      - type: bind
+        source: ./.devcontainer/mqtt-server-certs
+        target: /mosquitto/certs
+        read_only: true
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-h", "mosquitto", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/client-certs/ca.crt", "-u", "raptors", "-P", "changeme", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      test: ["CMD", "mosquitto_sub", "-h", "mosquitto", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/certs/ca.crt", "-u", "${MQTT_USERNAME:-raptors}", "-P", "${MQTT_PASSWORD:-changeme}", "-C", "1", "-i", "healthcheck", "-W", "3"]
       interval: 30s
       timeout: 10s
       retries: 3
