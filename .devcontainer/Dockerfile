@@ -1,6 +1,9 @@
 # Use the official image as a parent image
 FROM wisniax/ros-rover-base:latest
 
+# Dockerfile for ROS-JAZZY
+ARG USERNAME='rex'
+
 # Default configuration
 ENV ROS_ENABLE_AUTOSTART=0
 ENV ROS_BUILD_ON_STARTUP=on-failure
