@@ -8,42 +8,38 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish-image:
-    runs-on: ubuntu-latest
+  build-amd64:
+    runs-on: ubuntu-latest # x86-64 runner
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.push-amd64.outputs.digest }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Docker metadata
-        id: meta
+      - name: Extract Docker metadata for AMD64
+        id: meta_amd64
         uses: docker/metadata-action@v5
         with:
           images: wisniax/ros-core
           tags: |
-            # On new version tag (e.g., v1.2.3) -> create v1.2.3
-            type=ref,event=tag
+            # On new version tag (e.g., v1.2.3) -> create v1.2.3-amd64
+            type=ref,event=tag,suffix=-amd64
 
-            # Assign latest only if it's a version tag
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            # Assign latest-amd64 only if it's a version tag
+            type=raw,value=latest-amd64,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
-            # On new push to master -> create nightly
-            type=raw,value=nightly,enable=${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
+            # On new push to master -> create nightly-amd64
+            type=raw,value=nightly-amd64,enable=${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
 
-            # On each PR with master as target -> create pr-<id>
-            # This uses the PR number from the event context directly.
-            type=raw,value=pr-${{ github.event.number }},enable=${{ github.event_name == 'pull_request' }}
+            # On each PR with master as target -> create pr-<id>-amd64
+            type=raw,value=pr-${{ github.event.number }}-amd64,enable=${{ github.event_name == 'pull_request' }}
 
-            # Default: For push to any branch or manual trigger -> create <branch-name>
-            # This will now apply to 'master' pushes (in addition to 'nightly')
-            # and 'workflow_dispatch' builds.
-            type=ref,event=branch
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+            # Default: For push to any branch or manual trigger -> create <branch-name>-amd64
+            type=ref,event=branch,suffix=-amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -54,14 +50,106 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push AMD64 Docker image
+        id: push-amd64
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./.devcontainer/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=wisniax/ros-core:buildcache
-          cache-to: type=registry,ref=wisniax/ros-core:buildcache,mode=max
+          tags: ${{ steps.meta_amd64.outputs.tags }}
+          labels: ${{ steps.meta_amd64.outputs.labels }}
+          cache-from: type=registry,ref=wisniax/ros-core:buildcache-amd64
+          cache-to: type=registry,ref=wisniax/ros-core:buildcache-amd64,mode=max
+
+  build-arm64:
+    runs-on: ubuntu-24.04-arm # ARM64 native runner!
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.push-arm64.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Docker metadata for ARM64
+        id: meta_arm64
+        uses: docker/metadata-action@v5
+        with:
+          images: wisniax/ros-core
+          tags: |
+            # On new version tag (e.g., v1.2.3) -> create v1.2.3-arm64
+            type=ref,event=tag,suffix=-arm64
+
+            # Assign latest-arm64 only if it's a version tag
+            type=raw,value=latest-arm64,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+            # On new push to master -> create nightly-arm64
+            type=raw,value=nightly-arm64,enable=${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
+
+            # On each PR with master as target -> create pr-<id>-arm64
+            type=raw,value=pr-${{ github.event.number }}-arm64,enable=${{ github.event_name == 'pull_request' }}
+
+            # Default: For push to any branch or manual trigger -> create <branch-name>-arm64
+            type=ref,event=branch,suffix=-arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push ARM64 Docker image
+        id: push-arm64
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./.devcontainer/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta_arm64.outputs.tags }}
+          labels: ${{ steps.meta_arm64.outputs.labels }}
+          cache-from: type=registry,ref=wisniax/ros-core:buildcache-arm64
+          cache-to: type=registry,ref=wisniax/ros-core:buildcache-arm64,mode=max
+
+  create-manifest:
+    runs-on: ubuntu-latest # Can run on x86-64 runner
+    needs: [build-amd64, build-arm64] # Ensures both arch-specific builds complete
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata for combined manifest
+        id: meta_combined
+        uses: docker/metadata-action@v5
+        with:
+          images: wisniax/ros-core # This will be the main multi-arch tag
+          tags: |
+            # Original tags logic for the multi-arch manifest
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=nightly,enable=${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
+            type=raw,value=pr-${{ github.event.number }},enable=${{ github.event_name == 'pull_request' }}
+            type=ref,event=branch
+
+      - name: Create and push multi-arch manifest
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          tags: ${{ steps.meta_combined.outputs.tags }}
+          sources: |
+            wisniax/ros-core@${{ needs.build-amd64.outputs.digest }}
+            wisniax/ros-core@${{ needs.build-arm64.outputs.digest }}
+          index-annotations: ${{ steps.meta_combined.outputs.labels }}
