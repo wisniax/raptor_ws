@@ -1,5 +1,5 @@
 # Use the official image as a parent image
-FROM wisniax/ros-rover-base
+FROM wisniax/ros-rover-base:latest
 
 # Default configuration
 ENV ROS_ENABLE_AUTOSTART=0
