@@ -3,11 +3,11 @@
 # Exit on error and show commands
 set -ex
 
-# Get Docker PID with retries
-for i in {1..15}; do
-    DOCKERPID=$(docker inspect -f '{{.State.Pid}}' ros-core 2>/dev/null) && break
-    sleep 1
-done
+# # Get Docker PID with retries
+# for i in {1..15}; do
+#     DOCKERPID=$(docker inspect -f '{{.State.Pid}}' ros-core 2>/dev/null) && break
+#     sleep 1
+# done
 
 # Check if a USB-CAN device is connected
 if ! lsusb | grep -qE "PEAK System PCAN-USB|Kvaser AB Kvaser Leaf v3"; then
@@ -31,8 +31,8 @@ usbreset "PCAN-USB" || usbreset "Kvaser Leaf v3" || true
 modprobe can
 modprobe can_raw
 modprobe can_dev
-modprobe vxcan
-modprobe kvaser_usb || true # Needed for manually installed kvaser socket can drivers
+# modprobe vxcan
+# modprobe kvaser_usb || true # Needed for manually installed kvaser socket can drivers
 
 # Wait for up to 5 seconds for can0 interface to become available
 for i in {1..5}; do
@@ -52,24 +52,24 @@ fi
 
 ip link set can0 type can bitrate 500000 restart-ms 100 || { echo "Failed to configure can0"; exit 1; }
 
-if [ -z "$DOCKERPID" ]; then
-    echo "ERROR: ros-core container not found!"
-    exit 1
-fi
+# if [ -z "$DOCKERPID" ]; then
+#     echo "ERROR: ros-core container not found!"
+#     exit 1
+# fi
 
-# Create virtual CAN pair
-ip link add vxcan0 type vxcan peer name vxcan1 netns "$DOCKERPID"
+# # Create virtual CAN pair
+# ip link add vxcan0 type vxcan peer name vxcan1 netns "$DOCKERPID"
 
-# Bring up interfaces
-nsenter -t "$DOCKERPID" -n ip link set vxcan1 up
-ip link set vxcan0 up
+# # Bring up interfaces
+# nsenter -t "$DOCKERPID" -n ip link set vxcan1 up
+# ip link set vxcan0 up
 
-# Load can-gw module
-modprobe can-gw
+# # Load can-gw module
+# modprobe can-gw
 
-# Set up CAN gateway
-cangw -A -s can0 -d vxcan0 -e
-cangw -A -s vxcan0 -d can0 -e
+# # Set up CAN gateway
+# cangw -A -s can0 -d vxcan0 -e
+# cangw -A -s vxcan0 -d can0 -e
 
 ip link set can0 up || { echo "Failed to activate can0 in container"; exit 1; }
 
