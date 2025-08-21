@@ -67,25 +67,25 @@ if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
     canb_end_time=$(( $(date +%s) + canb_timeout ))
     canb_interface_up=0
 
-    echo "Rex: Waiting for vxcan1 to come up (max ${canb_timeout} seconds)..."
+    echo "Rex: Waiting for can0 to come up (max ${canb_timeout} seconds)..."
 
     while [[ $(date +%s) -lt $canb_end_time ]]; do
         sleep $canb_interval
-        if [[ -d /sys/class/net/vxcan1 ]] && [[ $(cat /sys/class/net/vxcan1/operstate) == "up" ]]; then
-            echo "Rex: vxcan1 is UP!"
+        if [[ -d /sys/class/net/can0 ]] && [[ $(cat /sys/class/net/can0/operstate) == "up" ]]; then
+            echo "Rex: can0 is UP!"
             canb_interface_up=1
             break
         fi
     done
 
     if [[ $canb_interface_up -eq 0 ]]; then
-        echo "REX ERROR: vxcan1 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
+        echo "REX ERROR: can0 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
         rm -rf /mnt/local/.can_bridge_rex_waiting || true
     fi
 
     if [ -f /mnt/local/.can_bridge_rex_waiting ]; then
         rm -rf /mnt/local/.can_bridge_rex_waiting
-        echo "REX WARN: vxcan1 setup service might fail - network probably is created but not bridged - please check the configuration"
+        echo "REX WARN: can0 setup service might fail - network probably is created but not bridged - please check the configuration"
     fi
 else
     echo "Rex can bridge setup disabled - skipping"
