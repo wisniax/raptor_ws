@@ -32,6 +32,9 @@ services:
         source: ./.devcontainer/ca.crt
         target: /opt/share/raptor_ws_mqtt_certs/ca.crt
         read_only: true
+      - type: bind
+        source: /dev/shm
+        target: /dev/shm
     restart: unless-stopped
 
   mosquitto:
