@@ -1,9 +1,3 @@
-networks:
-  default:
-    name: ros-core-network
-    driver_opts:
-      com.docker.network.bridge.name: br-ros-core
-
 services:
   ros-core:
     build:
@@ -43,8 +37,7 @@ services:
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
-    ports:
-      - "8883:8883"
+    network_mode: host
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
       # read-only bind mounts make compose fail when the source path doesn't exist - and this is our intention here
