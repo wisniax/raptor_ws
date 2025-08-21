@@ -17,8 +17,7 @@ services:
     pid: "host"
     ipc: "host"
     init: true
-    ports:
-      - "2122:22"
+    network_mode: host
     environment:
       - TZ=Europe/Warsaw
       - ROS_ENABLE_AUTOSTART=1
