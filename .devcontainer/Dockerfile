@@ -1,4 +1,3 @@
-# Use the official image as a parent image
 FROM wisniax/ros-rover-base:latest
 
 # Dockerfile for ROS-JAZZY

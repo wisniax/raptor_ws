@@ -56,7 +56,7 @@ services:
         read_only: true
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-h", "mosquitto", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/certs/ca.crt", "-u", "${MQTT_USERNAME:-raptors}", "-P", "${MQTT_PASSWORD:-changeme}", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      test: ["CMD", "mosquitto_sub", "-h", "localhost", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/certs/ca.crt", "-u", "${MQTT_USERNAME:-raptors}", "-P", "${MQTT_PASSWORD:-changeme}", "-C", "1", "-i", "healthcheck", "-W", "3"]
       interval: 30s
       timeout: 10s
       retries: 3
