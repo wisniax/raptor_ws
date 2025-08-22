@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-amd64-only:
+  build-amd64:
     runs-on: ubuntu-latest # x86-64 runner
     permissions:
       contents: read
