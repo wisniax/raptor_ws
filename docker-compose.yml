@@ -1,14 +1,10 @@
-networks:
-  default:
-    name: ros-core-network
-    driver_opts:
-      com.docker.network.bridge.name: br-ros-core
-
 services:
   ros-core:
     build:
       context: .
       dockerfile: ./.devcontainer/Dockerfile
+      args:
+        SSH_PORT: 2122
     image: wisniax/ros-core:latest
     stdin_open: true
     container_name: ros-core
@@ -17,8 +13,7 @@ services:
     pid: "host"
     ipc: "host"
     init: true
-    ports:
-      - "2122:22"
+    network_mode: host
     environment:
       - TZ=Europe/Warsaw
       - ROS_ENABLE_AUTOSTART=1
@@ -39,13 +34,15 @@ services:
         source: ./.devcontainer/ca.crt
         target: /opt/share/raptor_ws_mqtt_certs/ca.crt
         read_only: true
+      - type: bind
+        source: /dev/shm
+        target: /dev/shm
     restart: unless-stopped
 
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
-    ports:
-      - "8883:8883"
+    network_mode: host
     volumes:
       - ./.devcontainer/mosquitto.conf:/mosquitto/config/mosquitto.conf
       # read-only bind mounts make compose fail when the source path doesn't exist - and this is our intention here
@@ -61,7 +58,7 @@ services:
         read_only: true
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-h", "mosquitto", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/certs/ca.crt", "-u", "${MQTT_USERNAME:-raptors}", "-P", "${MQTT_PASSWORD:-changeme}", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      test: ["CMD", "mosquitto_sub", "-h", "localhost", "-p", "8883", "-t", "$$SYS/#", "--cafile", "/mosquitto/certs/ca.crt", "-u", "${MQTT_USERNAME:-raptors}", "-P", "${MQTT_PASSWORD:-changeme}", "-C", "1", "-i", "healthcheck", "-W", "3"]
       interval: 30s
       timeout: 10s
       retries: 3

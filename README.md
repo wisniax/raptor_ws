@@ -115,6 +115,14 @@ sudo systemctl start can-bridge.path
 ```
 > **Note!** Do not skip *.path* above. This results in improper setup!
 
+#### Debug can-bridge action
+```
+sudo systemctl status can-bridge.service
+```
+```
+sudo journalctl -u can-bridge.service -b
+```
+
 # Build using GH actions runner
 Make `.secrets` file in project directory with contents:
 ```

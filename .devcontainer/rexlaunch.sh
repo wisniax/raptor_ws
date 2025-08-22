@@ -1,6 +1,6 @@
 #/bin/sh
 # create a new session (so that all launched nodes share the same PGID, and thus can be bulk-terminated)
-setsid /bin/sh -c '. install/setup.sh && export ROS_DOMAIN_ID=1 && ros2 launch master-launch.yaml >> /tmp/rex_launch.log' &
+setsid /bin/sh -c '. install/setup.sh && export ROS_DOMAIN_ID=0 && ros2 launch master-launch.yaml >> /tmp/rex_launch.log' &
 
 # record the process group ID (PGID)
 PGID=$!
