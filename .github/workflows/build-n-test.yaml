@@ -28,5 +28,7 @@ jobs:
           context: .
           file: ./.devcontainer/Dockerfile
           platforms: linux/amd64
+          build-args: |
+            SSH_PORT=2122
           push: false
           cache-from: type=registry,ref=wisniax/ros-core:buildcache-amd64

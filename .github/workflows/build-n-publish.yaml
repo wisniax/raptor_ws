@@ -60,6 +60,8 @@ jobs:
           push: true
           tags: ${{ steps.meta_amd64.outputs.tags }}
           labels: ${{ steps.meta_amd64.outputs.labels }}
+          build-args: |
+            SSH_PORT=2122
           cache-from: type=registry,ref=wisniax/ros-core:buildcache-amd64
           cache-to: type=registry,ref=wisniax/ros-core:buildcache-amd64,mode=max
 
@@ -115,6 +117,8 @@ jobs:
           push: true
           tags: ${{ steps.meta_arm64.outputs.tags }}
           labels: ${{ steps.meta_arm64.outputs.labels }}
+          build-args: |
+            SSH_PORT=2122
           cache-from: type=registry,ref=wisniax/ros-core:buildcache-arm64
           cache-to: type=registry,ref=wisniax/ros-core:buildcache-arm64,mode=max
 
