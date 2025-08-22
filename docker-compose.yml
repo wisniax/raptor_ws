@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: ./.devcontainer/Dockerfile
+      args:
+        SSH_PORT: 2122
     image: wisniax/ros-core:latest
     stdin_open: true
     container_name: ros-core
