@@ -43,6 +43,9 @@ void SamplerControl::handleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &s
 {
 	if (isSamplerMode(mRoverStatusMsgLast))
 		mSamplerCtlMsgLast = samplerCtlMsg;
+	else
+		RCLCPP_WARN_THROTTLE(mNh->get_logger(), *mNh->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
+							 "When non-sampler mode is selected, incoming SamplerControl MQTT messages are discarded.");
 }
 
 void SamplerControl::handleRoverStatusClb(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
