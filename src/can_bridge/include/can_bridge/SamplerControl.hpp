@@ -8,10 +8,14 @@
 #include <can_bridge/VescInterop.hpp>
 #include "can_bridge/RosCanConstants.hpp"
 #include "rex_interfaces/msg/sampler_control.hpp"
+#include "rex_interfaces/msg/rover_status.hpp"
 extern "C"
 {
 #include <libVescCan/VESC.h>
 }
+
+using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
+using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 
 class SamplerControl
 {
@@ -19,18 +23,26 @@ public:
 	SamplerControl(rclcpp::Node::SharedPtr &nh);
 
 private:
-	void handleSamplerCtl(const rex_interfaces::msg::SamplerControl::ConstSharedPtr &samplerCtlMsg);
-	void doStuff();
+	bool isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg);
+	void stopSampler();
+	void handleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
+	void handleRoverStatusClb(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
+	void handleTimerClb();
+	void publishSamplerData();
 	void publish(const VESC_CommandFrame *arr, int arr_size);
 
 	rclcpp::Node::SharedPtr mNh;
 
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;						 /**< ROS publisher for raw CAN messages. */
-	rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr mSamplerCtlSub; /**< ROS subscriber for SamplerControl messages. */
+	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
+	rclcpp::Subscription<SamplerControlMsg>::SharedPtr mSamplerCtlSub; /**< ROS subscriber for SamplerControl messages. */
+	rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;   /**< ROS subscriber for SamplerControl messages. */
 
-	rclcpp::TimerBase::SharedPtr mTimerXd;
+	rclcpp::TimerBase::SharedPtr mTimer;
 
-	rex_interfaces::msg::SamplerControl::ConstSharedPtr mSamplerCtlMsgLast;
+	rclcpp::Time mProbeDisableTimestamp;
+
+	SamplerControlMsg::ConstSharedPtr mSamplerCtlMsgLast;
+	RoverStatusMsg::ConstSharedPtr mRoverStatusMsgLast;
 };
 
 #endif // SamplerControl_h_
