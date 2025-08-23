@@ -5,7 +5,7 @@ services:
       dockerfile: ./.devcontainer/Dockerfile
       args:
         SSH_PORT: 2122
-    image: wisniax/ros-core:latest
+    image: wisniax/ros-core:nightly
     stdin_open: true
     container_name: ros-core
     hostname: ros-core
