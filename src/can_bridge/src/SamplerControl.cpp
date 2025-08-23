@@ -54,6 +54,9 @@ void SamplerControl::handleRoverStatusClb(const RoverStatusMsg::ConstSharedPtr &
 	if (!isSamplerMode(roverStatusMsg) && isSamplerMode(mRoverStatusMsgLast))
 		stop_sampler = true;
 
+	if (isSamplerMode(roverStatusMsg) && !isSamplerMode(mRoverStatusMsgLast))
+		stop_sampler = true;
+
 	mRoverStatusMsgLast = roverStatusMsg;
 
 	if (stop_sampler)
