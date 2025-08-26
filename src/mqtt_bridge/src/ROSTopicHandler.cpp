@@ -19,6 +19,10 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mSub_ZedImuData = n->create_subscription<sensor_msgs::msg::Imu>("/zed2/zed_node/imu/data", 100, std::bind(&ROSTopicHandler::callback_ZedImuData, this, std::placeholders::_1));
 	mTimer_ZedImuData = n->create_timer(std::chrono::milliseconds(mInterval_ZedImuData), std::bind(&ROSTopicHandler::fire_ZedImuData, this), timer_cb_group);
 
+	mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>("RappTORS/BatteryInfo", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+
+	mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>("/RappTORS/SamplerFeedback", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
+
 	mPub_Wheels = n->create_publisher<rex_interfaces::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
 	mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
 	mPub_ManipulatorControl = n->create_publisher<rex_interfaces::msg::ManipulatorMqttMessage>("/MQTT/ManipulatorControl", 1000);
@@ -70,7 +74,7 @@ void ROSTopicHandler::fire_VescStatus()
 	{
 		publishMqttMessage_VescStatus(msgPair.second);
 	}
-	
+
 	mMsgMap_VescStatus.clear();
 }
 
@@ -140,17 +144,17 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<rex_interfac
 	std::map<std::string, double> jsonDoubleFieldsMap{
 		{"Current", msg->current}, {"DutyCycle", msg->duty_cycle}, {"AhUsed", msg->ah_used}, {"AhCharged", msg->ah_charged}, {"WhUsed", msg->wh_used}, {"WhCharged", msg->wh_charged}, {"TempFet", msg->temp_fet}, {"TempMotor", msg->temp_motor}, {"CurrentIn", msg->current_in}, {"PidPos", msg->pid_pos}, {"Tachometer", msg->tachometer}, {"VoltsIn", msg->volts_in}, {"ADC1", msg->adc1}, {"ADC2", msg->adc2}, {"ADC3", msg->adc3}, {"PPM", msg->ppm}, {"PrecisePos", msg->precise_pos}};
 
-	addMembersFromMapToJSON(d, jsonIntFieldsMap);
+		addMembersFromMapToJSON(d, jsonIntFieldsMap);
 
-	addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+		addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
 
-	addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
 
-	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	d.Accept(writer);
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
 
-	publishMqttMessage("RappTORS/VescStatus", buffer.GetString());
+		publishMqttMessage("RappTORS/VescStatus", buffer.GetString());
 }
 
 // ###### ZedImuData ######
@@ -212,93 +216,137 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 
 	std::string jsonDoubleArray9FieldNames[jsonDoubleArray9Fields] = {"orientation_covariance", "angular_velocity_covariance", "linear_acceleration_covariance"};
 	std::array<double, 9> jsonDoubleArray9FieldValues[jsonDoubleArray9Fields] = {msg->orientation_covariance,
-																				   msg->angular_velocity_covariance, msg->linear_acceleration_covariance};
+		msg->angular_velocity_covariance, msg->linear_acceleration_covariance};
 
-	std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
-	geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields];
-	jsonVector3FieldValues[0] = msg->angular_velocity;
-	jsonVector3FieldValues[1] = msg->linear_acceleration;
+		std::string jsonVector3FieldNames[jsonVector3Fields] = {"angular_velocity", "linear_acceleration"};
+		geometry_msgs::msg::Vector3 jsonVector3FieldValues[jsonVector3Fields];
+		jsonVector3FieldValues[0] = msg->angular_velocity;
+		jsonVector3FieldValues[1] = msg->linear_acceleration;
 
-	// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
-	for (int i = 0; i < jsonDoubleArray9Fields; i++)
-	{
-		rapidjson::Value k(jsonDoubleArray9FieldNames[i], d.GetAllocator());
-		rapidjson::Value v;
-		v.SetArray();
-		for (int j = 0; j < 9; j++)
+		// float64[9]: orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance
+		for (int i = 0; i < jsonDoubleArray9Fields; i++)
 		{
-			v.PushBack(jsonDoubleArray9FieldValues[i][j], d.GetAllocator());
+			rapidjson::Value k(jsonDoubleArray9FieldNames[i], d.GetAllocator());
+			rapidjson::Value v;
+			v.SetArray();
+			for (int j = 0; j < 9; j++)
+			{
+				v.PushBack(jsonDoubleArray9FieldValues[i][j], d.GetAllocator());
+			}
+			d.AddMember(k, v, d.GetAllocator());
 		}
-		d.AddMember(k, v, d.GetAllocator());
-	}
 
-	// geometry_msgs/Vector3: angular_velocity, linear_acceleration
-	for (int i = 0; i < jsonVector3Fields; i++)
-	{
-		rapidjson::Value k(jsonVector3FieldNames[i], d.GetAllocator());
-		rapidjson::Value v;
-		v.SetObject();
+		// geometry_msgs/Vector3: angular_velocity, linear_acceleration
+		for (int i = 0; i < jsonVector3Fields; i++)
 		{
+			rapidjson::Value k(jsonVector3FieldNames[i], d.GetAllocator());
+			rapidjson::Value v;
+			v.SetObject();
+			{
 
-			rapidjson::Value coordinateFieldName("x", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].x);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+				rapidjson::Value coordinateFieldName("x", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].x);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			{
+				rapidjson::Value coordinateFieldName("y", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].y);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			{
+				rapidjson::Value coordinateFieldName("z", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].z);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			d.AddMember(k, v, d.GetAllocator());
 		}
-		{
-			rapidjson::Value coordinateFieldName("y", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].y);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
-		}
-		{
-			rapidjson::Value coordinateFieldName("z", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(jsonVector3FieldValues[i].z);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
-		}
-		d.AddMember(k, v, d.GetAllocator());
-	}
 
-	// geometry_msgs/Quaternion: orientation
-	{
-		rapidjson::Value k("orientation", d.GetAllocator());
-		rapidjson::Value v;
-		v.SetObject();
+		// geometry_msgs/Quaternion: orientation
 		{
-			rapidjson::Value coordinateFieldName("x", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(msg->orientation.x);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			rapidjson::Value k("orientation", d.GetAllocator());
+			rapidjson::Value v;
+			v.SetObject();
+			{
+				rapidjson::Value coordinateFieldName("x", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(msg->orientation.x);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			{
+				rapidjson::Value coordinateFieldName("y", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(msg->orientation.y);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			{
+				rapidjson::Value coordinateFieldName("z", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(msg->orientation.z);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			{
+				rapidjson::Value coordinateFieldName("w", d.GetAllocator());
+				rapidjson::Value coordinateFieldValue;
+				coordinateFieldValue.SetDouble(msg->orientation.w);
+				v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
+			}
+			d.AddMember(k, v, d.GetAllocator());
 		}
-		{
-			rapidjson::Value coordinateFieldName("y", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(msg->orientation.y);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
-		}
-		{
-			rapidjson::Value coordinateFieldName("z", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(msg->orientation.z);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
-		}
-		{
-			rapidjson::Value coordinateFieldName("w", d.GetAllocator());
-			rapidjson::Value coordinateFieldValue;
-			coordinateFieldValue.SetDouble(msg->orientation.w);
-			v.AddMember(coordinateFieldName, coordinateFieldValue, d.GetAllocator());
-		}
-		d.AddMember(k, v, d.GetAllocator());
-	}
 
-	addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
 
-	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	d.Accept(writer);
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
 
-	publishMqttMessage("RappTORS/ZedImuData", buffer.GetString());
+		publishMqttMessage("RappTORS/ZedImuData", buffer.GetString());
+}
+
+// ###### BatteryInfo ######
+void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
+{
+	rapidjson::Document d;
+	d.SetObject();
+
+	std::map<std::string, int> jsonIntFieldsMap{{"Slot", msg->slot}, {"ID", msg->id}};
+
+	std::map<std::string, double> jsonDoubleFieldsMap{
+		{"Voltage", msg->voltage}, {"Current", msg->current}, {"Temperature", msg->temperature}, {"ChargePercent", msg->charge_percent}};
+
+		addMembersFromMapToJSON(d, jsonIntFieldsMap);
+
+		addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
+
+		publishMqttMessage("RappTORS/BatteryInfo", buffer.GetString());
+}
+
+// ###### SamplerFeedback ######
+void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr &msg)
+{
+	rapidjson::Document d;
+	d.SetObject();
+
+	std::map<std::string, double> jsonDoubleFieldsMap{
+		{"WeightA", msg->weight_a}, {"WeightB", msg->weight_b}, {"WeightC", msg->weight_c}, {"Ph", msg->ph}, {"Distance", msg->distance}};
+
+		addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
+
+		publishMqttMessage("RappTORS/SamplerFeedback", buffer.GetString());
 }
 
 // ###### Wheels ######
