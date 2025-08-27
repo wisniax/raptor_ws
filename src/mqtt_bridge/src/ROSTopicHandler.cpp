@@ -310,7 +310,7 @@ void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInf
 	rapidjson::Document d;
 	d.SetObject();
 
-	std::map<std::string, int> jsonIntFieldsMap{{"Slot", msg->slot}, {"ID", msg->id}};
+	std::map<std::string, int> jsonIntFieldsMap{{"Slot", msg->slot}, {"ID", msg->id}, {"BatteryStatus", msg->battery_status}, {"HotswapStatus", msg->hotswap_status}};
 
 	std::map<std::string, double> jsonDoubleFieldsMap{
 		{"Voltage", msg->voltage}, {"Current", msg->current}, {"Temperature", msg->temperature}, {"ChargePercent", msg->charge_percent}};
