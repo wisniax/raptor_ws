@@ -19,7 +19,7 @@ mkdir .devcontainer/mqtt-server-certs/
 openssl genrsa -out .devcontainer/mqtt-server-certs/ca.key 2048
 openssl req -new -x509 -days 3650 -key .devcontainer/mqtt-server-certs/ca.key -out .devcontainer/mqtt-server-certs/ca.crt -subj "/CN=${CA_CN}"
 openssl genrsa -out .devcontainer/mqtt-server-certs/server.key 2048
-openssl req -new -key .devcontainer/mqtt-server-certs/server.key -out .devcontainer/mqtt-server-certs/server.csr -addext "subjectAltName = DNS:mosquitto,IP:${SERVER_SAN}" -subj "/CN=mosquitto"
+openssl req -new -key .devcontainer/mqtt-server-certs/server.key -out .devcontainer/mqtt-server-certs/server.csr -addext "subjectAltName = DNS:localhost,IP:${SERVER_SAN}" -subj "/CN=mosquitto"
 openssl x509 -req -in .devcontainer/mqtt-server-certs/server.csr -CA .devcontainer/mqtt-server-certs/ca.crt -CAkey .devcontainer/mqtt-server-certs/ca.key -CAcreateserial -copy_extensions copy -out .devcontainer/mqtt-server-certs/server.crt -days 3650
 
 # Remove Certificate Signing Request (no longer needed)

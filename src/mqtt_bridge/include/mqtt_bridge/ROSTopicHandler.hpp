@@ -9,6 +9,8 @@
 #include "rex_interfaces/msg/rover_status.hpp"
 #include "rex_interfaces/msg/sampler_control.hpp"
 #include "rex_interfaces/msg/manipulator_mqtt_message.hpp"
+#include "rex_interfaces/msg/battery_info.hpp"
+#include "rex_interfaces/msg/sampler_feedback.hpp"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -45,6 +47,8 @@ private:
   void fire_ZedImuData();
   void publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs::msg::Imu> msg);
 
+  void callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &receivedMsg);
+  void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr &receivedMsg);
 
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
@@ -59,6 +63,9 @@ private:
   rclcpp::TimerBase::SharedPtr mTimer_ZedImuData;
   std::shared_ptr<sensor_msgs::msg::Imu> mMsg_ZedImuData;
   bool mFirst_ZedImuData = true;
+
+  rclcpp::Subscription<rex_interfaces::msg::BatteryInfo>::SharedPtr mSub_BatteryInfo;
+  rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr mSub_SamplerFeedback;
 
   rclcpp::Publisher<rex_interfaces::msg::Wheels>::SharedPtr mPub_Wheels;
   rclcpp::Publisher<rex_interfaces::msg::RoverControl>::SharedPtr mPub_RoverControl;

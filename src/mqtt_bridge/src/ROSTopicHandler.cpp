@@ -19,6 +19,9 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mSub_ZedImuData = n->create_subscription<sensor_msgs::msg::Imu>("/zed2/zed_node/imu/data", 100, std::bind(&ROSTopicHandler::callback_ZedImuData, this, std::placeholders::_1));
 	mTimer_ZedImuData = n->create_timer(std::chrono::milliseconds(mInterval_ZedImuData), std::bind(&ROSTopicHandler::fire_ZedImuData, this), timer_cb_group);
 
+	mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>("RappTORS/BatteryInfo", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+	mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>("/RappTORS/SamplerFeedback", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
+
 	mPub_Wheels = n->create_publisher<rex_interfaces::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
 	mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
 	mPub_ManipulatorControl = n->create_publisher<rex_interfaces::msg::ManipulatorMqttMessage>("/MQTT/ManipulatorControl", 1000);
@@ -299,6 +302,50 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 	d.Accept(writer);
 
 	publishMqttMessage("RappTORS/ZedImuData", buffer.GetString());
+}
+
+// ###### BatteryInfo ######
+void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
+{
+	rapidjson::Document d;
+	d.SetObject();
+
+	std::map<std::string, int> jsonIntFieldsMap{{"Slot", msg->slot}, {"ID", msg->id}};
+
+	std::map<std::string, double> jsonDoubleFieldsMap{
+		{"Voltage", msg->voltage}, {"Current", msg->current}, {"Temperature", msg->temperature}, {"ChargePercent", msg->charge_percent}};
+
+		addMembersFromMapToJSON(d, jsonIntFieldsMap);
+
+		addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
+
+		publishMqttMessage("RappTORS/BatteryInfo", buffer.GetString());
+}
+
+// ###### SamplerFeedback ######
+void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr &msg)
+{
+	rapidjson::Document d;
+	d.SetObject();
+
+	std::map<std::string, double> jsonDoubleFieldsMap{
+		{"WeightA", msg->weight_a}, {"WeightB", msg->weight_b}, {"WeightC", msg->weight_c}, {"Ph", msg->ph}, {"Distance", msg->distance}};
+
+		addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
+
+		addTimestampToJSON(d, ((long int)msg->header.stamp.sec * 1000) + ((long int)msg->header.stamp.nanosec / 1000000));
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		d.Accept(writer);
+
+		publishMqttMessage("RappTORS/SamplerFeedback", buffer.GetString());
 }
 
 // ###### Wheels ######

@@ -14,7 +14,7 @@
 ## Generate TLS keys, certificates and credentials for Mosquitto
 A helper script is included, which allows to easily generate a CA, server certificate, server keys, and an MQTT credentials file for Mosquitto; it also automatically sets the correct file permissions and ownership, and copies the files into the right locations. `openssl` package, Docker, and sudo access are required to run this script. The syntax is as follows:
 `./mqtt_certs_gen.sh <CA Common Name> <Server SAN> <MQTT Username> <MQTT Password>`
-where `CA Common Name` should be a name which identifies the Certificate Authority, and `Server SAN` should be the **IP address** (NOT DNS!) by which clients should be able to reach the MQTT broker (`mosquitto` is already included for in-docker access). Example:
+where `CA Common Name` should be a name which identifies the Certificate Authority, and `Server SAN` should be the **IP address** (NOT DNS!) by which clients should be able to reach the MQTT broker (`localhost` is already included for in-docker access). Example:
 `./mqtt_certs_gen.sh RaptorsCA 192.168.1.20 raptors changeme`
 (for local development, `127.0.0.1` can be used)
 
