@@ -11,7 +11,7 @@ VescStatusHandler::VescStatusHandler(rclcpp::Node::SharedPtr &nh, const MotorCon
 	mStatusPublisher = nh->create_publisher<rex_interfaces::msg::VescStatus>(
 		RosCanConstants::RosTopics::can_vesc_status, qos);
 
-	mSendTimer = nh->create_timer(std::chrono::milliseconds(200), std::bind(&VescStatusHandler::timer_method, this));
+	mSendTimer = nh->create_timer(std::chrono::milliseconds(50), std::bind(&VescStatusHandler::timer_method, this));
 }
 
 void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
@@ -21,16 +21,31 @@ void VescStatusHandler::statusGrabber(const can_msgs::msg::Frame::ConstSharedPtr
 	//whitelist for bldc and cupamars
 	switch(vescFrame.vescID)
 	{
-		//cupamars-es
+		//bldc-s
 		case 0x50:
 		case 0x51:
 		case 0x52:
 		case 0x53:
-		//bldc-s
+		//cupamars-es
 		case 0x60:
 		case 0x61:
 		case 0x62:
 		case 0x63:
+			break;
+		default:
+			return;
+	}
+
+	switch(vescFrame.command)
+	{
+		case VESC_COMMAND_STATUS_1:
+		case VESC_COMMAND_STATUS_2:
+		case VESC_COMMAND_STATUS_3:
+		case VESC_COMMAND_STATUS_4:
+		case VESC_COMMAND_STATUS_5:
+		case VESC_COMMAND_STATUS_6:
+		case VESC_COMMAND_STATUS_7:
+		case VESC_COMMAND_STATUS_11:
 			break;
 		default:
 			return;
