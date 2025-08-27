@@ -32,7 +32,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/StatusMessage.cpp
 	src/MotorControl.cpp
 	src/ManipulatorControl.cpp
-	src/ProbeStatusForwarder.cpp
+	src/SamplerStatusForwarder.cpp
   src/SamplerControl.cpp
  )
 

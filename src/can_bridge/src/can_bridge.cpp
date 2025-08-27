@@ -13,7 +13,7 @@
 #include "rex_interfaces/msg/rover_control.hpp"
 #include "can_bridge/StatusMessage.hpp"
 #include "can_bridge/ManipulatorControl.hpp"
-#include "can_bridge/ProbeStatusForwarder.hpp"
+#include "can_bridge/SamplerStatusForwarder.hpp"
 #include "can_bridge/SamplerControl.hpp"
 
 #include <std_srvs/srv/set_bool.hpp>
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	VescStatusHandler mVescStatusHandler(n, &motorControl);
 	StatusMessage mStatusMessage(n, true);
 	ManipulatorControl mManipulatorCtl(n);
-	ProbeStatusForwarder mProbeStatusForwarder(n);
+	SamplerStatusForwarder mSamplerStatusForwarder(n);
 	SamplerControl mSamplerCtl(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;

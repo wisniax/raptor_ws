@@ -9,7 +9,7 @@ const std::string RosCanConstants::RosTopics::can_stm_errors = "/CAN/RX/stm_erro
 const std::string RosCanConstants::RosTopics::can_stm_init = "/CAN/TX/stm_init";
 const std::string RosCanConstants::RosTopics::can_vesc_status = "/CAN/RX/vesc_status";
 const std::string RosCanConstants::RosTopics::can_manipulator_ctl = "/CAN/TX/manipulator_ctl";
-const std::string RosCanConstants::RosTopics::can_probe_status = "/CAN/RX/probe_status";
+const std::string RosCanConstants::RosTopics::can_sampler_status = "/CAN/RX/probe_status";
 
 const std::string RosCanConstants::RosTopics::mqtt_rover_status = "/MQTT/RoverStatus";
 const std::string RosCanConstants::RosTopics::mqtt_sampler_control = "/MQTT/SamplerControl";
