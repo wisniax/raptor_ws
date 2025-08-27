@@ -21,6 +21,7 @@ struct RosCanConstants
 		static const std::string can_vesc_status;		/**< Topic with vesc motor status */
 		static const std::string can_manipulator_ctl;	/**< Topic used for manipulator 'manipulation' */
 		static const std::string can_sampler_status;	/**< Topic with sampler status */
+		static const std::string can_battery_info;		/**< Topic with battery (BMS & HOTSWAP) status */
 		static const std::string mqtt_rover_status;		/**< Topic for rover status from MQTT. */
 		static const std::string mqtt_sampler_control;	/**< Topic for sampler control from MQTT. */
 	};
