@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	SamplerControl mSamplerCtl(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
-	rclcpp::Rate rate(100);
+	rclcpp::Rate rate(1000);
 
 	std_srvs::srv::SetBool::Request req;
 	std_srvs::srv::SetBool::Response res;
