@@ -34,6 +34,7 @@ add_executable(can_bridge_node src/can_bridge.cpp
 	src/ManipulatorControl.cpp
 	src/SamplerStatusForwarder.cpp
   src/SamplerControl.cpp
+  src/BatteryInfoForwarder.cpp
  )
 
 target_include_directories(can_bridge_node PUBLIC
