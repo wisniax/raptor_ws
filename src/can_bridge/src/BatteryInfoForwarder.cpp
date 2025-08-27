@@ -7,7 +7,7 @@ BatteryInfoForwarder::BatteryInfoForwarder(rclcpp::Node::SharedPtr &nh) : mNh(nh
         RosCanConstants::RosTopics::can_raw_RX, qos,
         std::bind(&BatteryInfoForwarder::batteryInfoGrabber, this, std::placeholders::_1));
     mBatteryInfoPublisher = mNh->create_publisher<rex_interfaces::msg::BatteryInfo>(
-        RosCanConstants::RosTopics::can_sampler_status, qos);
+        RosCanConstants::RosTopics::can_battery_info, qos);
 }
 
 void BatteryInfoForwarder::batteryInfoGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
