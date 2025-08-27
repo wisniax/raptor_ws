@@ -28,8 +28,6 @@ private:
 
 	rclcpp::Node::SharedPtr mNh;
 
-	bool mRottenNoted = false;
-
 	VESC_Status_8 mStatus8;
 	bool mStatus8Fresh = false;
 
