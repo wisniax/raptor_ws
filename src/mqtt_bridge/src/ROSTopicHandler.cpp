@@ -19,8 +19,8 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mSub_ZedImuData = n->create_subscription<sensor_msgs::msg::Imu>("/zed2/zed_node/imu/data", 100, std::bind(&ROSTopicHandler::callback_ZedImuData, this, std::placeholders::_1));
 	mTimer_ZedImuData = n->create_timer(std::chrono::milliseconds(mInterval_ZedImuData), std::bind(&ROSTopicHandler::fire_ZedImuData, this), timer_cb_group);
 
-	mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>("RappTORS/BatteryInfo", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
-	mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>("/RappTORS/SamplerFeedback", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
+	mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+	mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
 	mPub_Wheels = n->create_publisher<rex_interfaces::msg::Wheels>("/CAN/TX/set_motor_vel", 1000);
 	mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
