@@ -19,9 +19,10 @@ struct RosCanConstants
 		static const std::string can_stm_errors;		/**< Topic used for reporting STM32 errors. */
 		static const std::string can_stm_init;			/**< Topic used for initializing the STM32. */
 		static const std::string can_vesc_status;		/**< Topic with vesc motor status */
-		static const std::string can_manipulator_ctl;		/**< Topic used for manipulator 'manipulation' */
+		static const std::string can_manipulator_ctl;	/**< Topic used for manipulator 'manipulation' */
 		static const std::string can_probe_status;		/**< Topic with probe status */
 		static const std::string mqtt_rover_status;		/**< Topic for rover status from MQTT. */
+		static const std::string mqtt_sampler_control;	/**< Topic for sampler control from MQTT. */
 	};
 
 	struct VescIds
@@ -49,7 +50,15 @@ struct RosCanConstants
 		static const uint8_t manipulator_axis_6;  /**< ID for the manipulator 6th axis */
 		static const uint8_t manipulator_gripper; /**< ID for the manipulator gripper */
 
-		// 0x80 - 0x8f - range for the probe
+		// 0x80 - 0x8f - range for the sampler
+		static const uint8_t sampler_platform;		 /**< ID for the sampler platform movement */
+		static const uint8_t sampler_drill_mov;		 /**< ID for the sampler drill movement */
+		static const uint8_t sampler_drill;			 /**< ID for the sampler drill action */
+		static const uint8_t sampler_container_a;	 /**< ID for the sampler container A (position only) */
+		static const uint8_t sampler_container_b;	 /**< ID for the sampler container B (position only) */
+		static const uint8_t sampler_vacuum_suction; /**< ID for the sampler vacuum main motor -1:1 duty range */
+		static const uint8_t sampler_vacuum_a;		 /**< ID for the sampler vacuum motor A ON-OFF only (duty 0-1) */
+		static const uint8_t sampler_vacuum_b;		 /**< ID for the sampler vacuum motor B ON-OFF only (duty 0-1) */
 
 		// 0x90 - 0x9f - range for the bms
 		static const uint8_t bms_battery_left;	 /**< ID for the left battery BMS. */

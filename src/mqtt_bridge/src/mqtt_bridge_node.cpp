@@ -144,18 +144,18 @@ void processMqttSamplerControlMessage(const char *payloadMsg, std::shared_ptr<RO
 	{
 		try
 		{
-			rex_interfaces::msg::ProbeControl msg;
+			rex_interfaces::msg::SamplerControl msg;
 
 			msg.drill_movement = d["DrillMovement"].GetDouble();
 			msg.platform_movement = d["PlatformMovement"].GetDouble();
 			msg.drill_action = d["DrillAction"].GetDouble();
-			msg.container_degrees_0 = d["ContainerDegrees0"].GetDouble();
-			msg.container_degrees_1 = d["ContainerDegrees1"].GetDouble();
-			msg.container_degrees_2 = d["ContainerDegrees2"].GetDouble();
+			msg.container_degrees_a = d["ContainerDegrees0"].GetDouble();
+			msg.container_degrees_b = d["ContainerDegrees1"].GetDouble();
+			// msg.container_degrees_2 = d["ContainerDegrees2"].GetDouble();
 
 			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 
-			rth->publishMessage_ProbeControl(msg);
+			rth->publishMessage_SamplerControl(msg);
 		}
 		catch (JsonAssertException e)
 		{
