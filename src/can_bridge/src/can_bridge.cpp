@@ -15,6 +15,7 @@
 #include "can_bridge/ManipulatorControl.hpp"
 #include "can_bridge/SamplerStatusForwarder.hpp"
 #include "can_bridge/SamplerControl.hpp"
+#include "can_bridge/BatteryInfoForwarder.hpp"
 
 #include <std_srvs/srv/set_bool.hpp>
 
@@ -33,7 +34,7 @@ void doDrivingStuff(MotorControl &mtrCtl);
 static std::chrono::system_clock::time_point lastSendWheels;
 static std::chrono::nanoseconds diff;
 
-// TODO: 
+// TODO:
 // - Implement this as lifecycle node
 // - Utilize a new QoS profile for the publisher and subscriber
 // - Recreate the package to use new multi-node architecture (maybe multi-threaded?)
@@ -52,6 +53,7 @@ int main(int argc, char *argv[])
 	ManipulatorControl mManipulatorCtl(n);
 	SamplerStatusForwarder mSamplerStatusForwarder(n);
 	SamplerControl mSamplerCtl(n);
+	BatteryInfoForwarder mBatteryInfoForwarder(n);
 
 	CanNodeMode canNodeMode = CanNodeMode::Created;
 	rclcpp::Rate rate(1000);
@@ -67,7 +69,7 @@ int main(int argc, char *argv[])
 		switch (canNodeMode)
 		{
 		case CanNodeMode::Created:
-			
+
 			canNodeMode = CanNodeMode::Opening;
 			break;
 
