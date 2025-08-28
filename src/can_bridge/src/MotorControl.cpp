@@ -43,6 +43,40 @@ void MotorControl::handleRoverStatus(const rex_interfaces::msg::RoverStatus::Con
 	setCorrectState();
 }
 
+void MotorControl::stopMotors()
+{
+	rex_interfaces::msg::Wheels rover_wheels_velocity_temp;
+
+	rover_wheels_velocity_temp.header.stamp = mNh->get_clock()->now();
+
+	rover_wheels_velocity_temp.front_left.turn.command_id = VESC_COMMAND_SET_POS;
+	rover_wheels_velocity_temp.front_left.turn.set_value = 0.0;
+	rover_wheels_velocity_temp.front_left.turn.set_origin_data = 0;
+
+	rover_wheels_velocity_temp.front_right.turn.command_id = VESC_COMMAND_SET_POS;
+	rover_wheels_velocity_temp.front_right.turn.set_value = 0.0;
+	rover_wheels_velocity_temp.front_right.turn.set_origin_data = 0;
+
+	rover_wheels_velocity_temp.rear_right.turn.command_id = VESC_COMMAND_SET_POS;
+	rover_wheels_velocity_temp.rear_right.turn.set_value = 0.0;
+	rover_wheels_velocity_temp.rear_right.turn.set_origin_data = 0;
+
+	rover_wheels_velocity_temp.rear_left.turn.command_id = VESC_COMMAND_SET_POS;
+	rover_wheels_velocity_temp.rear_left.turn.set_value = 0.0;
+	rover_wheels_velocity_temp.rear_left.turn.set_origin_data = 0;
+
+	rover_wheels_velocity_temp.front_left.drive.command_id = VESC_COMMAND_SET_CURRENT;
+	rover_wheels_velocity_temp.front_right.drive.command_id = VESC_COMMAND_SET_CURRENT;
+	rover_wheels_velocity_temp.rear_right.drive.command_id = VESC_COMMAND_SET_CURRENT;
+	rover_wheels_velocity_temp.rear_left.drive.command_id = VESC_COMMAND_SET_CURRENT;
+	rover_wheels_velocity_temp.front_left.drive.set_value = 0.0;
+	rover_wheels_velocity_temp.front_right.drive.set_value = 0.0;
+	rover_wheels_velocity_temp.rear_right.drive.set_value = 0.0;
+	rover_wheels_velocity_temp.rear_left.drive.set_value = 0.0;
+
+	sendMotorVel(std::make_shared<const rex_interfaces::msg::Wheels>(rover_wheels_velocity_temp));
+}
+
 void MotorControl::setWheelsOrigin()
 {
 	rex_interfaces::msg::Wheels rover_wheels_velocity_temp;
@@ -113,9 +147,15 @@ void MotorControl::setCorrectState()
 
 	case State::Driving:
 		if (mLastRoverStatus->control_mode == mLastRoverStatus->CONTROL_MODE_ESTOP)
+		{
+			stopMotors();
 			mState = State::EStop;
+		}
 		else if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
+		{
+			stopMotors();
 			mState = State::EStop;
+		}
 		break;
 
 	default:

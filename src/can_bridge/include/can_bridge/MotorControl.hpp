@@ -42,6 +42,7 @@ private:
 	void handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg);
 	void handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg);
 	void handleRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg);
+	void stopMotors();
 	void setWheelsOrigin();
 	void setCorrectState();
 	void handleTimerClb();
