@@ -13,6 +13,8 @@ SamplerControl::SamplerControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 		std::bind(&SamplerControl::handleRoverStatusClb, this, std::placeholders::_1));
 	mTimer = mNh->create_timer(std::chrono::milliseconds(50), std::bind(&SamplerControl::handleTimerClb, this));
 
+	mRoverStatusMsgLast = std::make_shared<const RoverStatusMsg>();
+
 	stopSampler();
 }
 
