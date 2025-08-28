@@ -26,7 +26,11 @@ MotorControl::MotorControl(rclcpp::Node::SharedPtr &nh) : mNh(nh)
 void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
 {
 	if (mState != State::Driving)
+	{
+		RCLCPP_WARN_THROTTLE(mNh->get_logger(), *mNh->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
+							 "Ignoring drive command. Mode is not driving!");
 		return;
+	}
 
 	mLastSentFrame = msg;
 	sendMotorVel(msg);
@@ -124,11 +128,13 @@ void MotorControl::setCorrectState()
 	case State::DriveStop:
 		mState = State::PrepDriving;
 		mSetWheelsOriginCtd = 20;
+		RCLCPP_INFO(mNh->get_logger(), "Prepping for driving... Setting cupamars origin.");
 		break;
 
 	case State::PrepDriving:
 		if (mSetWheelsOriginCtd != 0)
 			break;
+		RCLCPP_INFO(mNh->get_logger(), "Prepping finished.");
 
 		if (mLastRoverStatus->control_mode == mLastRoverStatus->CONTROL_MODE_ESTOP)
 			mState = State::EStop;
