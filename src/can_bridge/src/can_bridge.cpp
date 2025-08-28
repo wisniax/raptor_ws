@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case CanNodeMode::Opened:
-			if ((iter++ % 100) == 9)
+			if ((iter++ % 500) == 9)
 			{
 				mStatusMessage.sendStatusMessage();
 			}
