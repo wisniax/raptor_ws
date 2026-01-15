@@ -26,7 +26,6 @@ echo "--------------------------------------------------------------------"
 echo "Loaded configuration:"
 echo " - ROS_ENABLE_AUTOSTART:  ${ROS_ENABLE_AUTOSTART}"
 echo " - ROS_BUILD_ON_STARTUP:  ${ROS_BUILD_ON_STARTUP}"
-echo " - ROS_ENABLE_CAN_BRIDGE: ${ROS_ENABLE_CAN_BRIDGE}"
 
 echo "--------------------------------------------------------------------"
 
@@ -60,44 +59,6 @@ chmod 664 /tmp/rex_launch.log
 # Make raptor_ws directory writable
 chmod g+rw -R /home/rex/raptor_ws
 chmod g+rw -R /mnt/local
-
-# Trigger and wait for can bridge creation on host's side
-if [[ ${ROS_ENABLE_CAN_BRIDGE} == "1" ]]; then
-    touch /mnt/local/.can_bridge_rex_waiting
-    chown rex:1000 /mnt/local/.can_bridge_rex_waiting
-    chmod 664 /mnt/local/.can_bridge_rex_waiting
-    echo "rex is waiting for host system to create a network"
-
-    # Total duration to check (seconds)
-    canb_timeout=5
-    # Interval between checks (seconds)
-    canb_interval=0.5
-    canb_end_time=$(( $(date +%s) + canb_timeout ))
-    canb_interface_up=0
-
-    echo "Rex: Waiting for can0 to come up (max ${canb_timeout} seconds)..."
-
-    while [[ $(date +%s) -lt $canb_end_time ]]; do
-        sleep $canb_interval
-        if [[ -d /sys/class/net/can0 ]] && [[ $(cat /sys/class/net/can0/operstate) == "up" ]]; then
-            echo "Rex: can0 is UP!"
-            canb_interface_up=1
-            break
-        fi
-    done
-
-    if [[ $canb_interface_up -eq 0 ]]; then
-        echo "REX ERROR: can0 did not come up within ${canb_timeout} seconds - probably bad configuration. Please refer to README.md"
-        rm -rf /mnt/local/.can_bridge_rex_waiting || true
-    fi
-
-    if [ -f /mnt/local/.can_bridge_rex_waiting ]; then
-        rm -rf /mnt/local/.can_bridge_rex_waiting
-        echo "REX WARN: can0 setup service might fail - network probably is created but not bridged - please check the configuration"
-    fi
-else
-    echo "Rex can bridge setup disabled - skipping"
-fi
 
 if [[ ${ROS_ENABLE_AUTOSTART} == "1" ]]; then
     echo "Rex autostart enabled - starting REX ROS2 ..."
