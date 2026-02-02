@@ -198,6 +198,96 @@ void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTo
 	}
 }
 
+void processMqttRoboticArmControlMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			rex_interfaces::msg::RoboticArmControl msg;
+
+			msg.action_type = d["ActionType"].GetUint();
+			msg.force_cartesian = d["ForceCartesian"].GetBool();
+			msg.force_movement = d["ForceMovement"].GetBool();
+
+			if (d["ForwardKin"].IsNull()) {
+				msg.joint_positions[0] = std::numeric_limits<double>::quiet_NaN();
+				msg.joint_positions[1] = std::numeric_limits<double>::quiet_NaN();
+				msg.joint_positions[2] = std::numeric_limits<double>::quiet_NaN();
+				msg.joint_positions[3] = std::numeric_limits<double>::quiet_NaN();
+				msg.joint_positions[4] = std::numeric_limits<double>::quiet_NaN();
+				msg.joint_positions[5] = std::numeric_limits<double>::quiet_NaN();
+			} else {
+				auto forwardKinArray = d["ForwardKin"].GetObject();
+				msg.joint_positions[0] = forwardKinArray["Axis1"].GetDouble();
+				msg.joint_positions[1] = forwardKinArray["Axis2"].GetDouble();
+				msg.joint_positions[2] = forwardKinArray["Axis3"].GetDouble();
+				msg.joint_positions[3] = forwardKinArray["Axis4"].GetDouble();
+				msg.joint_positions[4] = forwardKinArray["Axis5"].GetDouble();
+				msg.joint_positions[5] = forwardKinArray["Axis6"].GetDouble();
+			}
+
+			if (d["InvJoystick"].IsNull()) {
+				msg.velocity_cmd.linear.x = std::numeric_limits<double>::quiet_NaN();
+				msg.velocity_cmd.linear.y = std::numeric_limits<double>::quiet_NaN();
+				msg.velocity_cmd.linear.z = std::numeric_limits<double>::quiet_NaN();
+				msg.velocity_cmd.angular.x = std::numeric_limits<double>::quiet_NaN();
+				msg.velocity_cmd.angular.y = std::numeric_limits<double>::quiet_NaN();
+				msg.velocity_cmd.angular.z = std::numeric_limits<double>::quiet_NaN();
+			} else {
+				auto invJoystickObject = d["InvJoystick"].GetObject();
+				auto linearSpeedObject = invJoystickObject["LinearSpeed"].GetObject();
+				auto rotationSpeedObject = invJoystickObject["RotationSpeed"].GetObject();
+
+				msg.velocity_cmd.linear.x = linearSpeedObject["x"].GetDouble();
+				msg.velocity_cmd.linear.y = linearSpeedObject["y"].GetDouble();
+				msg.velocity_cmd.linear.z = linearSpeedObject["z"].GetDouble();
+				msg.velocity_cmd.angular.x = rotationSpeedObject["x"].GetDouble();
+				msg.velocity_cmd.angular.y = rotationSpeedObject["y"].GetDouble();
+				msg.velocity_cmd.angular.z = rotationSpeedObject["z"].GetDouble();
+			}
+
+			if (d["InvPosition"].IsNull()) {
+				msg.pose_cmd.position.x = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.position.y = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.position.z = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.orientation.x = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.orientation.y = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.orientation.z = std::numeric_limits<double>::quiet_NaN();
+				msg.pose_cmd.orientation.w = std::numeric_limits<double>::quiet_NaN();
+			} else {
+				auto invPositionObject = d["InvPosition"].GetObject();
+				auto positionObject = invPositionObject["Position"].GetObject();
+				auto rotationObject = invPositionObject["Rotation"].GetObject();
+
+				msg.pose_cmd.position.x = positionObject["x"].GetDouble();
+				msg.pose_cmd.position.y = positionObject["y"].GetDouble();
+				msg.pose_cmd.position.z = positionObject["z"].GetDouble();
+				msg.pose_cmd.orientation.x = rotationObject["x"].GetDouble();
+				msg.pose_cmd.orientation.y = rotationObject["y"].GetDouble();
+				msg.pose_cmd.orientation.z = rotationObject["z"].GetDouble();
+				msg.pose_cmd.orientation.w = rotationObject["w"].GetDouble();
+			}
+
+			if (!d["Reference"].IsNull()) msg.header.frame_id = d["Reference"].GetString();
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+			rth->publishMessage_RoboticArmControl(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	rclcpp::init(argc, argv);
@@ -220,8 +310,8 @@ int main(int argc, char *argv[])
 	const bool CLEAN_START = false;
 
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus", "RappTORS/RoboticArmControl"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0, 0};
 
 	auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
     param_desc.read_only = true;
@@ -290,6 +380,8 @@ int main(int argc, char *argv[])
 			processMqttSamplerControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/RoverStatus") {
 			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
+		} else if (messageTopic == "RappTORS/RoboticArmControl") {
+			processMqttRoboticArmControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else {
 			RCLCPP_WARN_STREAM(node->get_logger(), "Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });
