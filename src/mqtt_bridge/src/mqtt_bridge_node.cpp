@@ -246,12 +246,12 @@ void processMqttRoboticArmControlMessage(const char *payloadMsg, std::shared_ptr
 				auto linearSpeedObject = invJoystickObject["LinearSpeed"].GetObject();
 				auto rotationSpeedObject = invJoystickObject["RotationSpeed"].GetObject();
 
-				msg.velocity_cmd.linear.x = linearSpeedObject["x"].GetDouble();
-				msg.velocity_cmd.linear.y = linearSpeedObject["y"].GetDouble();
-				msg.velocity_cmd.linear.z = linearSpeedObject["z"].GetDouble();
-				msg.velocity_cmd.angular.x = rotationSpeedObject["x"].GetDouble();
-				msg.velocity_cmd.angular.y = rotationSpeedObject["y"].GetDouble();
-				msg.velocity_cmd.angular.z = rotationSpeedObject["z"].GetDouble();
+				msg.velocity_cmd.linear.x = linearSpeedObject["X"].GetDouble();
+				msg.velocity_cmd.linear.y = linearSpeedObject["Y"].GetDouble();
+				msg.velocity_cmd.linear.z = linearSpeedObject["Z"].GetDouble();
+				msg.velocity_cmd.angular.x = rotationSpeedObject["X"].GetDouble();
+				msg.velocity_cmd.angular.y = rotationSpeedObject["Y"].GetDouble();
+				msg.velocity_cmd.angular.z = rotationSpeedObject["Z"].GetDouble();
 			}
 
 			if (d["InvPosition"].IsNull()) {
@@ -267,13 +267,13 @@ void processMqttRoboticArmControlMessage(const char *payloadMsg, std::shared_ptr
 				auto positionObject = invPositionObject["Position"].GetObject();
 				auto rotationObject = invPositionObject["Rotation"].GetObject();
 
-				msg.pose_cmd.position.x = positionObject["x"].GetDouble();
-				msg.pose_cmd.position.y = positionObject["y"].GetDouble();
-				msg.pose_cmd.position.z = positionObject["z"].GetDouble();
-				msg.pose_cmd.orientation.x = rotationObject["x"].GetDouble();
-				msg.pose_cmd.orientation.y = rotationObject["y"].GetDouble();
-				msg.pose_cmd.orientation.z = rotationObject["z"].GetDouble();
-				msg.pose_cmd.orientation.w = rotationObject["w"].GetDouble();
+				msg.pose_cmd.position.x = positionObject["X"].GetDouble();
+				msg.pose_cmd.position.y = positionObject["Y"].GetDouble();
+				msg.pose_cmd.position.z = positionObject["Z"].GetDouble();
+				msg.pose_cmd.orientation.x = rotationObject["X"].GetDouble();
+				msg.pose_cmd.orientation.y = rotationObject["Y"].GetDouble();
+				msg.pose_cmd.orientation.z = rotationObject["Z"].GetDouble();
+				msg.pose_cmd.orientation.w = rotationObject["W"].GetDouble();
 			}
 
 			if (!d["Reference"].IsNull()) msg.header.frame_id = d["Reference"].GetString();
