@@ -27,6 +27,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 	mPub_ManipulatorControl = n->create_publisher<rex_interfaces::msg::ManipulatorMqttMessage>("/MQTT/ManipulatorControl", 1000);
 	mPub_SamplerControl = n->create_publisher<rex_interfaces::msg::SamplerControl>("/MQTT/SamplerControl", 1000);
 	mPub_RoverStatus = n->create_publisher<rex_interfaces::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
+	mPub_CalibrateAxis = n->create_publisher<rex_interfaces::msg::CalibrateAxis>("/MQTT/CalibrateAxis", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
@@ -381,4 +382,11 @@ void ROSTopicHandler::publishMessage_SamplerControl(rex_interfaces::msg::Sampler
 void ROSTopicHandler::publishMessage_RoverStatus(rex_interfaces::msg::RoverStatus message)
 {
 	mPub_RoverStatus->publish(message);
+}
+
+// ##### CalibrateAxis ######
+
+void ROSTopicHandler::publishMessage_CalibrateAxis(rex_interfaces::msg::CalibrateAxis message)
+{
+	mPub_CalibrateAxis->publish(message);
 }

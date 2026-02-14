@@ -11,6 +11,7 @@
 #include "rex_interfaces/msg/manipulator_mqtt_message.hpp"
 #include "rex_interfaces/msg/battery_info.hpp"
 #include "rex_interfaces/msg/sampler_feedback.hpp"
+#include "rex_interfaces/msg/calibrate_axis.hpp"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -30,6 +31,7 @@ public:
   void publishMessage_ManipulatorControl(rex_interfaces::msg::ManipulatorMqttMessage message);
   void publishMessage_SamplerControl(rex_interfaces::msg::SamplerControl message);
   void publishMessage_RoverStatus(rex_interfaces::msg::RoverStatus message);
+  void publishMessage_CalibrateAxis(rex_interfaces::msg::CalibrateAxis message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
@@ -72,6 +74,7 @@ private:
   rclcpp::Publisher<rex_interfaces::msg::ManipulatorMqttMessage>::SharedPtr mPub_ManipulatorControl;
   rclcpp::Publisher<rex_interfaces::msg::SamplerControl>::SharedPtr mPub_SamplerControl;
   rclcpp::Publisher<rex_interfaces::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
+  rclcpp::Publisher<rex_interfaces::msg::CalibrateAxis>::SharedPtr mPub_CalibrateAxis;
 
   rclcpp::CallbackGroup::SharedPtr timer_cb_group;
 

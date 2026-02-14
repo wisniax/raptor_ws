@@ -198,6 +198,36 @@ void processMqttRoverStatusMessage(const char *payloadMsg, std::shared_ptr<ROSTo
 	}
 }
 
+void processMqttCalibrateAxisMessage(const char *payloadMsg, std::shared_ptr<ROSTopicHandler> rth, std::shared_ptr<rclcpp::Node> node)
+{
+	rapidjson::Document d;
+	rapidjson::ParseResult ok = d.Parse(payloadMsg);
+
+	if (!ok)
+	{
+		RCLCPP_WARN_STREAM(node->get_logger(), "JSON parse error: " << rapidjson::GetParseError_En(ok.Code()) << " (" << ok.Offset() << "), discarding MQTT message.");
+	}
+	else
+	{
+		try
+		{
+			rex_interfaces::msg::CalibrateAxis msg;
+
+			msg.vesc_id = d["VescID"].GetUint();
+			msg.value = d["Value"].GetDouble();
+			msg.action_type = d["ActionType"].GetUint();
+
+			msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+			rth->publishMessage_CalibrateAxis(msg);
+		}
+		catch (JsonAssertException e)
+		{
+			RCLCPP_WARN(node->get_logger(), "JSON assert exception, discarding MQTT message.");
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	rclcpp::init(argc, argv);
@@ -220,8 +250,8 @@ int main(int argc, char *argv[])
 	const bool CLEAN_START = false;
 
 
-	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus"});
-	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
+	auto SUBSCRIBED_TOPICS_NAMES = mqtt::string_collection::create({"RappTORS/Wheels", "RappTORS/RoverControl", "RappTORS/ManipulatorControl", "RappTORS/SamplerControl", "RappTORS/RoverStatus", "RappTORS/CalibrateAxis"});
+	const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0, 0};
 
 	auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
     param_desc.read_only = true;
@@ -290,6 +320,8 @@ int main(int argc, char *argv[])
 			processMqttSamplerControlMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else if (messageTopic == "RappTORS/RoverStatus") {
 			processMqttRoverStatusMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
+		} else if (messageTopic == "RappTORS/CalibrateAxis") {
+			processMqttCalibrateAxisMessage(mqtt_msg->get_payload_str().c_str(), rth, node);
 		} else {
 			RCLCPP_WARN_STREAM(node->get_logger(), "Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
 		} });
