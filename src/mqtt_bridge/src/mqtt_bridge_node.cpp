@@ -216,6 +216,7 @@ void processMqttRoboticArmControlMessage(const char *payloadMsg, std::shared_ptr
 			msg.action_type = d["ActionType"].GetUint();
 			msg.force_cartesian = d["ForceCartesian"].GetBool();
 			msg.force_movement = d["ForceMovement"].GetBool();
+			msg.gripper = d["Gripper"].GetDouble();
 
 			if (d["ForwardKin"].IsNull()) {
 				msg.joint_positions[0] = std::numeric_limits<double>::quiet_NaN();
