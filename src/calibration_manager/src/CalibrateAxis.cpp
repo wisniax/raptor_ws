@@ -8,7 +8,6 @@ const std::string CALIBRATION_OUTDATED_DURATION_S = "calibration.outdated_durati
 const std::string CALIBRATION_SPEED_TIMEOUT_MS = "calibration.speed_timeout_ms";
 const std::string CALIBRATION_MESSAGE_SEND_PERIOD_MS = "calibration.message_send_period_ms";
 
-const std::string CALIBRATION_STOP_CONDITION = "calibration.stop_condition";
 const std::string CALIBRATION_STOP_TOLERANCE = "calibration.stop_tolerance";
 
 const std::string CALIBRATION_LOG_SETPOS_DIFF = "calibration.log_setpos_diff";
@@ -106,7 +105,6 @@ void CalibrateAxis::initParams()
 
 	mIntParams = {
 		{CALIBRATION_SPEED_TIMEOUT_MS, 500},
-		{CALIBRATION_STOP_CONDITION, 3},
 		{CALIBRATION_MESSAGE_SEND_PERIOD_MS, 1000 / 50},
 		{CALIBRATION_LOG_SETPOS_DIFF, 0},
 		{CALIBRATION_USE_SCHEDULE_HOLD, 1}};
@@ -437,22 +435,7 @@ bool CalibrateAxis::checkSetPosEndCondition(const rex_interfaces::msg::VescStatu
 			this->get_logger(), "Target is %f, current is %f, diff is %f, tolerance is %f",
 			targetValue, msg->precise_pos, std::abs(targetValue - msg->precise_pos), mFloatParams[CALIBRATION_STOP_TOLERANCE]);
 
-	switch (mIntParams[CALIBRATION_STOP_CONDITION])
-	{
-	default:
-	case 1:
-		return msg->erpm == 0;
-		break;
-	case 2:
-		return std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
-		break;
-	case 3:
-		return msg->erpm == 0 && std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
-		break;
-	case 4:
-		return msg->erpm == 0 || std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
-		break;
-	}
+	return msg->erpm == 0 && std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
 }
 
 bool CalibrateAxis::isTimestampOutdated(rclcpp::Time stamp)
