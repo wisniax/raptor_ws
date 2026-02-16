@@ -1,17 +1,17 @@
 #include "calibration_manager/CalibrateAxis.hpp"
 
-const std::string CALIBRATION_MAX_SPEED = "calibration.max_speed";
-const std::string CALIBRATION_MAX_OFFSET_SHIFT = "calibration.max_offset_shift";
-const std::string CALIBRATION_MAX_VELOCITY_SHIFT = "calibration.max_velocity_shift";
+const std::string CALIBRATION_MAX_SPEED = "max_speed";
+const std::string CALIBRATION_MAX_OFFSET_SHIFT = "max_offset_shift";
+const std::string CALIBRATION_MAX_VELOCITY_SHIFT = "max_velocity_shift";
 
-const std::string CALIBRATION_OUTDATED_DURATION_S = "calibration.outdated_duration_s";
-const std::string CALIBRATION_SPEED_TIMEOUT_MS = "calibration.speed_timeout_ms";
-const std::string CALIBRATION_MESSAGE_SEND_PERIOD_MS = "calibration.message_send_period_ms";
+const std::string CALIBRATION_OUTDATED_DURATION_S = "outdated_duration_s";
+const std::string CALIBRATION_SPEED_TIMEOUT_MS = "speed_timeout_ms";
+const std::string CALIBRATION_MESSAGE_SEND_PERIOD_MS = "message_send_period_ms";
 
-const std::string CALIBRATION_STOP_TOLERANCE = "calibration.stop_tolerance";
+const std::string CALIBRATION_STOP_TOLERANCE = "stop_tolerance";
 
-const std::string CALIBRATION_LOG_SETPOS_DIFF = "calibration.log_setpos_diff";
-const std::string CALIBRATION_USE_SCHEDULE_HOLD = "calibration.use_schedule_hold";
+const std::string CALIBRATION_LOG_SETPOS_DIFF = "log_setpos_diff";
+const std::string CALIBRATION_USE_SCHEDULE_HOLD = "use_schedule_hold";
 
 template <typename T>
 int signum(T val)
