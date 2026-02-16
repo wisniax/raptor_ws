@@ -101,6 +101,7 @@ private:
     bool checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg);
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
+    void scheduleHold(VESC_Id_t vescID);
 };
 
 template <typename T>

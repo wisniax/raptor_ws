@@ -78,11 +78,11 @@ Parameter                            | Type  | Unit | Description
 
 [0] - values outside of range are clamped<br />
 [1] - to rotate more, set origin and try again
-
+<!-- 
 It's possible to change parameters while the node is running. For instance:
 ```
 ros2 param set calibrate_axis max_speed 3000.0
-```
+``` -->
 
 ## Actions
 
