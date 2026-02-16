@@ -28,6 +28,7 @@ CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibra
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
 	modeNothing();
+	mHoldScheduled = false;
 
 	mCalibrationMotors = {
 		RosCanConstants::VescIds::front_left_stepper,
@@ -52,45 +53,21 @@ CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibra
 
 	mFrameSender = this->create_timer(
 		std::chrono::milliseconds(mIntParams[CALIBRATION_MESSAGE_SEND_PERIOD_MS]),
-		[this]
-		{
-			if (!mLastRoverStatus || mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
-				return;
-			if (mMode != Mode::Nothing)
-			{
-				mFrameToSend.header.stamp = this->get_clock()->now();
-				mCalibrationMotorCommandPub->publish(mFrameToSend);
-			}
-		});
+		std::bind(&CalibrateAxis::sendFrame, this));
 
 	mVelocityTimeoutTimer = this->create_timer(
 		std::chrono::milliseconds(mIntParams[CALIBRATION_SPEED_TIMEOUT_MS]),
-		[this]
-		{
-			if (mMode != Mode::SetVelocity)
-			{
-				RCLCPP_ERROR(this->get_logger(), "Error: timeout timer wasn't cancelled correctly!");
-			}
-			RCLCPP_INFO(this->get_logger(), "Motor [%d] stopped by timeout", mCurrentMotorID);
-			stopMotor(mCurrentMotorID);
-			if (mIntParams[CALIBRATION_USE_SCHEDULE_HOLD])
-			{
-				modeNothing();
-				mScheduleHold = true;
-			}
-			else
-				modeHold(mCurrentMotorID);
-			// stopMotor cancels the timer
-		});
+		std::bind(&CalibrateAxis::timeoutTimerTick, this));
 	mVelocityTimeoutTimer->cancel();
-
-	mScheduleHold = false;
 
 	RCLCPP_INFO(this->get_logger(), "Calibration module started.");
 };
 
 void CalibrateAxis::initParams()
 {
+	// Loads node parameters from args, launch files etc.
+	// Also registers a callback for dynamic param changing
+
 	mFloatParams = {
 		{CALIBRATION_MAX_SPEED, 3.0f},
 		{CALIBRATION_MAX_OFFSET_SHIFT, 30.0f},
@@ -132,29 +109,26 @@ void CalibrateAxis::initParams()
 		});
 }
 
-bool CalibrateAxis::calibrationMotorsContains(VESC_Id_t vescID)
-{
-	return std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID) != mCalibrationMotors.end();
-}
-
+// ######################### MSG HANDLERS #########################
 void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
 {
 	// RCLCPP_INFO(this->get_logger(), "%d precise %lf pid %f", msg->vesc_id, msg->precise_pos, msg->pid_pos);
 	if (!calibrationMotorsContains(msg->vesc_id))
 	{
+		// Only interested in calibratable motors.
 		return;
 	}
 	rclcpp::Time now = this->get_clock()->now();
 	mMotorStatuses[msg->vesc_id] = {static_cast<float>(msg->precise_pos), msg->erpm, now};
 
-	// --- Mode end/stop conditions below
+	// Below only applies to the currently-calibrated motor.
 
 	if (msg->vesc_id != mCurrentMotorID)
 		return;
 
-	if (mScheduleHold)
+	if (mHoldScheduled)
 	{
-		if (mMode != Mode::Nothing)
+		if (mMode == Mode::Nothing)
 		{
 			RCLCPP_ERROR(this->get_logger(), "Hold schedule wasn't cancelled correctly! Any mode changes should cancel it.");
 		}
@@ -166,6 +140,8 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 		}
 	}
 
+	// --- Mode end-conditions below
+
 	if (mMode == Mode::SetPos && checkSetPosEndCondition(msg))
 	{
 		RCLCPP_INFO(this->get_logger(), "End of SetPos reached, holding...");
@@ -173,14 +149,14 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 		return;
 	}
 
-	// If motor is rotated more than allowed at once
+	// If motor is rotated outside the allowed calibration range
 	if (
 		mMode == Mode::SetVelocity &&
 		std::abs(msg->precise_pos) > mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] &&
 		signum(mFrameToSend.set_value) == signum(msg->precise_pos) // Moving away from origin
 	)
 	{
-		RCLCPP_INFO(this->get_logger(), "Max velocity shift reached, snapping to %f", signum(msg->precise_pos) * (mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] + 1));
+		RCLCPP_INFO(this->get_logger(), "Rotated more than is allowed in velocity mode, snapping to %f", signum(msg->precise_pos) * (mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] + 1));
 		cancelTimeout();
 		// Snap to max shift
 		// +1 so that SetVelocity frames in the outer direction will still be rejected
@@ -206,6 +182,7 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 
 	// If motor is moving by SetVelocity, only STOP, CANCEL and SET_VELOCITY are fine
 	// If motor is moving by Offset, only STOP and CANCEL are fine
+	// If mMode is Hold or Nothing, all action types are allowed.
 	if (mMode == Mode::SetVelocity)
 	{
 		if (msg->action_type != CalibrateMsg::ACTION_TYPE_SET_VELOCITY &&
@@ -238,14 +215,14 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 	// --------------------
 
 	rex_interfaces::msg::VescMotorCommand fr;
-	float offsetShift;
+	// float offsetShift;
 	switch (msg->action_type)
 	{
 	case CalibrateMsg::ACTION_TYPE_STOP:
 		stopMotor(msg->vesc_id);
-		modeNothing(); // Clear the SetPos frame so that Hold doesn't use it
+		modeNothing(); // Clear the SetPos frame so that Hold doesn't use it (for safety reasons)
 		if (mIntParams[CALIBRATION_USE_SCHEDULE_HOLD])
-			mScheduleHold = true;
+			mHoldScheduled = true;
 		else
 			modeHold(msg->vesc_id);
 		break;
@@ -290,10 +267,12 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		}
 
 		// Limit value
-		offsetShift = msg->value;
+		float offsetShift = msg->value;
 		if (std::abs(offsetShift) > mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT])
 		{
-			RCLCPP_WARN(this->get_logger(), "Calibration: provided a relative offset that's too large (max %f)", mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT]);
+			RCLCPP_WARN(this->get_logger(), "Calibration: can't move by offset that much at a time! (tried %f, max %f)",
+						offsetShift,
+						mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT]);
 			offsetShift = std::clamp(offsetShift, -mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT], mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT]);
 		}
 
@@ -308,7 +287,8 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		}
 
 		float precise_pos = mMotorStatuses[msg->vesc_id].position;
-		// Don't allow movement more than max shift
+		// Don't allow to rotate the motor more than CALIBRATION_MAX_VELOCITY_SHIFT
+		// away from origin.
 		// If you want to move further, you have to set origin and repeat
 		if (
 			std::abs(precise_pos) > mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] &&
@@ -331,17 +311,17 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 			velocity = std::clamp(velocity, -mFloatParams[CALIBRATION_MAX_SPEED], mFloatParams[CALIBRATION_MAX_SPEED]);
 		}
 
-		// Handle the stop timers
+		// Velocity 0.0 is treated as a stop.
 		if (velocity == 0.0f)
 		{
 			// If not holding yet (and hold not scheduled)
-			if (mMode != Mode::Hold && !mScheduleHold)
+			if (mMode != Mode::Hold && !mHoldScheduled)
 			{
 				stopMotor(msg->vesc_id); // Also cancels timeout
 				if (mIntParams[CALIBRATION_USE_SCHEDULE_HOLD])
 				{
 					modeNothing();
-					mScheduleHold = true;
+					mHoldScheduled = true;
 				}
 				else
 					modeHold(msg->vesc_id);
@@ -371,10 +351,12 @@ void CalibrateAxis::handleRoverStatus(const rex_interfaces::msg::RoverStatus::Co
 	mLastRoverStatus = msg;
 }
 
+// ######################### MODES #########################
+
 void CalibrateAxis::modeNothing()
 {
 	RCLCPP_INFO(this->get_logger(), "MODE Nothing");
-	mScheduleHold = false;
+	mHoldScheduled = false;
 	mFrameToSend = rex_interfaces::msg::VescMotorCommand();
 	mMode = Mode::Nothing;
 	mCurrentMotorID = 0;
@@ -383,7 +365,7 @@ void CalibrateAxis::modeNothing()
 void CalibrateAxis::modeSetPos(VESC_Id_t vescID, float pos)
 {
 	RCLCPP_INFO(this->get_logger(), "MODE SetPos [%d]: %f", vescID, pos);
-	mScheduleHold = false;
+	mHoldScheduled = false;
 	mFrameToSend = frameSetPosition(vescID, pos);
 	mMode = Mode::SetPos;
 	mCurrentMotorID = vescID;
@@ -392,7 +374,7 @@ void CalibrateAxis::modeSetPos(VESC_Id_t vescID, float pos)
 void CalibrateAxis::modeSetVelocity(VESC_Id_t vescID, float velocity)
 {
 	RCLCPP_INFO(this->get_logger(), "MODE SetVelocity [%d]: %f", vescID, velocity);
-	mScheduleHold = false;
+	mHoldScheduled = false;
 	mFrameToSend = frameSetVelocity(vescID, velocity);
 	mMode = Mode::SetVelocity;
 	mCurrentMotorID = vescID;
@@ -400,7 +382,7 @@ void CalibrateAxis::modeSetVelocity(VESC_Id_t vescID, float velocity)
 
 void CalibrateAxis::modeHold(VESC_Id_t vescID)
 {
-	mScheduleHold = false;
+	mHoldScheduled = false;
 	if (mMode == Mode::SetPos)
 	{
 		// Keep sending the same frame
@@ -420,45 +402,7 @@ void CalibrateAxis::modeHold(VESC_Id_t vescID)
 	mCurrentMotorID = vescID;
 }
 
-bool CalibrateAxis::checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
-{
-	// Checks if SetPos mode is ready to finished (wheel is at target position)
-	// Only run during Mode::SetPos!
-	if (mMode != Mode::SetPos)
-		return false;
-
-	// Scale related to https://github.com/AlvaroBajceps/libVescCan/issues/10
-	float targetValue = mFrameToSend.set_value * 100.0;
-
-	if (mIntParams[CALIBRATION_LOG_SETPOS_DIFF])
-		RCLCPP_INFO(
-			this->get_logger(), "Target is %f, current is %f, diff is %f, tolerance is %f",
-			targetValue, msg->precise_pos, std::abs(targetValue - msg->precise_pos), mFloatParams[CALIBRATION_STOP_TOLERANCE]);
-
-	return msg->erpm == 0 && std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
-}
-
-bool CalibrateAxis::isTimestampOutdated(rclcpp::Time stamp)
-{
-	rclcpp::Time now = this->get_clock()->now();
-	return (now - stamp).seconds() > mFloatParams[CALIBRATION_OUTDATED_DURATION_S];
-}
-
-bool CalibrateAxis::isRecordedStatusValid(VESC_Id_t vescID)
-{
-	// Checks if motor status is missing or outdated
-
-	if (!mMotorStatuses.count(vescID))
-	{
-		return false;
-	}
-
-	if (isTimestampOutdated(mMotorStatuses[vescID].receivedAt))
-	{
-		return false;
-	}
-	return true;
-}
+// ######################### TIMER-RELATED #########################
 
 void CalibrateAxis::startTimeout()
 {
@@ -470,6 +414,24 @@ void CalibrateAxis::cancelTimeout()
 	mVelocityTimeoutTimer->cancel();
 }
 
+void CalibrateAxis::timeoutTimerTick()
+{
+	if (mMode != Mode::SetVelocity)
+	{
+		RCLCPP_ERROR(this->get_logger(), "Error: timeout timer wasn't cancelled correctly!");
+	}
+	RCLCPP_INFO(this->get_logger(), "Motor [%d] stopped by timeout", mCurrentMotorID);
+	// stopMotor cancels the timer
+	stopMotor(mCurrentMotorID);
+	if (mIntParams[CALIBRATION_USE_SCHEDULE_HOLD])
+	{
+		modeNothing();
+		mHoldScheduled = true;
+	}
+	else
+		modeHold(mCurrentMotorID);
+}
+
 void CalibrateAxis::stopMotor(VESC_Id_t vescID)
 {
 	cancelTimeout();
@@ -477,6 +439,8 @@ void CalibrateAxis::stopMotor(VESC_Id_t vescID)
 	rex_interfaces::msg::VescMotorCommand fr = frameStop(vescID);
 	mCalibrationMotorCommandPub->publish(fr);
 }
+
+// ######################### CAN FRAMES #########################
 
 rex_interfaces::msg::VescMotorCommand CalibrateAxis::frameStop(VESC_Id_t vescID)
 {
@@ -530,4 +494,62 @@ rex_interfaces::msg::VescMotorCommand CalibrateAxis::frameSetVelocity(VESC_Id_t 
 	msg.header.stamp = this->get_clock()->now();
 
 	return msg;
+}
+
+void CalibrateAxis::sendFrame()
+{
+	if (!mLastRoverStatus || mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
+		return;
+	if (mMode != Mode::Nothing)
+	{
+		mFrameToSend.header.stamp = this->get_clock()->now();
+		mCalibrationMotorCommandPub->publish(mFrameToSend);
+	}
+}
+
+// ######################### UTILITY #########################
+bool CalibrateAxis::calibrationMotorsContains(VESC_Id_t vescID)
+{
+	// Check if the supplied ID is in the list of motors allowed for calibration.
+	return std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID) != mCalibrationMotors.end();
+}
+
+bool CalibrateAxis::checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
+{
+	// Checks if SetPos mode is ready to finished (wheel is at target position)
+	// Only run during Mode::SetPos!
+	if (mMode != Mode::SetPos)
+		return false;
+
+	// Scale related to https://github.com/AlvaroBajceps/libVescCan/issues/10
+	float targetValue = mFrameToSend.set_value * 100.0;
+
+	if (mIntParams[CALIBRATION_LOG_SETPOS_DIFF])
+		RCLCPP_INFO(
+			this->get_logger(), "Target is %f, current is %f, diff is %f, tolerance is %f",
+			targetValue, msg->precise_pos, std::abs(targetValue - msg->precise_pos), mFloatParams[CALIBRATION_STOP_TOLERANCE]);
+
+	return msg->erpm == 0 && std::abs(msg->precise_pos - targetValue) <= mFloatParams[CALIBRATION_STOP_TOLERANCE];
+}
+
+bool CalibrateAxis::isTimestampOutdated(rclcpp::Time stamp)
+{
+	rclcpp::Time now = this->get_clock()->now();
+	return (now - stamp).seconds() > mFloatParams[CALIBRATION_OUTDATED_DURATION_S];
+}
+
+bool CalibrateAxis::isRecordedStatusValid(VESC_Id_t vescID)
+{
+	// Checks if motor status is missing or outdated
+
+	if (!mMotorStatuses.count(vescID))
+	{
+		return false;
+	}
+
+	if (isTimestampOutdated(mMotorStatuses[vescID].receivedAt))
+	{
+		return false;
+	}
+	return true;
 }
