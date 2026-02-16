@@ -1,6 +1,7 @@
 # Motor calibration
 
-ROS node which allows for Cubemars motor calibration.
+ROS node which allows for Cubemars motor calibration.<br />
+Calibration can be performed in app E-STOP mode. The black mushroom cannot be pushed in.
 
 [[Cubemars manual](https://www.cubemars.com/images/file/20240611/1718085712815162.pdf)] [[libVescCan](https://github.com/AlvaroBajceps/libVescCan/)]
 
@@ -49,15 +50,8 @@ A timeout is set - if there is `SET_VELOCITY` frame from the app for a specified
 During this mode, only `CANCEL`, `STOP` and `SET_VELOCITY` frames are accepted.
 
 ### SetPos
-Continously sends VESC `SET_POS` frames over CAN.
-Depending on the condition set, stops when:
-
-1. ERPM = 0 (from the motor's VescStatus)
-2. Position of the motor is almost at the target position (see `stop_tolerance` param)
-3. Both
-4. Either
-
-It then switches to `Hold`.<br />
+Continously sends VESC `SET_POS` frames over CAN.<br />
+Stops when ERPM = 0 and position is almost at target (see `stop_tolerance` param), it then switches to `Hold`.<br />
 During this mode, only `CANCEL`, `STOP` frames are accepted.
 
 ### Hold

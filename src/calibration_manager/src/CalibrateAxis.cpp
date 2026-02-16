@@ -13,16 +13,6 @@ const std::string CALIBRATION_STOP_TOLERANCE = "stop_tolerance";
 const std::string CALIBRATION_LOG_SETPOS_DIFF = "log_setpos_diff";
 const std::string CALIBRATION_USE_SCHEDULE_HOLD = "use_schedule_hold";
 
-template <typename T>
-int signum(T val)
-{
-	if (val > 0)
-		return 1;
-	if (val < 0)
-		return -1;
-	return 0;
-}
-
 CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibrate_axis", options)
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
@@ -50,6 +40,9 @@ CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibra
 	mRoverStatusSub = this->create_subscription<rex_interfaces::msg::RoverStatus>(
 		RosCanConstants::RosTopics::mqtt_rover_status,
 		qos, std::bind(&CalibrateAxis::handleRoverStatus, this, std::placeholders::_1));
+	mBatteryInfoSub = this->create_subscription<rex_interfaces::msg::BatteryInfo>(
+		RosCanConstants::RosTopics::can_battery_info,
+		qos, std::bind(&CalibrateAxis::handleBatteryInfo, this, std::placeholders::_1));
 
 	mFrameSender = this->create_timer(
 		std::chrono::milliseconds(mIntParams[CALIBRATION_MESSAGE_SEND_PERIOD_MS]),
@@ -110,6 +103,7 @@ void CalibrateAxis::initParams()
 }
 
 // ######################### MSG HANDLERS #########################
+
 void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
 {
 	// RCLCPP_INFO(this->get_logger(), "%d precise %lf pid %f", msg->vesc_id, msg->precise_pos, msg->pid_pos);
@@ -128,7 +122,7 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 
 	if (mHoldScheduled)
 	{
-		if (mMode == Mode::Nothing)
+		if (mMode != Mode::Nothing)
 		{
 			RCLCPP_ERROR(this->get_logger(), "Hold schedule wasn't cancelled correctly! Any mode changes should cancel it.");
 		}
@@ -171,6 +165,11 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 	if (!mLastRoverStatus || mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
 	{
 		RCLCPP_ERROR(this->get_logger(), "Rover not in ESTOP, calibration not permitted.");
+		return;
+	}
+	if (!mLastBatteryInfo || mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
+	{
+		RCLCPP_ERROR(this->get_logger(), "Black mushroom enganed (or status unknown), calibration not permitted.");
 		return;
 	}
 
@@ -351,6 +350,19 @@ void CalibrateAxis::handleRoverStatus(const rex_interfaces::msg::RoverStatus::Co
 	mLastRoverStatus = msg;
 }
 
+void CalibrateAxis::handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
+{
+	if (msg->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
+	{
+		if (!mLastBatteryInfo ||
+			!(mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP))
+		{
+			modeNothing();
+		}
+	}
+	mLastBatteryInfo = msg;
+}
+
 // ######################### MODES #########################
 
 void CalibrateAxis::modeNothing()
@@ -508,6 +520,7 @@ void CalibrateAxis::sendFrame()
 }
 
 // ######################### UTILITY #########################
+
 bool CalibrateAxis::calibrationMotorsContains(VESC_Id_t vescID)
 {
 	// Check if the supplied ID is in the list of motors allowed for calibration.
@@ -552,4 +565,14 @@ bool CalibrateAxis::isRecordedStatusValid(VESC_Id_t vescID)
 		return false;
 	}
 	return true;
+}
+
+template <typename T>
+int signum(T val)
+{
+	if (val > 0)
+		return 1;
+	if (val < 0)
+		return -1;
+	return 0;
 }

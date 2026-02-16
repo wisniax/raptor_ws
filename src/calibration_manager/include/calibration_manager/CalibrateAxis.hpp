@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rex_interfaces/msg/vesc_status.hpp"
 #include "rex_interfaces/msg/rover_status.hpp"
+#include "rex_interfaces/msg/battery_info.hpp"
 #include "rex_interfaces/msg/calibrate_axis.hpp"
 #include "rex_interfaces/msg/vesc_motor_command.hpp"
 #include "ros_constants/RosCanConstants.hpp"
@@ -57,11 +58,13 @@ private:
     VESC_Id_t mCurrentMotorID;
 
     rex_interfaces::msg::RoverStatus::ConstSharedPtr mLastRoverStatus;
+    rex_interfaces::msg::BatteryInfo::ConstSharedPtr mLastBatteryInfo;
 
     rclcpp::Publisher<rex_interfaces::msg::VescMotorCommand>::SharedPtr mCalibrationMotorCommandPub;
     rclcpp::Subscription<rex_interfaces::msg::VescStatus>::SharedPtr mVescStatusSub;
     rclcpp::Subscription<rex_interfaces::msg::CalibrateAxis>::SharedPtr mCalibrateAxisSub;
     rclcpp::Subscription<rex_interfaces::msg::RoverStatus>::SharedPtr mRoverStatusSub;
+    rclcpp::Subscription<rex_interfaces::msg::BatteryInfo>::SharedPtr mBatteryInfoSub;
 
     void initParams();
     rclcpp::node_interfaces::PostSetParametersCallbackHandle::SharedPtr mParamCallbackHandle;
@@ -70,6 +73,7 @@ private:
     void handleVescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg);
     void handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis::ConstSharedPtr &msg);
     void handleRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg);
+    void handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg);
 
     // ######################### MODES #########################
     void modeNothing();
@@ -98,5 +102,8 @@ private:
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
 };
+
+template <typename T>
+int signum(T val);
 
 #endif // CALIBRATE_AXIS_H
