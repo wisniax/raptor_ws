@@ -47,7 +47,7 @@ private:
     rex_interfaces::msg::VescMotorCommand mFrameToSend;
     rclcpp::TimerBase::SharedPtr mFrameSender;
 
-    std::array<VESC_Id_t, 4> mCalibrationMotors;
+    std::vector<VESC_Id_t> mCalibrationMotors;
     std::map<VESC_Id_t, MotorStatusStamped> mMotorStatuses;
     rclcpp::TimerBase::SharedPtr mVelocityTimeoutTimer;
 
@@ -58,6 +58,7 @@ private:
 
     rex_interfaces::msg::RoverStatus::ConstSharedPtr mLastRoverStatus;
     rex_interfaces::msg::BatteryInfo::ConstSharedPtr mLastBatteryInfo;
+    float mSetPosStartingPosition;
 
     rclcpp::Publisher<rex_interfaces::msg::VescMotorCommand>::SharedPtr mCalibrationMotorCommandPub;
     rclcpp::Subscription<rex_interfaces::msg::VescStatus>::SharedPtr mVescStatusSub;
@@ -76,7 +77,7 @@ private:
 
     // ######################### MODES #########################
     void modeNothing();
-    void modeSetPos(VESC_Id_t vescID, float pos);
+    void modeSetPos(VESC_Id_t vescID, float pos, bool dontSaveStartingPos);
     void modeSetVelocity(VESC_Id_t vescID, float velocity);
     void modeHold(VESC_Id_t vescID);
 
@@ -96,10 +97,11 @@ private:
     void sendFrame();
 
     // ######################### UTILITY #########################
-    bool calibrationMotorsContains(VESC_Id_t vescID);
+    bool isCalibrationAllowedForMotor(VESC_Id_t vescID);
     bool checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg);
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
+    void lockMotor(VESC_Id_t vescID);
 };
 
 template <typename T>

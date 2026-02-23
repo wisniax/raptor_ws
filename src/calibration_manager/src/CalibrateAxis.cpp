@@ -104,7 +104,7 @@ void CalibrateAxis::initParams()
 void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
 {
 	// RCLCPP_INFO(this->get_logger(), "%d precise %lf pid %f", msg->vesc_id, msg->precise_pos, msg->pid_pos);
-	if (!calibrationMotorsContains(msg->vesc_id))
+	if (!isCalibrationAllowedForMotor(msg->vesc_id))
 	{
 		// Only interested in calibratable motors.
 		return;
@@ -116,6 +116,39 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 
 	if (msg->vesc_id != mCurrentMotorID)
 		return;
+
+	// SetPos out-of-bounds emergency check
+	if (mMode == Mode::SetPos &&
+		!std::isnan(mSetPosStartingPosition) &&
+		std::abs(mSetPosStartingPosition - msg->precise_pos) > mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT] + 5)
+	{
+		// This should never happen. It means that the motor moved away from the target position or passed it,
+		// and will never stop. This is a hardware problem, the motor will be locked
+		RCLCPP_FATAL(this->get_logger(),
+					 "Motor moved away from the target position or passed it while in SetPos mode. This is a hardware failure."
+					 "The motor will be locked until CalibrateAxis restart.");
+		stopMotor(msg->vesc_id);
+		modeNothing();
+		lockMotor(msg->vesc_id);
+		return;
+	}
+
+	// Hold drift emergency check
+	if (mMode == Mode::Hold)
+	{
+		// Scale related to https://github.com/AlvaroBajceps/libVescCan/issues/10
+		float holdTarget = mFrameToSend.set_value * 100.0;
+		if (std::abs(holdTarget - msg->precise_pos) > 2.0) // Arbitrary threshold
+		{
+			RCLCPP_FATAL(this->get_logger(),
+						 "Drift detected during Hold mode. This is likely a hardware failure."
+						 "The motor will be locked until CalibrateAxis restart.");
+			stopMotor(msg->vesc_id);
+			modeNothing();
+			lockMotor(msg->vesc_id);
+			return;
+		}
+	}
 
 	// --- Mode end-conditions below
 
@@ -137,7 +170,7 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 		cancelTimeout();
 		// Snap to max shift
 		// +1 so that SetVelocity frames in the outer direction will still be rejected
-		modeSetPos(msg->vesc_id, signum(msg->precise_pos) * (mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] + 1));
+		modeSetPos(msg->vesc_id, signum(msg->precise_pos) * (mFloatParams[CALIBRATION_MAX_VELOCITY_SHIFT] + 1), false);
 	}
 }
 
@@ -156,7 +189,7 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		return;
 	}
 
-	if (!calibrationMotorsContains(msg->vesc_id))
+	if (!isCalibrationAllowedForMotor(msg->vesc_id))
 	{
 		RCLCPP_ERROR(this->get_logger(), "Attempted to calibrate motor with invalid VESC ID: %#x", msg->vesc_id);
 		return;
@@ -207,7 +240,7 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		break;
 
 	case CalibrateMsg::ACTION_TYPE_RETURN_TO_ORIGIN:
-		modeSetPos(msg->vesc_id, 0.0f);
+		modeSetPos(msg->vesc_id, 0.0f, true);
 		break;
 
 	case CalibrateMsg::ACTION_TYPE_CONFIRM:
@@ -255,7 +288,7 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 			offsetShift = std::clamp(offsetShift, -mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT], mFloatParams[CALIBRATION_MAX_OFFSET_SHIFT]);
 		}
 
-		modeSetPos(msg->vesc_id, startingPosition + offsetShift);
+		modeSetPos(msg->vesc_id, startingPosition + offsetShift, false);
 		break;
 
 	case CalibrateMsg::ACTION_TYPE_SET_VELOCITY:
@@ -356,8 +389,19 @@ void CalibrateAxis::modeNothing()
 	cancelTimeout();
 }
 
-void CalibrateAxis::modeSetPos(VESC_Id_t vescID, float pos)
+void CalibrateAxis::modeSetPos(VESC_Id_t vescID, float pos, bool dontSaveStartingPos)
 {
+	if (!isRecordedStatusValid(vescID))
+	{
+		RCLCPP_ERROR(this->get_logger(), "modeSetPos called even though there is no recent status for the motor");
+		stopMotor(vescID);
+		modeNothing();
+		return;
+	}
+	if (!dontSaveStartingPos)
+		mSetPosStartingPosition = mMotorStatuses[vescID].position;
+	else
+		mSetPosStartingPosition = std::numeric_limits<float>::quiet_NaN();
 	RCLCPP_INFO(this->get_logger(), "MODE SetPos [%d]: %f", vescID, pos);
 	mFrameToSend = frameSetPosition(vescID, pos);
 	mMode = Mode::SetPos;
@@ -409,7 +453,7 @@ void CalibrateAxis::cancelTimeout()
 void CalibrateAxis::timeoutTimerTick()
 {
 	VESC_Id_t vescID = mCurrentMotorID;
-	if (!vescID || !calibrationMotorsContains(vescID))
+	if (!vescID || !isCalibrationAllowedForMotor(vescID))
 	{
 		RCLCPP_ERROR(this->get_logger(), "Timeout handler: Invalid motor ID");
 		cancelTimeout();
@@ -504,7 +548,7 @@ void CalibrateAxis::sendFrame()
 
 // ######################### UTILITY #########################
 
-bool CalibrateAxis::calibrationMotorsContains(VESC_Id_t vescID)
+bool CalibrateAxis::isCalibrationAllowedForMotor(VESC_Id_t vescID)
 {
 	// Check if the supplied ID is in the list of motors allowed for calibration.
 	return std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID) != mCalibrationMotors.end();
@@ -558,4 +602,14 @@ int signum(T val)
 	if (val < 0)
 		return -1;
 	return 0;
+}
+
+void CalibrateAxis::lockMotor(VESC_Id_t vescID)
+{
+	// Remove the motor from mCalibrationMotors, effectively locking it.
+	auto it = std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID);
+	if (it != mCalibrationMotors.end())
+	{
+		mCalibrationMotors.erase(it);
+	}
 }
