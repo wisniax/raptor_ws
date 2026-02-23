@@ -24,5 +24,3 @@ launch:
               value: 1.0
             - name: "log_setpos_diff"
               value: 0
-            - name: "use_schedule_hold"
-              value: 1
