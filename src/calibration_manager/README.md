@@ -71,10 +71,8 @@ Parameter                            | Type  | Unit | Description
 `outdated_duration_s`    | float | s    | Time after which a `VescStatus` frame is considered outdated.
 `speed_timeout_ms`       | float | ms   | Timeout for SetVelocity. If no frame comes from the app in this time, the motor is stopped
 `message_send_period_ms` | float | ms   | Period at which to send VESC frames.
-`stop_condition`         | int   | -    | Which variant of the SetPos stop condition to use
 `stop_tolerance`         | int   | deg  | Position tolerance to decide when SetPos can be stopped
 `log_setpos_diff`        | int   | 0/1  | Whether to log current_position<->target_position during SetPos
-`use_schedule_hold`      | int   | 0/1  | Whether to delay holding until next received VESC status (to prevent jerk), see [FAQ](#faq)
 
 [0] - values outside of range are clamped<br />
 [1] - to rotate more, set origin and try again
@@ -114,5 +112,3 @@ If you need to rotate more, set origin and repeat.
 
 - What happens if motor 2 starts being calibrated when motor 1 is still being calibrated?
     - Only one motor can be calibrated at a time. In this case, motor 1 would be stopped (without hold) and calibration of motor 2 would continue as normal
-- What is hold scheduling?
-    - Normally, when the motor is rotated by velocity and then stopped, it holds at the last known position. It may cause the motor to jerk backwards before stopping. When hold scheduling is enabled, the motor is first stopped, and held only when a new position is received.

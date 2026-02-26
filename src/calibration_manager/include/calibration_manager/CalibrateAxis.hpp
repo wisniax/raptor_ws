@@ -58,7 +58,9 @@ private:
 
     rex_interfaces::msg::RoverStatus::ConstSharedPtr mLastRoverStatus;
     rex_interfaces::msg::BatteryInfo::ConstSharedPtr mLastBatteryInfo;
-    float mSetPosStartingPosition;
+
+    // Used during SetPos to track distance left to target. Used for hardware failure detection.
+    float mSetPosDistanceToTarget;
 
     rclcpp::Publisher<rex_interfaces::msg::VescMotorCommand>::SharedPtr mCalibrationMotorCommandPub;
     rclcpp::Subscription<rex_interfaces::msg::VescStatus>::SharedPtr mVescStatusSub;
@@ -77,7 +79,7 @@ private:
 
     // ######################### MODES #########################
     void modeNothing();
-    void modeSetPos(VESC_Id_t vescID, float pos, bool dontSaveStartingPos);
+    void modeSetPos(VESC_Id_t vescID, float pos);
     void modeSetVelocity(VESC_Id_t vescID, float velocity);
     void modeHold(VESC_Id_t vescID);
 
@@ -102,6 +104,8 @@ private:
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
     void lockMotor(VESC_Id_t vescID);
+    float getTargetPosFromSetPosFrame(const rex_interfaces::msg::VescMotorCommand msg);
+    bool isBlackMushroomPressed(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg);
 };
 
 template <typename T>
