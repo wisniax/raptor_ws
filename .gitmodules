@@ -1,0 +1,6 @@
+[submodule "src/rex_interfaces"]
+	path = src/rex_interfaces
+	url = https://github.com/Bitnut01/rex_interfaces.git
+[submodule "src/libVescCan"]
+	path = src/libVescCan
+	url = https://github.com/AlvaroBajceps/libVescCan

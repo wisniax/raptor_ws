@@ -1,0 +1,10 @@
+# one to launch them all!
+
+### Example configuration:
+launch:
+
+- node:
+    pkg: "manipulator_simple"
+    exec: "manipulator_simple_node"
+    name: "manipulator_simple_node"
+    namespace: "raptor"

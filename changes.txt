@@ -1,0 +1,77 @@
+---For the deep-sampler control----
+1. Control via application - change the message rex_interfaces/msg/SamplerControl.hpp to have field "int auto_mission" 
+auto_mission state: start/in_process/abort/complete/stop. - also added to   rex_interfaces/msg/SamplerFeedback.hpp
+/////////////////////////////////////
+From application
+
+std_msgs/Header header
+bool mission_start
+//float32 platform_movement       
+//float32 drill_movement
+//float32 drill_action
+//float32 container_degrees_a
+string mission_status
+
+In general:
+std_msgs/Header header
+bool mission_start
+float32 platform_pos       
+float32 drill_pos
+float32 drill_current
+float32 container_degrees_a
+string mission_status
+bool mission_end
+
+
+float32 container_degrees_b
+float32 vacuum_suction # -1:1 range one way to suck other to...
+float32 vacuum_a # on-off some motor A (this one actually exists)
+float32 vacuum_b # on-off some motor B (this one does not exist but anyway)
+
+```c
+#Control for Vesc
+uint8       command_id
+uint8       VESC_id
+float32     set_linear_position     #for movement - platform/drill
+float32     set_RPM
+float32     set_angular_position    #for container
+float32     set_max_current         #torque limiations
+
+#VescMotorCommand seems be good + current lim
+uint8 command_id
+float32 set_value           #(set_max_current)
+uint8 set_origin_data
+float32 set_pos_speed_loop_position
+float32 set_pos_speed_loop_speed
+float32 set_pos_speed_loop_acceleration
+     
+
+#feedback from Vesc
+float32 platform_position           #in mm. Set origin from end switches - calibration. 
+float32 platform_speed              #in RPM, optional 
+float32 drill_posiion               #in mm
+float32 drill_rotation_speed        #in RPM
+float32 drill_current               
+float32 container_degrees_a
+float32 weight_a                    
+float32 weight_b
+float32 weight_c
+float32 ph
+
+
+#Control from App - RoverStatus seems to be ok
+#defines the start of a mission
+int32 CONTROL_MODE_SAMPLER _AUTONOMY = 5    #additional field to distinguish autonomous from manual
+
+
+#Feedback to application 
+
+string operation_status             #to describe what is going
+float32 platform_position           #in mm. Set origin from end switches - calibration. 
+float32 drill_posiion               #in mm         
+float32 container_degrees_a
+float32 weight_a                    
+float32 weight_b
+float32 weight_c
+float32 ph
+```

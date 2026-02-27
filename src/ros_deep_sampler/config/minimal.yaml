@@ -1,0 +1,30 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    slider_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    drill_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    rotor_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+slider_position_controller:
+  ros__parameters:
+    joints:
+      - slider_joint
+
+drill_position_controller:
+  ros__parameters:
+    joints:
+      - drill_joint
+
+rotor_velocity_controller:
+  ros__parameters:
+    joints:
+      - rotor_joint

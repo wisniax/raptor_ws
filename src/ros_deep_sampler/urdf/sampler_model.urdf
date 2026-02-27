@@ -1,0 +1,197 @@
+<?xml version="1.0"?>
+<robot name="slider_robot">
+
+  <!-- ================= BASE PLATFORM ================= -->
+
+  <link name="world"/>
+
+<joint name="world_to_base" type="fixed">
+  <parent link="world"/>
+  <child link="base_link"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+</joint>
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 0.02"/>
+      </geometry>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
+      <material name="gray">
+        <color rgba="0.6 0.6 0.6 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.5 0.5 0.02"/>
+      </geometry>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
+    </collision>
+
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0"
+               iyy="0.02" iyz="0.0"
+               izz="0.04"/>
+    </inertial>
+  </link> 
+
+  <!-- ================= SLIDER BLOCK ================= -->
+  <link name="slider_link">
+    <visual>
+      <geometry>
+        <box size="0.1 0.6 0.1"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+      <material name="blue">
+        <color rgba="0.2 0.2 0.8 1.0"/>
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="0.1 0.6 0.1"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+               iyy="0.01" iyz="0.0"
+               izz="0.01"/>
+    </inertial>
+  </link>
+
+
+<!-- ===================== DRILL BLOCK ==================-->
+  <link name="drill_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.6 0.05"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.05 0.6 0.05"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+               iyy="0.01" iyz="0.0"
+               izz="0.01"/>
+    </inertial>
+  </link>
+
+<!-- ===================== DRILL Rotation ==================-->
+  <link name="rotor_link">
+    <visual>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.07 0.7 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0"
+               iyy="0.01" iyz="0.0"
+               izz="0.01"/>
+    </inertial>
+  </link>
+
+
+  <!--==================JOINTS====================-->
+  <joint name="slider_joint" type="prismatic">
+    <parent link="base_link"/>
+    <child link="slider_link"/>
+
+   
+    <origin xyz="0.06 0 1" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit lower="-0.2" upper="0.2" effort="50" velocity="0.5"/>
+  </joint> 
+
+  <joint name="drill_joint" type="prismatic">
+    <parent link="slider_link"/>
+    <child link="drill_link"/>
+
+   
+    <origin xyz="0.1 0 0" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit lower="-0.2" upper="0.2" effort="50" velocity="0.5"/>
+  </joint> 
+
+  <joint name="rotor_joint" type="continuous">
+    <parent link="drill_link"/>
+    <child link="rotor_link"/>
+
+   
+    <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit lower="0.0" upper="6.2" effort="50" velocity="0.5"/> 
+  </joint> 
+
+  <gazebo>
+    <plugin
+      filename="libgz_ros2_control-system.so"
+      name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>__CONTROLLER_CONFIG_PATH__</parameters>
+    </plugin>
+  </gazebo>
+
+  <ros2_control name="GazeboSimSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <joint name="slider_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="drill_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+     <joint name="rotor_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    
+  </ros2_control>
+
+
+
+</robot>
+
