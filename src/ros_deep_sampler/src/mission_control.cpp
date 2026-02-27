@@ -25,9 +25,9 @@ namespace ros_deep_sampler{
     AppFeedbackTimer_ = this->create_wall_timer(
     std::chrono::milliseconds(500), std::bind(&MissionControl::AppFeedbackPublish, this));
 
-    mPubFeedback.platform_position = this->platform_position;
-    mPubFeedback.drill_position = this->drill_position;
-    mPubFeedback.drill_current = this->drill_velocity; 
+    // mPubFeedback.platform_position = this->platform_position;
+    // mPubFeedback.drill_position = this->drill_position;
+    // mPubFeedback.drill_current = this->drill_velocity; 
     
     
   }
@@ -73,11 +73,11 @@ void MissionControl::MissionCheck(std_msgs::msg::String::SharedPtr msg){
 void MissionControl::AppFeedbackPublish(){
 
   if(state_ != State::IDLE){
-  RCLCPP_INFO(this->get_logger(), "<====Publishing sampler state====> \n");
-  RCLCPP_INFO(this->get_logger(), "Platform position: '%s' \n",  std::to_string(mPubFeedback.platform_position).c_str());
-  RCLCPP_INFO(this->get_logger(), "Drill position: '%s' \n", std::to_string(mPubFeedback.drill_position).c_str());
-  RCLCPP_INFO(this->get_logger(), "Drill velocity: '%s' \n", std::to_string(mPubFeedback.drill_current).c_str());
-  PubFeedback->publish(mPubFeedback);
+  // RCLCPP_INFO(this->get_logger(), "<====Publishing sampler state====> \n");
+  // RCLCPP_INFO(this->get_logger(), "Platform position: '%s' \n",  std::to_string(mPubFeedback.platform_position).c_str());
+  // RCLCPP_INFO(this->get_logger(), "Drill position: '%s' \n", std::to_string(mPubFeedback.drill_position).c_str());
+  // RCLCPP_INFO(this->get_logger(), "Drill velocity: '%s' \n", std::to_string(mPubFeedback.drill_current).c_str());
+  // PubFeedback->publish(mPubFeedback);
   }
 }
 
