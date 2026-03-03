@@ -67,11 +67,20 @@ void MissionControl::statesLoop(){
           move_client_->send_goal(1, 0.2, 0.05);
           goal_sent = true;
         }
+        
+        if(move_client_->get_goal_status()){
+          RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+          goal_sent = false;
+          move_client_->set_goal_status(goal_sent);
+          state_ = State::MOVE_PLATFORM_DOWN; 
+        }
+        
 
 
         break;
 
       case State::MOVE_PLATFORM_DOWN:
+        
         break;
 
       case State::DONE:
@@ -110,6 +119,9 @@ void MissionControl::AppFeedbackPublish(){
   }
 }
 
+std::shared_ptr<MoveLinearActionClient> MissionControl::get_move_client() {
+    return move_client_;
+}
 
 
 

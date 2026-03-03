@@ -15,6 +15,7 @@ int main(int argc, char ** argv)
   rclcpp::executors::MultiThreadedExecutor exec;
   exec.add_node(mission);
   exec.add_node(move_server);
+  exec.add_node(mission->get_move_client());
   exec.spin();
 
   rclcpp::shutdown();

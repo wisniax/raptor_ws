@@ -14,17 +14,18 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     this->client_ptr_ = rclcpp_action::create_client<Movement>(
       this,
       "Movement");
+    goal_completed = false;
 
     // this->timer_ = this->create_wall_timer(
     //   std::chrono::milliseconds(500),
     //   std::bind(&MoveLinearActionClient::send_goal, this));
   }
 
-  void MoveLinearActionClient::send_goal(int actuator_id, float velocity, float position)
+
+  void MoveLinearActionClient::send_goal(int actuator_id, float position, float velocity)
   {
     using namespace std::placeholders;
 
-    RCLCPP_ERROR(this->get_logger(), "Inside send_goal function");
     if (!this->client_ptr_->wait_for_action_server()) {
       RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
       rclcpp::shutdown();
@@ -61,8 +62,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     GoalHandleMovement::SharedPtr,
     const std::shared_ptr<const Movement::Feedback> feedback)
   {
-
-    
+    RCLCPP_INFO(this->get_logger(), "Current position is: %f", feedback->current_position);
+ 
   }
 
   void MoveLinearActionClient::result_callback(const GoalHandleMovement::WrappedResult & result)
@@ -80,14 +81,20 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
         return;
     }
-    std::stringstream ss;
-    // ss << "Result received: ";
-    // for (auto number : result.result->sequence) {
-    //   ss << number << " ";
-    // }
-    // RCLCPP_INFO(this->get_logger(), ss.str().c_str());
-    rclcpp::shutdown();
+    RCLCPP_INFO(this->get_logger(), "Goal was reached");
+    goal_completed = true;
+
+
+    //rclcpp::shutdown();
   }  // class MoveLinearActionClient
+
+  bool MoveLinearActionClient::get_goal_status(){
+    return goal_completed;
+  }
+
+  void MoveLinearActionClient::set_goal_status(bool status){
+    goal_completed = status;
+  }
 
 }  // namespace action_tutorials_cpp
 

@@ -78,6 +78,7 @@ void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointSta
     const double actuator_id = goal->actuator_id;
     const double target_position = goal->position;
     const double tolerance = 0.005; // meters
+    RCLCPP_INFO(this->get_logger(), "Goal is %.3f", goal->position);
     rclcpp::Rate rate(50); // 50 Hz loop
 
     auto feedback = std::make_shared<Movement::Feedback>();
@@ -103,15 +104,16 @@ void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointSta
         feedback->current_position = current_slider_;
         goal_handle->publish_feedback(feedback);
 
+        rate.sleep();
+
         // Check if target reached
         if (std::fabs(current_slider_ - target_position) < tolerance) {
             result->success = true;
             goal_handle->succeed(result);
-            RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached %.3f", current_slider_);
+            //RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached %.3f", current_slider_);
             return;
-        }
-
-        rate.sleep();
+        
+        }  
     
     }
   }

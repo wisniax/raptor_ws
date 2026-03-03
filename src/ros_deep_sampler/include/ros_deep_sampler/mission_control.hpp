@@ -14,6 +14,8 @@ namespace ros_deep_sampler{
 class MissionControl : public rclcpp::Node{
     public:
         explicit MissionControl(const rclcpp::NodeOptions & options);
+         
+        std::shared_ptr<MoveLinearActionClient> get_move_client();
 
     private:
         void MissionCheck(std_msgs::msg::String::SharedPtr msg);
@@ -51,8 +53,9 @@ class MissionControl : public rclcpp::Node{
         void AppFeedbackPublish();
         int getPlatformPosition();
 
-        std::shared_ptr<MoveLinearActionClient> move_client_;
+       
         //rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr SubStatus;
+        std::shared_ptr<MoveLinearActionClient> move_client_;
         std_msgs::msg::String::SharedPtr SubStatus;
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_;
         rclcpp::Publisher<rex_interfaces::msg::SamplerFeedback>::SharedPtr PubFeedback;

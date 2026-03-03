@@ -21,6 +21,8 @@ public:
 
 
   void send_goal(int actuator_id, float position, float velocity);
+  bool get_goal_status();
+  void set_goal_status(bool status);
 
 private:
   rclcpp_action::Client<Movement>::SharedPtr client_ptr_;
@@ -33,6 +35,8 @@ private:
     const std::shared_ptr<const Movement::Feedback> feedback);
 
   void result_callback(const GoalHandleMovement::WrappedResult & result);
+
+  bool goal_completed;
 };  // class MoveLinearActionClient
 
 }
