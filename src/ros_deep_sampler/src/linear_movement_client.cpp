@@ -20,21 +20,20 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     //   std::bind(&MoveLinearActionClient::send_goal, this));
   }
 
-  void MoveLinearActionClient::send_goal()
+  void MoveLinearActionClient::send_goal(int actuator_id, float velocity, float position)
   {
     using namespace std::placeholders;
 
-    //this->timer_->cancel();
-
+    RCLCPP_ERROR(this->get_logger(), "Inside send_goal function");
     if (!this->client_ptr_->wait_for_action_server()) {
       RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
       rclcpp::shutdown();
     }
 
     auto goal_msg = MoveLinearActionClient::Movement::Goal();
-    goal_msg.actuator_id = 1;
-    goal_msg.position = 0.15;
-    goal_msg.velocity = 0.05;
+    goal_msg.actuator_id = actuator_id;
+    goal_msg.position = position;
+    goal_msg.velocity = velocity;
 
     RCLCPP_INFO(this->get_logger(), "Sending goal");
 

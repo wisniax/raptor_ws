@@ -17,13 +17,33 @@ namespace ros_deep_sampler
 
     this->action_server_ = rclcpp_action::create_server<Movement>(
       this,
-      "movement",
+      "Movement",
       std::bind(&MoveLinearActionServer::handle_goal, this, _1, _2),
       std::bind(&MoveLinearActionServer::handle_cancel, this, _1),
       std::bind(&MoveLinearActionServer::handle_accepted, this, _1));
+
+     slider_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/slider_position_controller/commands", 10);
+
+        // Subscriber to joint states
+    joint_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "/joint_states", 10,
+            std::bind(&MoveLinearActionServer::jointStateCallback, this, std::placeholders::_1));
+  
   }
 
 
+
+void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
+    {
+        // Update current slider position
+        for (size_t i = 0; i < msg->name.size(); ++i) {
+            if (msg->name[i] == "slider_joint") {
+                current_slider_ = msg->position[i];
+                break;
+            }
+        }
+    }
 
 
   rclcpp_action::GoalResponse MoveLinearActionServer::handle_goal(
@@ -53,40 +73,46 @@ namespace ros_deep_sampler
   void MoveLinearActionServer::execute(const std::shared_ptr<GoalHandleMovement> goal_handle)
   {
     RCLCPP_INFO(this->get_logger(), "Executing goal");
-    rclcpp::Rate loop_rate(1);
+
     const auto goal = goal_handle->get_goal();
+    const double actuator_id = goal->actuator_id;
+    const double target_position = goal->position;
+    const double tolerance = 0.005; // meters
+    rclcpp::Rate rate(50); // 50 Hz loop
+
     auto feedback = std::make_shared<Movement::Feedback>();
-    auto & current_position = feedback->current_position;
-    auto & current_velocity = feedback->current_velocity;
-    auto & state = feedback->state;
-    // sequence.push_back(0);
-    // sequence.push_back(1);
     auto result = std::make_shared<Movement::Result>();
 
+    while (rclcpp::ok()) {
+        // Check if goal was canceled
+        if (goal_handle->is_canceling()) {
+            //result->final_position = current_slider_;
+            goal_handle->canceled(result);
+            RCLCPP_INFO(this->get_logger(), "Goal canceled at %.3f", current_slider_);
+            return;
+        }
+
+        // Publish command to controller
+        std_msgs::msg::Float64MultiArray cmd_msg;
+        if(actuator_id == 1){
+          cmd_msg.data = {target_position};
+        }
+        slider_pub_->publish(cmd_msg);
+
+        // Publish feedback
+        feedback->current_position = current_slider_;
+        goal_handle->publish_feedback(feedback);
+
+        // Check if target reached
+        if (std::fabs(current_slider_ - target_position) < tolerance) {
+            result->success = true;
+            goal_handle->succeed(result);
+            RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached %.3f", current_slider_);
+            return;
+        }
+
+        rate.sleep();
     
-
-    // for (int i = 1; (i < goal->order) && rclcpp::ok(); ++i) {
-    //   // Check if there is a cancel request
-    //   if (goal_handle->is_canceling()) {
-    //     result->sequence = sequence;
-    //     goal_handle->canceled(result);
-    //     RCLCPP_INFO(this->get_logger(), "Goal canceled");
-    //     return;
-    //   }
-    //   // Update sequence
-    //   sequence.push_back(sequence[i] + sequence[i - 1]);
-    //   // Publish feedback
-    //   goal_handle->publish_feedback(feedback);
-    //   RCLCPP_INFO(this->get_logger(), "Publish feedback");
-
-    //   loop_rate.sleep();
-    // }
-
-    // Check if goal is done
-    if (rclcpp::ok()) {
-      result->success = true;
-      goal_handle->succeed(result);
-      RCLCPP_INFO(this->get_logger(), "Goal succeeded");
     }
   }
  // class MoveLinearActionServer

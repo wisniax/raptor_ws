@@ -32,18 +32,46 @@ namespace ros_deep_sampler{
     
   }
 
+int MissionControl::getPlatformPosition(){
+  return (int)platform_position;
+}
+
 
 void MissionControl::statesLoop(){
     switch(state_){
         case State::IDLE:
+        if(mission_commands == "mission_start"){
+          RCLCPP_INFO(this->get_logger(), "Starting deep  sampling mission");
+          goal_sent = false;
+          if (getPlatformPosition() != 0){
+             RCLCPP_INFO(this->get_logger(), "Starting callibration");
+             state_ = State::MOVE_UP_CALIBRATION;
+          }
+         else{
+          RCLCPP_INFO(this->get_logger(), "Starting moving down");
+          state_ = State::MOVE_PLATFORM_DOWN;
+         }
+        }
+
         // waiting for mission_start callback
         break;
 
-      case State::MOVING:
+      case State::MOVE_UP_CALIBRATION:
+        if(mission_commands == "cancel"){
+          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+          state_ = State::DONE;
+          break;
+        }
+        if(!goal_sent){
+          RCLCPP_INFO(this->get_logger(), "Starting moving up");
+          move_client_->send_goal(1, 0.2, 0.05);
+          goal_sent = true;
+        }
+
 
         break;
 
-      case State::DRILLING:
+      case State::MOVE_PLATFORM_DOWN:
         break;
 
       case State::DONE:
@@ -54,16 +82,17 @@ void MissionControl::statesLoop(){
 
 void MissionControl::MissionCheck(std_msgs::msg::String::SharedPtr msg){
   RCLCPP_INFO(this->get_logger(), "Received: %s", msg->data.c_str());
+  mission_commands= msg->data;
 
-    if (msg->data == "mission_start"){
+    // if (msg->data == "mission_start"){
      
-        if(state_ == State::IDLE){
-            state_ = State::MOVING;
-            RCLCPP_INFO(this->get_logger(), "Current state: %s", to_string(state_).c_str());            
-            move_client_->send_goal();
-        }
+    //     if(state_ == State::IDLE){
+    //         state_ = State::MOVING;
+    //         RCLCPP_INFO(this->get_logger(), "Current state: %s", to_string(state_).c_str());            
+    //         //move_client_->send_goal();
+    //     }
 
-    }
+    //}
   
   
   //RCLCPP_INFO(this->get_logger(), "Current state: %s", to_string(state_).c_str());

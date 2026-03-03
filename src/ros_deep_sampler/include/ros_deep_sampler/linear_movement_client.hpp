@@ -20,7 +20,7 @@ public:
   explicit MoveLinearActionClient(const rclcpp::NodeOptions & options);
 
 
-  void send_goal();
+  void send_goal(int actuator_id, float position, float velocity);
 
 private:
   rclcpp_action::Client<Movement>::SharedPtr client_ptr_;

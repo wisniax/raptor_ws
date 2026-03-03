@@ -4,13 +4,9 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "ros_deep_sampler/visibility_control.h"
 
-#include <geometry_msgs/msg/quaternion.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <cmath>
-#include <chrono>
-
+using namespace std::chrono;
 
 namespace ros_deep_sampler
 {
@@ -20,8 +16,9 @@ public:
   using Movement = sampler_motion_interfaces::action::MoveLinear;
   using GoalHandleMovement = rclcpp_action::ServerGoalHandle<Movement>;
 
-  ACTION_TUTORIALS_CPP_PUBLIC
+  //ACTION_TUTORIALS_CPP_PUBLIC
   explicit MoveLinearActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
 
 private:
   rclcpp_action::Server<Movement>::SharedPtr action_server_;
@@ -37,6 +34,12 @@ private:
   
 
   void execute(const std::shared_ptr<GoalHandleMovement> goal_handle);
+  void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
+
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr slider_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
+
+  double current_slider_ = 0.0; 
 
 };  // class MoveLinearActionServer
 
