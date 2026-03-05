@@ -6,6 +6,9 @@
 
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
+
 using namespace std::chrono;
 
 namespace ros_deep_sampler
@@ -36,10 +39,11 @@ private:
   void execute(const std::shared_ptr<GoalHandleMovement> goal_handle);
   void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr slider_pub_;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr trajectory_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 
-  double current_slider_ = 0.0; 
+  double current_slider_ = 0.0;
+  double current_slider_velocity = 0.0; 
 
 };  // class MoveLinearActionServer
 

@@ -63,6 +63,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     const std::shared_ptr<const Movement::Feedback> feedback)
   {
     RCLCPP_INFO(this->get_logger(), "Current position is: %f", feedback->current_position);
+    RCLCPP_INFO(this->get_logger(), "Current velocity is: %f", feedback->current_velocity);
  
   }
 

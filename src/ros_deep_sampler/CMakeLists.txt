@@ -18,6 +18,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 
 
 add_library(action_server SHARED
@@ -33,6 +34,7 @@ ament_target_dependencies(action_server
   "rclcpp"
   "rclcpp_action"
   "rclcpp_components"
+  trajectory_msgs
   geometry_msgs
   sensor_msgs
   tf2_ros

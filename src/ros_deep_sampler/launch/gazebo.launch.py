@@ -45,7 +45,7 @@ def generate_launch_description():
     slider_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["slider_position_controller"],
+        arguments=["slider_controller"],
         output="screen",
     )
 
