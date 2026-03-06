@@ -5,7 +5,7 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    slider_controller:
+    platform_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
     drill_position_controller:
@@ -14,10 +14,10 @@ controller_manager:
     rotor_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 
-slider_controller:
+platform_controller:
   ros__parameters:
     joints:
-      - slider_joint
+      - platform_joint
     command_interfaces:
       - position
     state_interfaces:

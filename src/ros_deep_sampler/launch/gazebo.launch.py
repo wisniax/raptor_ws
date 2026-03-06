@@ -42,10 +42,10 @@ def generate_launch_description():
         output="screen",
     )
 
-    slider_controller_spawner = Node(
+    platform_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["slider_controller"],
+        arguments=["platform_controller"],
         output="screen",
     )
 
@@ -71,6 +71,6 @@ def generate_launch_description():
             OnProcessExit(target_action=spawn, on_exit=[joint_state_spawner])
         ),
         RegisterEventHandler(
-            OnProcessExit(target_action=joint_state_spawner, on_exit=[slider_controller_spawner, drill_controller_spawner, rotor_controller_spawner])
+            OnProcessExit(target_action=joint_state_spawner, on_exit=[platform_controller_spawner, drill_controller_spawner, rotor_controller_spawner])
         ),
     ])

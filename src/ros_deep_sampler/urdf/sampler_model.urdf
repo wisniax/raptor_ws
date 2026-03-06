@@ -122,7 +122,7 @@
 
 
   <!--==================JOINTS====================-->
-  <joint name="slider_joint" type="prismatic">
+  <joint name="platform_joint" type="prismatic">
     <parent link="base_link"/>
     <child link="slider_link"/>
 
@@ -171,7 +171,7 @@
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
 
-    <joint name="slider_joint">
+    <joint name="platform_joint">
       <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
