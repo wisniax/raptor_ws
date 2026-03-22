@@ -1,7 +1,5 @@
 #Goal
-int32 actuator_id
-float64 position
-float64 velocity
+ActuatorCommand[] commands
 
 ---
 #Result
@@ -11,6 +9,6 @@ string error_reason
 
 ---
 #SamplerFeedback
-float64 current_position
-float64 current_velocity
+float64[] current_position 
+float64[] current_velocity 
 string state

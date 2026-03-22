@@ -24,7 +24,7 @@ namespace ros_deep_sampler
       //(std::bind(&MoveLinearActionServer::execute, this, _1), goal_handle).detach());
 
     trajectory_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
-        "/slider_controller/joint_trajectory", 10);
+        "/platform_controller/joint_trajectory", 10);
 
         // Subscriber to joint states
     joint_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -37,24 +37,47 @@ namespace ros_deep_sampler
 
 void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
     {
-        // Update current slider position
-        for (size_t i = 0; i < msg->name.size(); ++i) {
-            if (msg->name[i] == "slider_joint") {
-                current_slider_ = msg->position[i];
-                current_slider_velocity = msg->velocity[i];
-                break;
-            }
-        }
+      for (size_t i = 0; i < msg->name.size(); ++i) {
+        const std::string & name = msg->name[i];
+        current_position_[name] = msg->position[i];
+        current_velocity_[name] = msg->velocity[i];
     }
+    
+  }
+
+double MoveLinearActionServer::get_current_position(int id){
+  if(id == 1){
+    return current_position_["platform_joint"];
+  }
+  if(id == 2){
+    return current_position_["drill_joint"];
+  }
+  if(id == 3){
+    return current_position_["rotor_joint"];
+  }
+
+}
+double MoveLinearActionServer::get_current_velocity(int id){
+  if(id == 1){
+    return current_velocity_["platform_joint"];
+  }
+  if(id == 2){
+    return current_velocity_["drill_joint"];
+  }
+  if(id == 3){
+    return current_velocity_["rotor_joint"];
+  }
+
+}
 
 
   rclcpp_action::GoalResponse MoveLinearActionServer::handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const MoveLinearActionServer::Movement::Goal> goal)
   {
-    RCLCPP_INFO(this->get_logger(), "Received goal request with Id %d", goal->actuator_id);
-    RCLCPP_INFO(this->get_logger(), "Received goal request with position %f", goal->position);
-    RCLCPP_INFO(this->get_logger(), "Received goal request with velocity %f", goal->velocity);
+    // RCLCPP_INFO(this->get_logger(), "Received goal request with Id %d", goal->actuator_id);
+    // RCLCPP_INFO(this->get_logger(), "Received goal request with position %f", goal->position);
+    // RCLCPP_INFO(this->get_logger(), "Received goal request with velocity %f", goal->velocity);
     (void)uuid;
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
   }
@@ -79,28 +102,38 @@ void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointSta
     RCLCPP_INFO(this->get_logger(), "Executing goal");
 
     const auto goal = goal_handle->get_goal();
-    const double actuator_id = goal->actuator_id;
-    const double target_position = goal->position;
-    //const double target_velocity = goal->velocity;
-    const double tolerance = 0.005; // meters
-    const double time_to_position = target_position/goal->velocity;
+    // const double actuator_id = goal->actuator_id;
+    // const double target_position = goal->position;
+    // //const double target_velocity = goal->velocity;
+     const double tolerance = 0.005; // meters
+    // const double time_to_position = target_position/goal->velocity;
 
     //RCLCPP_INFO(this->get_logger(), "Goal is %.3f", goal->position);
     rclcpp::Rate rate(50); // 50 Hz loop
 
     auto feedback = std::make_shared<Movement::Feedback>();
     auto result = std::make_shared<Movement::Result>();
+
     trajectory_msgs::msg::JointTrajectory traj;
 
-    traj.joint_names = {"slider_joint"};
+    for (const auto & cmd : goal->commands) {
+        trajectory_msgs::msg::JointTrajectoryPoint point;
+        double time_to_position = std::fabs(cmd.position) / cmd.velocity;
 
-    trajectory_msgs::msg::JointTrajectoryPoint point;
-    point.positions = {target_position};      // meters
-    point.velocities = {0.0};    // m/s
-    point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
+        // Map actuator ID to joint name
+        std::string joint_name;
+        if (cmd.id == 1) joint_name = "platform_joint";
+        if (cmd.id == 2) joint_name = "drill_joint";
+        if (cmd.id == 3) joint_name = "rotor_joint";
+        
+        traj.joint_names.push_back(joint_name);
 
-    traj.points.push_back(point);
+        point.positions = {cmd.position};
+        point.velocities = {0.0}; // or cmd.velocity if continuous joint
+        point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
 
+        traj.points.push_back(point);
+    }
     trajectory_pub_->publish(traj);
 
     while (rclcpp::ok()) {
@@ -108,20 +141,43 @@ void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointSta
         if (goal_handle->is_canceling()) {
             //result->final_position = current_slider_;
             goal_handle->canceled(result);
-            RCLCPP_INFO(this->get_logger(), "Goal canceled at %.3f", current_slider_);
+            // RCLCPP_INFO(this->get_logger(), "Goal canceled at %.3f", current_slider_);
             return;
         }
 
 
         // Publish feedback
-        feedback->current_position = current_slider_;
-        feedback->current_velocity = current_slider_velocity;
+        feedback->current_position.clear();
+        feedback->current_velocity.clear();
+
+        for (const auto & cmd : goal->commands) {
+            // Replace these with actual readings from your hardware
+            double pos = get_current_position(cmd.id);
+            double vel = get_current_velocity(cmd.id);
+
+            feedback->current_position.push_back(pos);
+            feedback->current_velocity.push_back(vel);
+        }
+
         goal_handle->publish_feedback(feedback);
-
         
+        bool all_reached = true;
+        for (const auto & cmd : goal->commands) {
+          std::string joint_name;
+          if (cmd.id == 1) joint_name = "platform_joint";
+          else if (cmd.id == 2) joint_name = "drill_joint";
+          else if (cmd.id == 3) joint_name = "rotor_joint";
 
+          double pos = current_position_[joint_name];
+          // optional: double vel = current_velocity_[joint_name];
+
+          if (std::fabs(pos - cmd.position) > tolerance) {
+              all_reached = false;
+              break;  // one joint not reached, keep looping
+          }
+      }
         // Check if target reached
-        if (std::fabs(current_slider_ - target_position) < tolerance) {
+        if (all_reached) {
             result->success = true;
             goal_handle->succeed(result);
             //RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached %.3f", current_slider_);

@@ -8,6 +8,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
+#include <unordered_map>
+#include <string>
 
 using namespace std::chrono;
 
@@ -21,6 +23,8 @@ public:
 
   //ACTION_TUTORIALS_CPP_PUBLIC
   explicit MoveLinearActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  double get_current_position(int id);
+  double get_current_velocity(int id);
 
 
 private:
@@ -42,8 +46,8 @@ private:
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr trajectory_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 
-  double current_slider_ = 0.0;
-  double current_slider_velocity = 0.0; 
+  std::unordered_map<std::string, double> current_position_;
+  std::unordered_map<std::string, double> current_velocity_;
 
 };  // class MoveLinearActionServer
 

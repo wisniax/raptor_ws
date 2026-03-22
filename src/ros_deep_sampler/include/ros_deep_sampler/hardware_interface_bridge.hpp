@@ -2,11 +2,13 @@
 #include "std_msgs/msg/string.hpp"
 #include "rex_interfaces/msg/sampler_control.hpp"
 #include "rex_interfaces/msg/sampler_feedback.hpp"
-#include "ros_deep_sampler/linear_movement_client.hpp"
-#include "ros_deep_sampler/linear_movement_server.hpp"
+// #include "ros_deep_sampler/linear_movement_client.hpp"
+// #include "ros_deep_sampler/linear_movement_server.hpp"
 #include <chrono>
 #include <string>
 #include <iostream>
+
+
 
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>

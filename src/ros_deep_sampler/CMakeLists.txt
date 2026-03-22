@@ -5,7 +5,22 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+)
+
 # find dependencies
+
+find_package(controller_manager 4.0.0)
+# Handle the case where the required version is not found
+if(NOT controller_manager_FOUND)
+  message(FATAL_ERROR "ros2_control version 4.0.0 or higher is required. "
+  "Are you using the correct branch of the ros2_control_demos repository?")
+endif()
+
 find_package(ament_cmake REQUIRED)
 find_package(sampler_motion_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -19,6 +34,10 @@ find_package(sensor_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(backward_ros REQUIRED)
+foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
+  find_package(${Dependency} REQUIRED)
+endforeach()
 
 
 add_library(action_server SHARED
@@ -52,6 +71,7 @@ install(
   DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
+
 
 # Install URDF files
 install(
@@ -102,6 +122,7 @@ target_link_libraries(ros_deep_sampler_node
   ${cpp_typesupport_target}
   libVescCan::libVescCan
   action_server
+  #harware_sampler
 )
 
 # Export
@@ -115,6 +136,7 @@ install(TARGETS
   ros_deep_sampler_node
   DESTINATION lib/${PROJECT_NAME}
 )
+
 
 install(TARGETS
   action_server
@@ -134,5 +156,8 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 ament_package()

@@ -22,7 +22,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
   }
 
 
-  void MoveLinearActionClient::send_goal(int actuator_id, float position, float velocity)
+  void MoveLinearActionClient::send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands)
   {
     using namespace std::placeholders;
 
@@ -32,9 +32,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     }
 
     auto goal_msg = MoveLinearActionClient::Movement::Goal();
-    goal_msg.actuator_id = actuator_id;
-    goal_msg.position = position;
-    goal_msg.velocity = velocity;
+    goal_msg.commands = commands;
 
     RCLCPP_INFO(this->get_logger(), "Sending goal");
 
@@ -62,8 +60,15 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     GoalHandleMovement::SharedPtr,
     const std::shared_ptr<const Movement::Feedback> feedback)
   {
-    RCLCPP_INFO(this->get_logger(), "Current position is: %f", feedback->current_position);
-    RCLCPP_INFO(this->get_logger(), "Current velocity is: %f", feedback->current_velocity);
+     for (size_t i = 0; i < feedback->current_position.size(); ++i) {
+        RCLCPP_INFO(this->get_logger(),
+                    "Actuator %zu: pos=%f, vel=%f",
+                    i,
+                    feedback->current_position[i],
+                    feedback->current_velocity[i]);
+    }
+    // RCLCPP_INFO(this->get_logger(), "Current position is: %f", feedback->current_position);
+    // RCLCPP_INFO(this->get_logger(), "Current velocity is: %f", feedback->current_velocity);
  
   }
 

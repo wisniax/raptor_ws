@@ -2,6 +2,7 @@
 
 
 
+
 namespace ros_deep_sampler{
 
     HardwareBridge::HardwareBridge(const rclcpp::NodeOptions & options)
@@ -33,6 +34,18 @@ namespace ros_deep_sampler{
   }
 
   void HardwareBridge::trajCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg){
+
+    if(msg->points.empty())
+            return;
+
+        auto point = msg->points.back();
+
+        double position = point.positions[0];
+        double velocity = point.velocities.empty() ? 0.0 : point.velocities[0];
+
+        RCLCPP_INFO(this->get_logger(),
+            "Trajectory command: pos=%.3f vel=%.3f",
+            position, velocity);
 
   }
 

@@ -1,9 +1,10 @@
 #include <memory>
 
 #include "sampler_motion_interfaces/action/move_linear.hpp"
+#include "sampler_motion_interfaces/msg/actuator_command.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
-
+#include <vector>
 
 #include "ros_deep_sampler/visibility_control.h"
 
@@ -20,7 +21,7 @@ public:
   explicit MoveLinearActionClient(const rclcpp::NodeOptions & options);
 
 
-  void send_goal(int actuator_id, float position, float velocity);
+  void send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands);
   bool get_goal_status();
   void set_goal_status(bool status);
 

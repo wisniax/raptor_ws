@@ -10,6 +10,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
+
+ <build_depend>ros2_control_cmake</build_depend>
   <build_depend>rosidl_default_generators</build_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>std_msgs</build_depend>
@@ -29,7 +31,14 @@
   <exec_depend>xacro</exec_depend>
 
   <exec_depend>ros_gz_sim</exec_depend>
-  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>forward_command_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>ros2_control_demo_description</exec_depend>
+  <exec_depend>ros2_controllers_test_nodes</exec_depend>
+  <exec_depend>ros2controlcli</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rqt_joint_trajectory_controller</exec_depend>
 
   <!-- Needed for launch files -->
   <exec_depend>launch</exec_depend>
@@ -55,6 +64,14 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>trajectory_msgs</depend>
+
+ 
+
+  <depend>backward_ros</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <!-- <depend>rclcpp</depend> -->
+  <depend>rclcpp_lifecycle</depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 

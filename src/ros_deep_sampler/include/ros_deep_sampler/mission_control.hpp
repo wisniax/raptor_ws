@@ -65,13 +65,18 @@ class MissionControl : public rclcpp::Node{
         rex_interfaces::msg::SamplerFeedback mPubFeedback;
         rclcpp::TimerBase::SharedPtr appFeedbackTimer;
 
+
         rclcpp::TimerBase::SharedPtr missionTimer_;
         rclcpp::TimerBase::SharedPtr AppFeedbackTimer_;
 
 
         std::string mission_commands;
+        std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands;
+        sampler_motion_interfaces::msg::ActuatorCommand cmd1;
+        sampler_motion_interfaces::msg::ActuatorCommand cmd3;
+        sampler_motion_interfaces::msg::ActuatorCommand cmd2;
         bool goal_sent;
-        float platform_position = -1000.0;
+        float platform_position = 0.0;
         float drill_position = 0.0;
         float drill_velocity = 0.0;
 

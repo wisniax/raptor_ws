@@ -8,7 +8,7 @@
 <joint name="world_to_base" type="fixed">
   <parent link="world"/>
   <child link="base_link"/>
-  <origin xyz="0 0 1" rpy="0 0 0"/>
+  <origin xyz="0 0 0" rpy="0 0 0"/>
 </joint>
 
   <link name="base_link">
@@ -16,7 +16,7 @@
       <geometry>
         <box size="0.5 0.5 0.02"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 1.5707 0"/>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
       <material name="gray">
         <color rgba="0.6 0.6 0.6 1.0"/>
       </material>
@@ -26,12 +26,12 @@
       <geometry>
         <box size="0.5 0.5 0.02"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 1.5707 0"/>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
     </collision>
 
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 1.5707 0"/>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
       <inertia ixx="0.02" ixy="0.0" ixz="0.0"
                iyy="0.02" iyz="0.0"
                izz="0.04"/>
@@ -39,7 +39,7 @@
   </link> 
 
   <!-- ================= SLIDER BLOCK ================= -->
-  <link name="platform_link">
+  <link name="slider_link">
     <visual>
       <geometry>
         <box size="0.1 0.6 0.1"/>
@@ -124,18 +124,18 @@
   <!--==================JOINTS====================-->
   <joint name="platform_joint" type="prismatic">
     <parent link="base_link"/>
-    <child link="platform_link"/>
+    <child link="slider_link"/>
 
    
-    <origin xyz="0.06 0 0" rpy="0 0 0"/>
+    <origin xyz="0.06 0 1" rpy="0 0 0"/>
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.3" upper="0.3" effort="50" velocity="0.5"/>
+    <limit lower="-0.2" upper="0.2" effort="50" velocity="0.5"/>
   </joint> 
 
   <joint name="drill_joint" type="prismatic">
-    <parent link="platform_link"/>
+    <parent link="slider_link"/>
     <child link="drill_link"/>
 
    
@@ -143,7 +143,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.5" upper="0.1" effort="50" velocity="0.5"/>
+    <limit lower="-0.2" upper="0.2" effort="50" velocity="0.5"/>
   </joint> 
 
   <joint name="rotor_joint" type="continuous">
@@ -155,7 +155,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <!-- <limit lower="0.0" upper="6.2" effort="50" velocity="0.5"/>  -->
+    <limit lower="0.0" upper="6.2" effort="50" velocity="0.5"/> 
   </joint> 
 
   <gazebo>
