@@ -5,6 +5,7 @@ logs/
 build/
 bin/
 lib/
+sampler_hardware_interface/
 msg_gen/
 srv_gen/
 msg/*Action.msg

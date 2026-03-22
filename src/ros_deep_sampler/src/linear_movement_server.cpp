@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <thread>
+// #include "std_msgs/msg/Float64MultiArray.hpp"
 
 #include "rclcpp_components/register_node_macro.hpp"
 
@@ -23,13 +24,19 @@ namespace ros_deep_sampler
       std::bind(&MoveLinearActionServer::handle_accepted, this, _1));
       //(std::bind(&MoveLinearActionServer::execute, this, _1), goal_handle).detach());
 
-    trajectory_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+    platform_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
         "/platform_controller/joint_trajectory", 10);
+      
+    drill_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+        "/drill_position_controller/joint_trajectory", 10);
 
         // Subscriber to joint states
     joint_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
             "/joint_states", 10,
             std::bind(&MoveLinearActionServer::jointStateCallback, this, std::placeholders::_1));
+
+    rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64>(
+    "/rotor_velocity_controller/commands", 10);
   
   }
 
@@ -113,28 +120,44 @@ double MoveLinearActionServer::get_current_velocity(int id){
 
     auto feedback = std::make_shared<Movement::Feedback>();
     auto result = std::make_shared<Movement::Result>();
+    int current_slider_;
 
     trajectory_msgs::msg::JointTrajectory traj;
 
     for (const auto & cmd : goal->commands) {
         trajectory_msgs::msg::JointTrajectoryPoint point;
-        double time_to_position = std::fabs(cmd.position) / cmd.velocity;
+        double time_to_position =  (cmd.velocity > 0.001) ? std::fabs(cmd.position)/cmd.velocity : 1.0; 
 
         // Map actuator ID to joint name
         std::string joint_name;
-        if (cmd.id == 1) joint_name = "platform_joint";
-        if (cmd.id == 2) joint_name = "drill_joint";
-        if (cmd.id == 3) joint_name = "rotor_joint";
+        if (cmd.id == 1){ joint_name = "platform_joint";
+                          current_slider_ = 1;}
+        if (cmd.id == 2) {joint_name = "drill_joint";
+                          current_slider_ =2;}
+        if(cmd.id == 3) break;
+        //if (cmd.id == 3) joint_name = "rotor_joint";
         
         traj.joint_names.push_back(joint_name);
 
         point.positions = {cmd.position};
         point.velocities = {0.0}; // or cmd.velocity if continuous joint
-        point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
-
         traj.points.push_back(point);
+        point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     }
-    trajectory_pub_->publish(traj);
+    if(current_slider_==1){
+      platform_pub_->publish(traj);
+    }
+    else if(current_slider_ == 2){
+      drill_pub_->publish(traj);
+    }
+
+    for (const auto & cmd : goal->commands) {
+      if (cmd.id == 3) {  // rotor joint
+          std_msgs::msg::Float64 rotor_msg;
+          rotor_msg.data = cmd.velocity;
+          rotor_velocity_pub_->publish(rotor_msg);
+      }
+  }
 
     while (rclcpp::ok()) {
         // Check if goal was canceled

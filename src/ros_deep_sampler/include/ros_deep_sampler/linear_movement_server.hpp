@@ -10,6 +10,7 @@
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 #include <unordered_map>
 #include <string>
+#include "std_msgs/msg/float64.hpp"
 
 using namespace std::chrono;
 
@@ -43,7 +44,10 @@ private:
   void execute(const std::shared_ptr<GoalHandleMovement> goal_handle);
   void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr trajectory_pub_;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr drill_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
+  //rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 
   std::unordered_map<std::string, double> current_position_;

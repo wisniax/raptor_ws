@@ -9,10 +9,11 @@ controller_manager:
       type: joint_trajectory_controller/JointTrajectoryController
 
     drill_position_controller:
-      type: position_controllers/JointGroupPositionController
+      type: joint_trajectory_controller/JointTrajectoryController
 
     rotor_velocity_controller:
-      type: velocity_controllers/JointGroupVelocityController
+      type: velocity_controllers/JointVelocityController
+
 
 platform_controller:
   ros__parameters:
@@ -28,8 +29,17 @@ drill_position_controller:
   ros__parameters:
     joints:
       - drill_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
 
 rotor_velocity_controller:
   ros__parameters:
-    joints:
+    joint: 
       - rotor_joint
+    command_interfaces:
+      - velocity
+    state_interfaces:
+      - velocity
