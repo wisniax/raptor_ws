@@ -138,7 +138,7 @@ void MissionControl::statesLoop(){
           // commands.push_back(cmd1);
           cmd2.id = 2;
           cmd2.velocity = 0.1;
-          cmd2.position = -2;
+          cmd2.position = -0.4;
           commands.push_back(cmd2);
           // cmd3.id = 3;
           // cmd3.velocity = 0.4;

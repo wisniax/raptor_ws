@@ -123,17 +123,18 @@ double MoveLinearActionServer::get_current_velocity(int id){
     int current_slider_;
 
     trajectory_msgs::msg::JointTrajectory traj;
-
+    RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
     for (const auto & cmd : goal->commands) {
         trajectory_msgs::msg::JointTrajectoryPoint point;
         double time_to_position =  (cmd.velocity > 0.001) ? std::fabs(cmd.position)/cmd.velocity : 1.0; 
-
+        RCLCPP_INFO(this->get_logger(), "Ids in cmd: %.3d", cmd.id);
         // Map actuator ID to joint name
         std::string joint_name;
         if (cmd.id == 1){ joint_name = "platform_joint";
                           current_slider_ = 1;}
         if (cmd.id == 2) {joint_name = "drill_joint";
-                          current_slider_ =2;}
+                          current_slider_ =2;
+                        RCLCPP_INFO(this->get_logger(), "Goal id is 2");}
         if(cmd.id == 3) break;
         //if (cmd.id == 3) joint_name = "rotor_joint";
         
@@ -187,12 +188,17 @@ double MoveLinearActionServer::get_current_velocity(int id){
         bool all_reached = true;
         for (const auto & cmd : goal->commands) {
           std::string joint_name;
-          if (cmd.id == 1) joint_name = "platform_joint";
+          //RCLCPP_INFO(this->get_logger(), "Loop id check: %d", cmd.id);
+          if (cmd.id == 1) {
+            joint_name = "platform_joint";
+            //RCLCPP_INFO(this->get_logger(), "Checking id 1");
+          }
           else if (cmd.id == 2) joint_name = "drill_joint";
           else if (cmd.id == 3) joint_name = "rotor_joint";
 
-          double pos = current_position_[joint_name];
+          double pos = get_current_position(cmd.id);
           // optional: double vel = current_velocity_[joint_name];
+          
 
           if (std::fabs(pos - cmd.position) > tolerance) {
               all_reached = false;
@@ -203,7 +209,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
         if (all_reached) {
             result->success = true;
             goal_handle->succeed(result);
-            //RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached %.3f", current_slider_);
+            RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached");
             return;
         
         }

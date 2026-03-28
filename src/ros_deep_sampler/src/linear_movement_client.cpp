@@ -60,13 +60,13 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     GoalHandleMovement::SharedPtr,
     const std::shared_ptr<const Movement::Feedback> feedback)
   {
-     for (size_t i = 0; i < feedback->current_position.size(); ++i) {
-        RCLCPP_INFO(this->get_logger(),
-                    "Actuator %zu: pos=%f, vel=%f",
-                    i,
-                    feedback->current_position[i],
-                    feedback->current_velocity[i]);
-    }
+    // for (size_t i = 0; i < feedback->current_position.size(); ++i) {
+    //     RCLCPP_INFO(this->get_logger(),
+    //                 "Actuator %zu: pos=%f, vel=%f",
+    //                 i,
+    //                 feedback->current_position[i],
+    //                 feedback->current_velocity[i]);
+    // }
     // RCLCPP_INFO(this->get_logger(), "Current position is: %f", feedback->current_position);
     // RCLCPP_INFO(this->get_logger(), "Current velocity is: %f", feedback->current_velocity);
  

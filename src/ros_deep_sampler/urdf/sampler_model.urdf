@@ -31,7 +31,7 @@
 
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 1.5707 0"/>
+      <origin xyz="0 0 1" rpy="0 1.5707 0"/>
       <inertia ixx="0.02" ixy="0.0" ixz="0.0"
                iyy="0.02" iyz="0.0"
                izz="0.04"/>
@@ -59,7 +59,7 @@
 
     <inertial>
       <mass value="1.0"/>
-      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0.0" ixz="0.0"
                iyy="0.01" iyz="0.0"
                izz="0.01"/>
@@ -85,14 +85,14 @@
 
     <inertial>
       <mass value="1.0"/>
-      <origin xyz="0 0 0" rpy="1.5707 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0.0" ixz="0.0"
                iyy="0.01" iyz="0.0"
                izz="0.01"/>
     </inertial>
   </link>
 
-<!-- ===================== DRILL Rotation ==================-->
+<!-- ===================== DRILL Rotation ==================
   <link name="rotor_link">
     <visual>
       <geometry>
@@ -118,7 +118,7 @@
                iyy="0.01" iyz="0.0"
                izz="0.01"/>
     </inertial>
-  </link>
+  </link> -->
 
 
   <!--==================JOINTS====================-->
@@ -131,7 +131,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.3" upper="0.3" effort="50" velocity="0.5"/>
+    <limit lower="-0.4" upper="0.4" effort="500" velocity="0.5"/>
   </joint> 
 
   <joint name="drill_joint" type="prismatic">
@@ -143,10 +143,10 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit effort="50" velocity="0.5"/>
+    <limit lower="-0.2" upper="0.2" effort="500" velocity="0.5"/>
   </joint> 
 
-  <joint name="rotor_joint" type="continuous">
+  <!-- <joint name="rotor_joint" type="continuous">
     <parent link="drill_link"/>
     <child link="rotor_link"/>
 
@@ -155,8 +155,8 @@
 
     <axis xyz="0 0 1"/>
 
-    <!-- <limit lower="0.0" upper="6.2" effort="50" velocity="0.5"/>  -->
-  </joint> 
+    <limit lower="0.0" upper="6.2" effort="50" velocity="0.5"/> 
+  </joint>  -->
 
   <gazebo>
     <plugin
@@ -183,10 +183,11 @@
       <state_interface name="velocity"/>
     </joint>
 
-     <joint name="rotor_joint">
+     <!-- <joint name="rotor_joint">
       <command_interface name="velocity"/>
+      <state_interface name="position"/>
       <state_interface name="velocity"/>
-    </joint>
+    </joint> -->
     
   </ros2_control>
 
