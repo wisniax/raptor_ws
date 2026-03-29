@@ -137,22 +137,23 @@ void MissionControl::statesLoop(){
           // cmd1.position = 0.0
           // commands.push_back(cmd1);
           cmd2.id = 2;
-          cmd2.velocity = 0.1;
-          cmd2.position = -0.4;
+          cmd2.velocity = 0.001;
+          cmd2.position = -0.2;
           commands.push_back(cmd2);
-          // cmd3.id = 3;
-          // cmd3.velocity = 0.4;
-          // cmd3.position = 0.0;
-          // commands.push_back(cmd3);
+          cmd3.id = 3;
+          cmd3.velocity = 0.4;
+          cmd3.position = 0.0;
+          commands.push_back(cmd3);
           move_client_->send_goal(commands);
           goal_sent = true;
         }
         
         if(move_client_->get_goal_status()){
-          RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+          RCLCPP_INFO(this->get_logger(), "Finishing moving down during drillling");
           goal_sent = false;
           move_client_->set_goal_status(goal_sent);
-          state_ = State::DRILLING; 
+          commands.clear();
+          state_ = State::DONE; 
         }
         break;
 

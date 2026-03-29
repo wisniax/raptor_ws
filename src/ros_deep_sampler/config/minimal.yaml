@@ -12,7 +12,7 @@ controller_manager:
       type: joint_trajectory_controller/JointTrajectoryController
 
     rotor_velocity_controller:
-      type: velocity_controllers/JointVelocityController
+      type: forward_command_controller/ForwardCommandController
 
 
 platform_controller:
@@ -37,9 +37,7 @@ drill_position_controller:
 
 rotor_velocity_controller:
   ros__parameters:
-    joint: 
+    joints: 
       - rotor_joint
-    command_interfaces:
-      - velocity
-    state_interfaces:
-      - velocity
+    interface_name: velocity
+  

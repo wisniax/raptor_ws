@@ -35,7 +35,7 @@ namespace ros_deep_sampler
             "/joint_states", 10,
             std::bind(&MoveLinearActionServer::jointStateCallback, this, std::placeholders::_1));
 
-    rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64>(
+    rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "/rotor_velocity_controller/commands", 10);
   
   }
@@ -123,18 +123,19 @@ double MoveLinearActionServer::get_current_velocity(int id){
     int current_slider_;
 
     trajectory_msgs::msg::JointTrajectory traj;
-    RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
+    //RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
     for (const auto & cmd : goal->commands) {
         trajectory_msgs::msg::JointTrajectoryPoint point;
-        double time_to_position =  (cmd.velocity > 0.001) ? std::fabs(cmd.position)/cmd.velocity : 1.0; 
-        RCLCPP_INFO(this->get_logger(), "Ids in cmd: %.3d", cmd.id);
+        double time_to_position =  (cmd.velocity >= 0.001) ? std::fabs(cmd.position)/cmd.velocity : 1.0; 
+        //RCLCPP_INFO(this->get_logger(), "Ids in cmd: %.3d", cmd.id);
         // Map actuator ID to joint name
         std::string joint_name;
         if (cmd.id == 1){ joint_name = "platform_joint";
                           current_slider_ = 1;}
         if (cmd.id == 2) {joint_name = "drill_joint";
                           current_slider_ =2;
-                        RCLCPP_INFO(this->get_logger(), "Goal id is 2");}
+          //              RCLCPP_INFO(this->get_logger(), "Goal id is 2");
+          }
         if(cmd.id == 3) break;
         //if (cmd.id == 3) joint_name = "rotor_joint";
         
@@ -154,8 +155,8 @@ double MoveLinearActionServer::get_current_velocity(int id){
 
     for (const auto & cmd : goal->commands) {
       if (cmd.id == 3) {  // rotor joint
-          std_msgs::msg::Float64 rotor_msg;
-          rotor_msg.data = cmd.velocity;
+        auto rotor_msg = std_msgs::msg::Float64MultiArray();
+        rotor_msg.data = {cmd.velocity};  // one joint → one value
           rotor_velocity_pub_->publish(rotor_msg);
       }
   }
@@ -200,7 +201,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
           // optional: double vel = current_velocity_[joint_name];
           
 
-          if (std::fabs(pos - cmd.position) > tolerance) {
+          if (cmd.id != 3 && std::fabs(pos - cmd.position) > tolerance) {
               all_reached = false;
               break;  // one joint not reached, keep looping
           }

@@ -10,7 +10,7 @@
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 #include <unordered_map>
 #include <string>
-#include "std_msgs/msg/float64.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
 
 using namespace std::chrono;
 
@@ -46,7 +46,7 @@ private:
 
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr drill_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr rotor_velocity_pub_;
   //rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 
