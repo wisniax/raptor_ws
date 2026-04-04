@@ -38,6 +38,7 @@ private:
   void result_callback(const GoalHandleMovement::WrappedResult & result);
 
   bool goal_completed;
+
 };  // class MoveLinearActionClient
 
 }

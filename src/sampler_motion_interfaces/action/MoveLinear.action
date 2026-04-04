@@ -9,6 +9,8 @@ string error_reason
 
 ---
 #SamplerFeedback
+int32[] ids
 float64[] current_position 
 float64[] current_velocity 
+float64[] current_effort
 string state

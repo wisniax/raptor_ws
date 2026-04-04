@@ -100,8 +100,8 @@ void MissionControl::statesLoop(){
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           cmd1.id = 1;
-          cmd1.velocity = 0.1;
-          cmd1.position = -0.3;
+          cmd1.velocity = 0.04;
+          cmd1.position = -0.4;
           commands.push_back(cmd1);
           // cmd2.id = 2;
           // cmd2.velocity = 0.0;
@@ -116,11 +116,17 @@ void MissionControl::statesLoop(){
         }
         
         if(move_client_->get_goal_status()){
-          RCLCPP_INFO(this->get_logger(), "Finishing moving down");
-          goal_sent = false;
-          move_client_->set_goal_status(goal_sent);
-          commands.clear();
-          state_ = State::DRILLING; 
+          time_between_states++;
+          if(time_between_states > 1){
+            RCLCPP_INFO(this->get_logger(), "Finishing moving down");
+            time_between_states = 0;
+            goal_sent = false;
+            move_client_->set_goal_status(goal_sent);
+            commands.clear();
+            state_ = State::DRILLING; 
+          }
+         
+          
         }
         break;
 
@@ -133,15 +139,15 @@ void MissionControl::statesLoop(){
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting drilling");
           // cmd1.id = 1;
-          // cmd1.velocity = 0.0;
-          // cmd1.position = 0.0
+          // cmd1.velocity = 0.04;
+          // cmd1.position = -0.1;
           // commands.push_back(cmd1);
           cmd2.id = 2;
-          cmd2.velocity = 0.001;
-          cmd2.position = -0.2;
+          cmd2.velocity = 0.04;
+          cmd2.position = -0.35;
           commands.push_back(cmd2);
           cmd3.id = 3;
-          cmd3.velocity = 0.4;
+          cmd3.velocity = 4.0;
           cmd3.position = 0.0;
           commands.push_back(cmd3);
           move_client_->send_goal(commands);
@@ -149,15 +155,96 @@ void MissionControl::statesLoop(){
         }
         
         if(move_client_->get_goal_status()){
-          RCLCPP_INFO(this->get_logger(), "Finishing moving down during drillling");
-          goal_sent = false;
-          move_client_->set_goal_status(goal_sent);
-          commands.clear();
-          state_ = State::DONE; 
+          time_between_states++;
+          if(time_between_states > 1){
+            RCLCPP_INFO(this->get_logger(), "Finishing moving down during drillling");
+            time_between_states = 0;
+            goal_sent = false;
+            move_client_->set_goal_status(goal_sent);
+            commands.clear();
+            state_ = State::MOVE_DRILL_UP; 
+          }
+          
+         
         }
         break;
 
-      case State::DONE:
+        case State::MOVE_DRILL_UP:
+          if(mission_commands == "cancel"){
+            RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+            state_ = State::DONE;
+            break;
+          }
+          if(!goal_sent){
+            RCLCPP_INFO(this->get_logger(), "Moving drill up");
+            // cmd1.id = 1;
+            // cmd1.velocity = 0.0;
+            // cmd1.position = 0.0
+            // commands.push_back(cmd1);
+            cmd2.id = 2;
+            cmd2.velocity = 0.04;
+            cmd2.position = 0.0;
+            commands.push_back(cmd2);
+            // cmd3.id = 3;
+            // cmd3.velocity = 0.0;
+            // cmd3.position = 0.0;
+            // commands.push_back(cmd3);
+            move_client_->send_goal(commands);
+            goal_sent = true;
+          }
+          
+          if(move_client_->get_goal_status()){
+            time_between_states++;
+            if(time_between_states > 100){
+                RCLCPP_INFO(this->get_logger(), "Finish moving drill up");
+                time_between_states =0;
+                goal_sent = false;
+                move_client_->set_goal_status(goal_sent);
+                commands.clear();
+                state_ = State::MOVE_PLATFORM_UP; 
+              }
+          }   
+        break; 
+        
+        case State::MOVE_PLATFORM_UP:
+          if(mission_commands == "cancel"){
+              RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+              state_ = State::DONE;
+              break;
+            }
+            if(!goal_sent){
+              RCLCPP_INFO(this->get_logger(), "Moving Platform up");
+              cmd1.id = 1;
+              cmd1.velocity = 0.04;
+              cmd1.position = 0.0;
+              commands.push_back(cmd1);
+              // cmd2.id = 2;
+              // cmd2.velocity = 0.04;
+              // cmd2.position = 0.1;
+              // commands.push_back(cmd2);
+              // cmd3.id = 3;
+              // cmd3.velocity = 0.0;
+              // cmd3.position = 0.0;
+              // commands.push_back(cmd3);
+              move_client_->send_goal(commands);
+              goal_sent = true;
+            }
+            
+            if(move_client_->get_goal_status()){
+              time_between_states++;
+              if(time_between_states > 100){
+                  RCLCPP_INFO(this->get_logger(), "Finish moving drill up");
+                  time_between_states =0;
+                  goal_sent = false;
+                  move_client_->set_goal_status(goal_sent);
+                  commands.clear();
+                  state_ = State::DONE; 
+                }
+            }   
+        break; 
+
+      
+        case State::DONE:
         break;
     }
 }

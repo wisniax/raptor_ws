@@ -121,31 +121,39 @@ double MoveLinearActionServer::get_current_velocity(int id){
     auto feedback = std::make_shared<Movement::Feedback>();
     auto result = std::make_shared<Movement::Result>();
     int current_slider_;
+    float current_slider_pos;
+    float current_slider_vel;
+
 
     trajectory_msgs::msg::JointTrajectory traj;
-    //RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
-    for (const auto & cmd : goal->commands) {
-        trajectory_msgs::msg::JointTrajectoryPoint point;
-        double time_to_position =  (cmd.velocity >= 0.001) ? std::fabs(cmd.position)/cmd.velocity : 1.0; 
-        //RCLCPP_INFO(this->get_logger(), "Ids in cmd: %.3d", cmd.id);
-        // Map actuator ID to joint name
-        std::string joint_name;
+    trajectory_msgs::msg::JointTrajectoryPoint point;
+    std::string joint_name;
+    for(const auto &cmd: goal->commands){
+      
         if (cmd.id == 1){ joint_name = "platform_joint";
-                          current_slider_ = 1;}
-        if (cmd.id == 2) {joint_name = "drill_joint";
-                          current_slider_ =2;
-          //              RCLCPP_INFO(this->get_logger(), "Goal id is 2");
+            current_slider_ = 1;
+            current_slider_pos = cmd.position;
+            current_slider_vel = cmd.velocity;
           }
+        if (cmd.id == 2) {joint_name = "drill_joint";
+            current_slider_ = 2;
+            current_slider_pos = cmd.position;
+            current_slider_vel = cmd.velocity;
+          }
+       
         if(cmd.id == 3) break;
-        //if (cmd.id == 3) joint_name = "rotor_joint";
-        
-        traj.joint_names.push_back(joint_name);
-
-        point.positions = {cmd.position};
-        point.velocities = {0.0}; // or cmd.velocity if continuous joint
-        traj.points.push_back(point);
-        point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     }
+    double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(current_slider_pos)/current_slider_vel : 1.0;   
+    point.positions = {current_slider_pos};
+    point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
+    traj.joint_names.push_back(joint_name);
+
+    
+    //point.velocities = {0.0}; // or cmd.velocity if continuous joint
+    
+    traj.points.push_back(point);
+
+    //RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
     if(current_slider_==1){
       platform_pub_->publish(traj);
     }
@@ -208,6 +216,9 @@ double MoveLinearActionServer::get_current_velocity(int id){
       }
         // Check if target reached
         if (all_reached) {
+            auto rotor_msg = std_msgs::msg::Float64MultiArray();
+            rotor_msg.data = {0.0};  // one joint → one value
+            rotor_velocity_pub_->publish(rotor_msg);
             result->success = true;
             goal_handle->succeed(result);
             RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached");

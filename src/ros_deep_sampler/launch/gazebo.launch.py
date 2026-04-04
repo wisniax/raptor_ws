@@ -4,6 +4,7 @@ from launch.event_handlers import OnProcessExit
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
+from launch.actions import SetEnvironmentVariable
 
 
 def generate_launch_description():
@@ -14,6 +15,7 @@ def generate_launch_description():
     # 🔥 Read URDF and replace placeholder with absolute YAML path
     with open(urdf_path, 'r') as f:
         robot_desc = f.read().replace('__CONTROLLER_CONFIG_PATH__', yaml_path)
+
 
     gz_sim = ExecuteProcess(
         cmd=['gz', 'sim', '-r', 'empty.sdf'],
@@ -39,6 +41,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster"],
+        parameters=[{"use_sim_time": True}],
         output="screen",
     )
 
@@ -46,6 +49,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["platform_controller"],
+        parameters=[{"use_sim_time": True}],
         output="screen",
     )
 
@@ -53,6 +57,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["drill_position_controller"],
+        parameters=[{"use_sim_time": True}],
         output="screen",
     )
 
@@ -64,6 +69,10 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        SetEnvironmentVariable(
+            name='GZ_SIM_SYSTEM_PLUGIN_PATH',
+            value='/opt/ros/jazzy/lib:{existing}'
+        ),
         gz_sim,
         rsp,
         spawn,

@@ -38,7 +38,7 @@
     </inertial>
   </link> 
 
-  <!-- ================= SLIDER BLOCK ================= -->
+  <!-- ================= PLATFORM BLOCK ================= -->
   <link name="platform_link">
     <visual>
       <geometry>
@@ -58,11 +58,11 @@
     </collision> 
 
     <inertial>
-      <mass value="1.0"/>
+      <mass value="5.0"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-               iyy="0.01" iyz="0.0"
-               izz="0.01"/>
+      <inertia ixx="0.154" ixy="0.0" ixz="0.0"
+               iyy="0.008" iyz="0.0"
+               izz="0.154"/>
     </inertial>
   </link>
 
@@ -84,7 +84,7 @@
     </collision> 
 
     <inertial>
-      <mass value="1.0"/>
+      <mass value="3.0"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0.0" ixz="0.0"
                iyy="0.01" iyz="0.0"
@@ -131,7 +131,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.4" upper="0.4" effort="500" velocity="0.5"/>
+    <limit lower="-0.5" upper="0.4" effort="1000" velocity="0.3"/>
   </joint> 
 
   <joint name="drill_joint" type="prismatic">
@@ -143,7 +143,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.5" upper="0.5" effort="500" velocity="0.5"/>
+    <limit lower="-0.5" upper="0.5" effort="5000" velocity="0.5"/>
   </joint> 
 
   <joint name="rotor_joint" type="continuous">
@@ -155,7 +155,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit effort="500" velocity="0.5"/> 
+    <limit effort="500" velocity="5"/> 
   </joint> 
 
   <gazebo>

@@ -50,6 +50,7 @@ private:
   //rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 
+
   std::unordered_map<std::string, double> current_position_;
   std::unordered_map<std::string, double> current_velocity_;
 

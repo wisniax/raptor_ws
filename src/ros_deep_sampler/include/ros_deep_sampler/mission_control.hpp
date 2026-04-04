@@ -17,6 +17,8 @@ class MissionControl : public rclcpp::Node{
          
         std::shared_ptr<MoveLinearActionClient> get_move_client();
 
+        int check_drilling();
+
     private:
         void MissionCheck(std_msgs::msg::String::SharedPtr msg);
 
@@ -32,10 +34,13 @@ class MissionControl : public rclcpp::Node{
             MOVE_UP_CALIBRATION,
             MOVE_PLATFORM_DOWN,
             DRILLING,
+            MOVE_DRILL_UP,
             MOVE_PLATFORM_UP,
             DONE
 
         };
+
+        
 
         std::string to_string(State s)
         {
@@ -79,6 +84,7 @@ class MissionControl : public rclcpp::Node{
         float platform_position = 0.0;
         float drill_position = 0.0;
         float drill_velocity = 0.0;
+        int time_between_states = 100;
 
 
 };

@@ -10,8 +10,7 @@ def generate_launch_description():
         #name='mission_node',
         output='screen',
         parameters=[
-            # optional YAML config file
-            # '/path/to/config.yaml'
+            {"use_sim_time": True}
         ]
     )
 
