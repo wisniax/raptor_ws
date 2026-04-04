@@ -22,6 +22,14 @@ def generate_launch_description():
         output='screen'
     )
 
+    gz_bridge = Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='clock_bridge',
+            arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+            output='screen',
+    )
+
     rsp = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -73,6 +81,7 @@ def generate_launch_description():
             name='GZ_SIM_SYSTEM_PLUGIN_PATH',
             value='/opt/ros/jazzy/lib:{existing}'
         ),
+        gz_bridge,
         gz_sim,
         rsp,
         spawn,

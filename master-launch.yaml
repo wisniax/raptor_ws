@@ -1,15 +1,5 @@
 # one to launch them all!
 
-<<<<<<< HEAD
-### Example configuration:
-launch:
-
-- node:
-    pkg: "manipulator_simple"
-    exec: "manipulator_simple_node"
-    name: "manipulator_simple_node"
-    namespace: "raptor"
-=======
 launch:
 
  - include:
@@ -33,4 +23,3 @@ launch:
       -
         name: "to_can_bus_topic"
         value: "/CAN/TX/raw"
->>>>>>> ed77c514532d825da4007a4cd76851dee5ecd88d
