@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>mqtt_bridge</name>
+  <version>0.1.0</version>
+  <description>The mqtt_bridge package</description>
+
+  <maintainer email="247733@edu.p.lodz.pl">Bartosz Mazurkiewicz</maintainer>
+
+  <license>MIT</license>
+
+  <author email="247733@edu.p.lodz.pl">Bartosz Mazurkiewicz</author>
+
+
+  <exec_depend>message_runtime</exec_depend>
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>rex_interfaces</build_depend>
+  <build_export_depend>rclcpp</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>rex_interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,30 @@
+// More information can be found at https://code.visualstudio.com/docs/devcontainers/create-dev-container
+{
+  "name": "Raptor ROS desktop-full",
+  "dockerFile": "Dockerfile",
+  "runArgs": [
+    // "--privileged",
+    // "--network=host",
+    // "--pid=host",
+    // "--ipc=host"
+  ],
+  "remoteUser": "rex",
+  "containerUser": "rex",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/rex/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/home/rex/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        // "ms-python.vscode-pylance",
+        // "ms-python.python",
+        "ms-iot.vscode-ros"
+      ]
+    }
+  },
+  "containerEnv": {
+    "ROS_DOMAIN_ID": "0"
+  }
+}

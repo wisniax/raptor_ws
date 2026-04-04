@@ -1,0 +1,75 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          rex
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     0 6
+# Default-Stop:      1 2 3 4 5
+# Short-Description: REX ROS2 stuff
+### END INIT INFO
+
+# Stop script on errors
+set -e
+
+. /lib/lsb/init-functions
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+stop_rex() {
+	# if the file that stores PGID exists
+	if [ -f /tmp/rexlaunch.pgid ]; then
+		log_daemon_msg "Found PGID file, stopping REX ROS2 stuff..." "rex" || true
+		# kill all processes with that PGID; we're using tr to sanitize input, avoiding a potential security risk if /tmp/rexlaunch.pgid is maliciously crafted
+		if su - rex -c 'kill -TERM -$(tr -cd "0-9" < /tmp/rexlaunch.pgid)'; then
+			log_daemon_msg "Stopped REX ROS2 stuff!" "rex" || true
+			# remove the PGID file, as it's no longer needed
+			su - rex -c 'rm /tmp/rexlaunch.pgid'
+			# log success
+			log_end_msg 0 || true
+		else
+			log_daemon_msg "Stopping REX ROS2 stuff failed!" "rex" || true
+			# log failure
+			log_end_msg 1 || true
+		fi
+	else
+		log_daemon_msg "PGID file does not exist, nothing to stop!" "rex" || true
+		# log success (?)
+		log_end_msg 0 || true
+	fi
+}
+
+case "$1" in
+	stop)
+		stop_rex
+		;;
+
+	# start and restart do the same; could potentially be split into 2 cases
+	try-restart|condrestart|reload|force-reload|restart|start)
+		echo "(Re)starting REX ROS2 stuff..." "rex"
+		# try to stop already running instance (if any)
+		stop_rex
+		# start rexlaunch.sh, with user rex and GID 1000, in the context of raptor_ws
+		if start-stop-daemon --start --oknodo --chuid rex:1000 --user rex --group 1000 -d /home/rex/raptor_ws/ --exec /bin/sh .devcontainer/rexlaunch.sh; then
+			log_daemon_msg "Started REX ROS2 stuff!" "rex" || true
+			# log success
+			log_end_msg 0 || true
+		else
+ 			log_daemon_msg "Starting REX ROS2 stuff failed!" "rex" || true
+			# remove the PGID file
+			su - rex -c 'rm /tmp/rexlaunch.pgid' || true
+			# log failure
+			log_end_msg 1 || true
+		fi
+		;;
+
+	logs)
+		less +G /tmp/rex_launch.log
+		;;
+
+	*)
+		log_action_msg "Usage: /etc/init.d/rex {start|stop|reload|force-reload|restart|try-restart|condrestart|status}" || true
+		exit 1
+esac
+
+exit 0

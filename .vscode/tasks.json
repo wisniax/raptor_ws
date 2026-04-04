@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Colcon: Build (Debug)",
+            "type": "shell",
+            "command": "colcon",
+            "args": [
+                "build",
+                "--event-handlers",
+                "console_package_list+",
+                "--cmake-args",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_BUILD_TYPE=Debug"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Colcon: Build (RelWithDebInfo)",
+            "type": "shell",
+            "command": "colcon",
+            "args": [
+                "build",
+                "--event-handlers",
+                "console_package_list+",
+                "--cmake-args",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch for CAN bridge trigger file
+
+[Path]
+PathExists=/path/to/raptor_ws/.can_bridge_rex_waiting
+MakeDirectory=no
+Unit=can-bridge.service
+
+[Install]
+WantedBy=multi-user.target
