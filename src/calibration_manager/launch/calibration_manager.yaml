@@ -19,7 +19,7 @@ launch:
             - name: "outdated_duration_s"
               value: 0.3
             - name: "stop_tolerance"
-              value: 1.0
+              value: 0.3
             - name: "speed_timeout_ms"
               value: 500
             - name: "log_setpos_diff"
