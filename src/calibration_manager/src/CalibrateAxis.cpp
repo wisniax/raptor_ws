@@ -124,7 +124,7 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 	{
 		float targetPos = getTargetPosFromSetPosFrame(mFrameToSend);
 		float newDistance = std::abs(msg->precise_pos - targetPos);
-		float error = 0.5;
+		float error = 5;
 		if (newDistance > mSetPosDistanceToTarget + error)
 		{
 			// This should never happen. It means that the motor moved away from the target position or passed it,
