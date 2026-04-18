@@ -106,6 +106,7 @@ private:
     void lockMotor(VESC_Id_t vescID);
     float getTargetPosFromSetPosFrame(const rex_interfaces::msg::VescMotorCommand msg);
     bool isBlackMushroomPressed(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg);
+    bool isCalibrationAllowedByRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg) const;
 };
 
 template <typename T>

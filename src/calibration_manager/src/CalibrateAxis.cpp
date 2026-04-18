@@ -184,9 +184,19 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 {
 	using CalibrateMsg = rex_interfaces::msg::CalibrateAxis;
 
-	if (!mLastRoverStatus || mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
+	if (!mLastRoverStatus)
+	{
+		RCLCPP_ERROR(this->get_logger(), "Rover status unknown, calibration not permitted.");
+		return;
+	}
+	if (mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
 	{
 		RCLCPP_ERROR(this->get_logger(), "Rover not in ESTOP, calibration not permitted.");
+		return;
+	}
+	if (mLastRoverStatus->communication_state != rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED)
+	{
+		RCLCPP_ERROR(this->get_logger(), "Rover communication not opened, calibration not permitted.");
 		return;
 	}
 	if (!mLastBatteryInfo || mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
@@ -358,9 +368,10 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 
 void CalibrateAxis::handleRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg)
 {
-	if (mLastRoverStatus &&
-		mLastRoverStatus->control_mode == rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP &&
-		msg->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
+	const bool wasCalibrationAllowed = mLastRoverStatus && isCalibrationAllowedByRoverStatus(mLastRoverStatus);
+	const bool isCalibrationAllowed = isCalibrationAllowedByRoverStatus(msg);
+
+	if (wasCalibrationAllowed && !isCalibrationAllowed)
 	{
 		if (mMode == Mode::SetPos || mMode == Mode::SetVelocity)
 			stopMotor(mCurrentMotorID);
@@ -371,13 +382,12 @@ void CalibrateAxis::handleRoverStatus(const rex_interfaces::msg::RoverStatus::Co
 
 void CalibrateAxis::handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
 {
+	const bool wasBlackMushroomPressed = mLastBatteryInfo && isBlackMushroomPressed(mLastBatteryInfo);
+	const bool isBlackMushroomPressedNow = isBlackMushroomPressed(msg);
 	// Black mushroom pressed
-	if (isBlackMushroomPressed(msg))
+	if (!wasBlackMushroomPressed && isBlackMushroomPressedNow)
 	{
-		if (!mLastBatteryInfo || !isBlackMushroomPressed(mLastBatteryInfo))
-		{
-			modeNothing();
-		}
+		modeNothing();
 	}
 	mLastBatteryInfo = msg;
 }
@@ -538,8 +548,7 @@ rex_interfaces::msg::VescMotorCommand CalibrateAxis::frameSetVelocity(VESC_Id_t 
 
 void CalibrateAxis::sendFrame()
 {
-	if (
-		!mLastRoverStatus || mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP ||
+	if (!isCalibrationAllowedByRoverStatus(mLastRoverStatus) ||
 		!mLastBatteryInfo || isBlackMushroomPressed(mLastBatteryInfo))
 		return;
 	if (mMode != Mode::Nothing)
@@ -632,4 +641,10 @@ float CalibrateAxis::getTargetPosFromSetPosFrame(rex_interfaces::msg::VescMotorC
 bool CalibrateAxis::isBlackMushroomPressed(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
 {
 	return msg->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP;
+}
+
+bool CalibrateAxis::isCalibrationAllowedByRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg) const
+{
+	return msg->control_mode == rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP &&
+		   msg->communication_state == rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED;
 }
