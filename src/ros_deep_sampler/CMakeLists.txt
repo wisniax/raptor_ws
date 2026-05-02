@@ -102,6 +102,7 @@ add_executable(ros_deep_sampler_node
   src/linear_movement_client.cpp
   src/linear_movement_server.cpp
   src/hardware_interface_bridge.cpp
+  src/RosCanConstants.cpp
 )
 
 ament_target_dependencies(ros_deep_sampler_node
