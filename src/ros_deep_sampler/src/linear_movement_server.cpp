@@ -188,6 +188,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
             double pos = get_current_position(cmd.id);
             double vel = get_current_velocity(cmd.id);
 
+            feedback->ids.push_back(cmd.id);
             feedback->current_position.push_back(pos);
             feedback->current_velocity.push_back(vel);
         }

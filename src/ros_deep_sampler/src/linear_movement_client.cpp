@@ -60,7 +60,16 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     GoalHandleMovement::SharedPtr,
     const std::shared_ptr<const Movement::Feedback> feedback)
   {
-    // for (size_t i = 0; i < feedback->current_position.size(); ++i) {
+
+    MoveLinearActionClient::clear_feedback();
+    for (size_t i = 0; i < feedback->current_position.size(); ++i) {
+
+   
+      id_to_pos[feedback->ids[i]] = feedback->current_position[i];
+      id_to_vel[feedback->ids[i]] = feedback->current_velocity[i];
+      // ids.push_back(feedback->ids[i]);
+      // positions.push_back(feedback->current_position[i]);
+      // velocities.push_back(feedback->current_velocity[i]);
     //     RCLCPP_INFO(this->get_logger(),
     //                 "Actuator %zu: pos=%f, vel=%f",
     //                 i,
@@ -71,6 +80,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     // RCLCPP_INFO(this->get_logger(), "Current velocity is: %f", feedback->current_velocity);
  
   }
+}
 
   void MoveLinearActionClient::result_callback(const GoalHandleMovement::WrappedResult & result)
   {
@@ -94,12 +104,31 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     //rclcpp::shutdown();
   }  // class MoveLinearActionClient
 
+  void MoveLinearActionClient::clear_feedback(){
+    id_to_vel.erase(0x82);
+  }
+
   bool MoveLinearActionClient::get_goal_status(){
     return goal_completed;
   }
 
   void MoveLinearActionClient::set_goal_status(bool status){
     goal_completed = status;
+  }
+
+
+  double MoveLinearActionClient::get_position(int id){
+    if(id_to_pos.find(id) != id_to_pos.end()){
+      return id_to_pos[id];
+    }else{return 0.0;}
+
+  }
+
+  double MoveLinearActionClient::get_velocity(int id){
+    if(id_to_vel.find(id) != id_to_pos.end()){
+      return id_to_vel[id];
+    }else{ return 0.0;}
+
   }
 
 }  // namespace action_tutorials_cpp

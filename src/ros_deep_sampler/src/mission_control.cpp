@@ -32,11 +32,11 @@ namespace ros_deep_sampler{
     //     "/MQTT/SamplerControl",
     //     rclcpp::QoS(10), std::bind(&MissionControl::MissionCheck, this, std::placeholders::_1));
 
-    // PubFeedback_ = this->create_publisher<rex_interfaces::msg::SamplerFeedback>("/MQTT/SamplerFeedback", 100);
-    // // AppFeedbackTimer_ = this->create_wall_timer(
-    // // std::chrono::milliseconds(500), std::bind(&MissionControl::AppFeedbackPublish, this));
+    PubFeedback_ = this->create_publisher<rex_interfaces::msg::SamplerFeedback>("/MQTT/SamplerFeedback", 100);
+    AppFeedbackTimer_ = this->create_wall_timer(
+     std::chrono::milliseconds(500), std::bind(&MissionControl::AppFeedbackPublish, this));
 
-    // mPubCanCtrl_ = this->create_publisher<sampler_motion_interfaces::msg::SamplerCanEx>("/SamplerCanCom", 100);
+    //mPubCanCtrl_ = this->create_publisher<sampler_motion_interfaces::msg::SamplerCanEx>("/SamplerCanCom", 100);
 
     
     rex_interfaces::msg::RoverStatus init_msg;
@@ -337,14 +337,18 @@ void MissionControl::MissionCheck(std_msgs::msg::String::SharedPtr msg){
 
 
 void MissionControl::AppFeedbackPublish(){
+  platform_position = move_client_->get_position(RosCanConstants::VescIds::sampler_platform);
+  drill_position = move_client_->get_position(RosCanConstants::VescIds::sampler_drill_mov);
 
-  if(state_ != State::IDLE){
-  // RCLCPP_INFO(this->get_logger(), "<====Publishing sampler state====> \n");
-  // RCLCPP_INFO(this->get_logger(), "Platform position: '%s' \n",  std::to_string(mPubFeedback.platform_position).c_str());
-  // RCLCPP_INFO(this->get_logger(), "Drill position: '%s' \n", std::to_string(mPubFeedback.drill_position).c_str());
-  // RCLCPP_INFO(this->get_logger(), "Drill velocity: '%s' \n", std::to_string(mPubFeedback.drill_current).c_str());
-  // PubFeedback->publish(mPubFeedback);
-  }
+  drill_velocity = move_client_->get_velocity(RosCanConstants::VescIds::sampler_drill);
+
+  rex_interfaces::msg::SamplerFeedback msg;
+  msg.platform_pos = platform_position;
+  msg.drill_pos = drill_position;
+  msg.drill_rot_vel = drill_velocity;
+
+  PubFeedback_->publish(msg);
+
 }
 
 std::shared_ptr<MoveLinearActionClient> MissionControl::get_move_client() {

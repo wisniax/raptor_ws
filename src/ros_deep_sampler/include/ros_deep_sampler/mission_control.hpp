@@ -96,9 +96,9 @@ class MissionControl : public rclcpp::Node{
         sampler_motion_interfaces::msg::ActuatorCommand cmd3;
         sampler_motion_interfaces::msg::ActuatorCommand cmd2;
         bool goal_sent;
-        float platform_position = 0.0;
-        float drill_position = 0.0;
-        float drill_velocity = 0.0;
+        double platform_position = 0.0;
+        double drill_position = 0.0;
+        double drill_velocity = 0.0;
         int time_between_states = 100;
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;

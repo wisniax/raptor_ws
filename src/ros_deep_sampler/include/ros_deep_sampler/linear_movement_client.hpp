@@ -5,7 +5,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include <vector>
-
+#include <unordered_map>
 #include "ros_deep_sampler/visibility_control.h"
 
 
@@ -24,6 +24,9 @@ public:
   void send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands);
   bool get_goal_status();
   void set_goal_status(bool status);
+  void clear_feedback();
+  double get_position(int id);
+  double get_velocity(int id);
 
 private:
   rclcpp_action::Client<Movement>::SharedPtr client_ptr_;
@@ -36,6 +39,8 @@ private:
     const std::shared_ptr<const Movement::Feedback> feedback);
 
   void result_callback(const GoalHandleMovement::WrappedResult & result);
+  std::unordered_map<int, double> id_to_pos;
+  std::unordered_map<int, double> id_to_vel;
 
   bool goal_completed;
 
