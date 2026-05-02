@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <string>
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "ros_deep_sampler/RosCanConstants.hpp"
+
 
 using namespace std::chrono;
 

@@ -32,13 +32,20 @@ namespace ros_deep_sampler{
     //     "/MQTT/SamplerControl",
     //     rclcpp::QoS(10), std::bind(&MissionControl::MissionCheck, this, std::placeholders::_1));
 
-    PubFeedback_ = this->create_publisher<rex_interfaces::msg::SamplerFeedback>("/MQTT/SamplerFeedback", 100);
-    AppFeedbackTimer_ = this->create_wall_timer(
-    std::chrono::milliseconds(500), std::bind(&MissionControl::AppFeedbackPublish, this));
+    // PubFeedback_ = this->create_publisher<rex_interfaces::msg::SamplerFeedback>("/MQTT/SamplerFeedback", 100);
+    // // AppFeedbackTimer_ = this->create_wall_timer(
+    // // std::chrono::milliseconds(500), std::bind(&MissionControl::AppFeedbackPublish, this));
 
-    mPubCanCtrl_ = this->create_publisher<sampler_motion_interfaces::msg::SamplerCanEx>("/SamplerCanCom", 100);
+    // mPubCanCtrl_ = this->create_publisher<sampler_motion_interfaces::msg::SamplerCanEx>("/SamplerCanCom", 100);
 
+    
+    rex_interfaces::msg::RoverStatus init_msg;
+    init_msg.communication_state = RoverStatusMsg::COMMUNICATION_STATE_CLOSED;
+    init_msg.pad_connected = false;
+    init_msg.control_mode = RoverStatusMsg::CONTROL_MODE_ESTOP;
+    LastStatusMsg = std::make_shared<const RoverStatusMsg>(init_msg);
 
+    RCLCPP_INFO(this->get_logger(), "Constructor executed");
 
 
     // mPubFeedback.platform_position = this->platform_position;
@@ -54,6 +61,11 @@ int MissionControl::getPlatformPosition(){
 
 bool MissionControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
+  // RCLCPP_INFO(this->get_logger(), "Com state mode of msg: %d", msg->communication_state);
+  // RCLCPP_INFO(this->get_logger(), "Control mode of msg: %d", msg->control_mode);
+  // RCLCPP_INFO(this->get_logger(), "Com state Opened: %d", RoverStatusMsg::COMMUNICATION_STATE_OPENED);
+  // RCLCPP_INFO(this->get_logger(), "Control mode sampler: %d", RoverStatusMsg::CONTROL_MODE_SAMPLER);
+
 	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
 		   msg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER;
 }
@@ -81,7 +93,11 @@ void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &rov
 
 	// if (isSamplerMode(roverStatusMsg) && !isSamplerMode(LastStatusMsg))
 	// 	stop_sampler = true;
-
+  // RCLCPP_INFO(this->get_logger(), "Recieved Rover status msg");
+  // RCLCPP_INFO(this->get_logger(), "Com state mode: %d", roverStatusMsg->communication_state);
+  // RCLCPP_INFO(this->get_logger(), "COntrol mode: %d", roverStatusMsg->control_mode);
+  // RCLCPP_WARN(this->get_logger(), "Callback ptr: %p", roverStatusMsg.get());
+  // RCLCPP_WARN(this->get_logger(), "Stored ptr: %p", LastStatusMsg.get());
 	LastStatusMsg = roverStatusMsg;
 
 	// if (stop_sampler)
@@ -91,23 +107,26 @@ void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &rov
 
 //////
 void MissionControl::statesLoop(){
+    // RCLCPP_INFO(this->get_logger(), "statesLoop running");
     switch(state_){
-        case State::IDLE:
+      case State::IDLE:
+        //RCLCPP_WARN(this->get_logger(), "Read ptr: %p", LastStatusMsg.get());
+        // RCLCPP_INFO(this->get_logger(), "Is sampler mode: %d", MissionControl::isSamplerMode(LastStatusMsg));
         if(MissionControl::isSamplerMode(LastStatusMsg)){
           RCLCPP_INFO(this->get_logger(), "Starting deep  sampling mission");
           goal_sent = false;
           if (getPlatformPosition() != 0){
-             RCLCPP_INFO(this->get_logger(), "Starting callibration");
-             state_ = State::MOVE_UP_CALIBRATION;
+            RCLCPP_INFO(this->get_logger(), "Starting callibration");
+            state_ = State::MOVE_UP_CALIBRATION;
           }
-         else{
+        else{
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           state_ = State::MOVE_PLATFORM_DOWN;
-         }
+        }
         }
 
-        // waiting for mission_start callback
-        break;
+      // waiting for mission_start callback
+      break;
 
       case State::MOVE_UP_CALIBRATION:
      

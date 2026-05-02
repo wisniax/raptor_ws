@@ -53,25 +53,25 @@ void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointSta
   }
 
 double MoveLinearActionServer::get_current_position(int id){
-  if(id == 1){
+  if(id == RosCanConstants::VescIds::sampler_platform){
     return current_position_["platform_joint"];
   }
-  if(id == 2){
+  if(id == RosCanConstants::VescIds::sampler_drill_mov){
     return current_position_["drill_joint"];
   }
-  if(id == 3){
+  if(id == RosCanConstants::VescIds::sampler_drill){
     return current_position_["rotor_joint"];
   }
 
 }
 double MoveLinearActionServer::get_current_velocity(int id){
-  if(id == 1){
+  if(id == RosCanConstants::VescIds::sampler_platform){
     return current_velocity_["platform_joint"];
   }
-  if(id == 2){
+  if(id == RosCanConstants::VescIds::sampler_drill_mov){
     return current_velocity_["drill_joint"];
   }
-  if(id == 3){
+  if(id == RosCanConstants::VescIds::sampler_drill){
     return current_velocity_["rotor_joint"];
   }
 
@@ -130,18 +130,18 @@ double MoveLinearActionServer::get_current_velocity(int id){
     std::string joint_name;
     for(const auto &cmd: goal->commands){
       
-        if (cmd.id == 1){ joint_name = "platform_joint";
+        if (cmd.id == RosCanConstants::VescIds::sampler_platform){ joint_name = "platform_joint";
             current_slider_ = 1;
             current_slider_pos = cmd.position;
             current_slider_vel = cmd.velocity;
           }
-        if (cmd.id == 2) {joint_name = "drill_joint";
+        if (cmd.id == RosCanConstants::VescIds::sampler_drill_mov) {joint_name = "drill_joint";
             current_slider_ = 2;
             current_slider_pos = cmd.position;
             current_slider_vel = cmd.velocity;
           }
        
-        if(cmd.id == 3) break;
+        if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
     }
     double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(current_slider_pos)/current_slider_vel : 1.0;   
     point.positions = {current_slider_pos};
@@ -162,7 +162,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     }
 
     for (const auto & cmd : goal->commands) {
-      if (cmd.id == 3) {  // rotor joint
+      if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
         auto rotor_msg = std_msgs::msg::Float64MultiArray();
         rotor_msg.data = {cmd.velocity};  // one joint → one value
           rotor_velocity_pub_->publish(rotor_msg);
@@ -198,18 +198,18 @@ double MoveLinearActionServer::get_current_velocity(int id){
         for (const auto & cmd : goal->commands) {
           std::string joint_name;
           //RCLCPP_INFO(this->get_logger(), "Loop id check: %d", cmd.id);
-          if (cmd.id == 1) {
+          if (cmd.id == RosCanConstants::VescIds::sampler_platform) {
             joint_name = "platform_joint";
             //RCLCPP_INFO(this->get_logger(), "Checking id 1");
           }
-          else if (cmd.id == 2) joint_name = "drill_joint";
-          else if (cmd.id == 3) joint_name = "rotor_joint";
+          else if (cmd.id == RosCanConstants::VescIds::sampler_drill_mov) joint_name = "drill_joint";
+          else if (cmd.id == RosCanConstants::VescIds::sampler_drill) joint_name = "rotor_joint";
 
           double pos = get_current_position(cmd.id);
           // optional: double vel = current_velocity_[joint_name];
           
 
-          if (cmd.id != 3 && std::fabs(pos - cmd.position) > tolerance) {
+          if (cmd.id != RosCanConstants::VescIds::sampler_drill && std::fabs(pos - cmd.position) > tolerance) {
               all_reached = false;
               break;  // one joint not reached, keep looping
           }

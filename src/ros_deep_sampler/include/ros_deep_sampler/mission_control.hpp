@@ -9,6 +9,7 @@
 #include <chrono>
 #include <string>
 #include <iostream>
+#include "ros_deep_sampler/RosCanConstants.hpp"
 
 
 namespace ros_deep_sampler{
@@ -51,18 +52,6 @@ class MissionControl : public rclcpp::Node{
             ABORT
 
         };
-
-        
-        static const uint8_t sampler_platform_id = 0x80;		 /**< ID for the sampler platform movement */
-        static const uint8_t sampler_drill_mov_id = 0x81;		 /**< ID for the sampler drill movement */
-        static const uint8_t sampler_drill_id = 0x82;			 /**< ID for the sampler drill action */
-        static const uint8_t sampler_container_a_id = 0x83;	 /**< ID for the sampler container A (position only) */
-        static const uint8_t sampler_container_b_id = 0x84;	 /**< ID for the sampler container B (position only) */
-        static const uint8_t sampler_vacuum_suction_id = 0x85; /**< ID for the sampler vacuum main motor -1:1 duty range */
-        static const uint8_t sampler_vacuum_a_id = 0x86;		 /**< ID for the sampler vacuum motor A ON-OFF only (duty 0-1) */
-        static const uint8_t sampler_vacuum_b_id = 0x87;		 /**< ID for the sampler vacuum motor B ON-OFF only (duty 0-1) */
-        
-
         
 
         std::string to_string(State s)
