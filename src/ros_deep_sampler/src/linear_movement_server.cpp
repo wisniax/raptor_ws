@@ -112,7 +112,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     // const double actuator_id = goal->actuator_id;
     // const double target_position = goal->position;
     // //const double target_velocity = goal->velocity;
-     const double tolerance = 0.005; // meters
+     const double tolerance = 0.001; // meters
     // const double time_to_position = target_position/goal->velocity;
 
     //RCLCPP_INFO(this->get_logger(), "Goal is %.3f", goal->position);
@@ -143,11 +143,21 @@ double MoveLinearActionServer::get_current_velocity(int id){
        
         if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
     }
-    double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(current_slider_pos)/current_slider_vel : 1.0;   
+    double dist;
+    if(current_slider_ == 1){
+      dist = prev_platform_pos + current_slider_pos;
+       prev_platform_pos = current_slider_pos;
+    }
+    if(current_slider_ == 2){
+       dist = prev_drill_pos + current_slider_pos;
+       prev_drill_pos = current_slider_pos;
+    }
+    double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(dist)/current_slider_vel : 1.0;  
+    RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position );
     point.positions = {current_slider_pos};
     point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     traj.joint_names.push_back(joint_name);
-
+    
     
     //point.velocities = {0.0}; // or cmd.velocity if continuous joint
     

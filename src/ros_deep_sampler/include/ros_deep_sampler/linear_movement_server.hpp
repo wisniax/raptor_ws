@@ -56,6 +56,9 @@ private:
   std::unordered_map<std::string, double> current_position_;
   std::unordered_map<std::string, double> current_velocity_;
 
+  double prev_platform_pos = 0.0;
+  double prev_drill_pos = 0.0;
+
 };  // class MoveLinearActionServer
 
 }  // namespace action_tutorials_cpp
