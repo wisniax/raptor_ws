@@ -22,7 +22,8 @@ public:
 
 
   void send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands);
-  bool get_goal_status();
+  int get_goal_status();
+  void cancel_goal();
   void set_goal_status(bool status);
   void clear_feedback();
   double get_position(int id);
@@ -31,6 +32,7 @@ public:
 private:
   rclcpp_action::Client<Movement>::SharedPtr client_ptr_;
   rclcpp::TimerBase::SharedPtr timer_;
+  GoalHandleMovement::SharedPtr current_goal_handle_;
 
   void goal_response_callback(GoalHandleMovement::SharedPtr goal_handle);
 
@@ -43,6 +45,7 @@ private:
   std::unordered_map<int, double> id_to_vel;
 
   bool goal_completed;
+  bool goal_canceled;
 
 };  // class MoveLinearActionClient
 

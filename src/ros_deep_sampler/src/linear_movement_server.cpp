@@ -123,6 +123,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     int current_slider_;
     float current_slider_pos;
     float current_slider_vel;
+    int current_id;
 
 
     trajectory_msgs::msg::JointTrajectory traj;
@@ -132,11 +133,13 @@ double MoveLinearActionServer::get_current_velocity(int id){
       
         if (cmd.id == RosCanConstants::VescIds::sampler_platform){ joint_name = "platform_joint";
             current_slider_ = 1;
+            current_id = cmd.id;
             current_slider_pos = cmd.position;
             current_slider_vel = cmd.velocity;
           }
         if (cmd.id == RosCanConstants::VescIds::sampler_drill_mov) {joint_name = "drill_joint";
             current_slider_ = 2;
+            current_id = cmd.id;
             current_slider_pos = cmd.position;
             current_slider_vel = cmd.velocity;
           }
@@ -177,15 +180,38 @@ double MoveLinearActionServer::get_current_velocity(int id){
         rotor_msg.data = {cmd.velocity};  // one joint → one value
           rotor_velocity_pub_->publish(rotor_msg);
       }
-  }
+    }
 
     while (rclcpp::ok()) {
         // Check if goal was canceled
-        if (goal_handle->is_canceling()) {
-            //result->final_position = current_slider_;
-            goal_handle->canceled(result);
-            // RCLCPP_INFO(this->get_logger(), "Goal canceled at %.3f", current_slider_);
-            return;
+       if (goal_handle->is_canceling()) {
+
+          trajectory_msgs::msg::JointTrajectory traj;
+
+          traj.joint_names = {joint_name};
+
+          trajectory_msgs::msg::JointTrajectoryPoint point;
+
+          point.positions = {get_current_position(current_id)};
+          point.velocities = {0.0};
+          point.time_from_start = rclcpp::Duration::from_seconds(0.1);
+
+          traj.points.push_back(point);
+
+          if (current_slider_ == 1) {
+              platform_pub_->publish(traj);
+          } else if (current_slider_ == 2) {
+              drill_pub_->publish(traj);
+          }
+
+          auto rotor_msg = std_msgs::msg::Float64MultiArray();
+          rotor_msg.data = {0.0};
+          rotor_velocity_pub_->publish(rotor_msg);
+
+          RCLCPP_INFO(this->get_logger(), "Goal canceled at %d", current_slider_);
+
+          goal_handle->canceled(result);
+          return;
         }
 
 

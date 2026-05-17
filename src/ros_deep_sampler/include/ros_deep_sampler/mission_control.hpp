@@ -59,13 +59,17 @@ class MissionControl : public rclcpp::Node{
             switch(s) {
                 case State::IDLE: return "IDLE";
                 case State::MOVE_UP_CALIBRATION: return "MOVING up to set origin";
-                case State::DRILLING: return "DRILLING";
+                case State::MOVE_PLATFORM_DOWN: return "MOVING PLATFORM DOWN";
+                case State::DRILLING: return "DRILLING WITH MOVING DRILL DOWN";
+                case State::MOVE_DRILL_UP: return "MOVING DRILL UP";
+                case State::MOVE_PLATFORM_UP: return "MOVING PLATFORM UP";
                 case State::DONE: return "DONE";
                 default: return "UNKNOWN";
             }
         }
 
         State state_ = State::IDLE;
+        State state_to_abort = State::IDLE;
         void statesLoop();
         void AppFeedbackPublish();
         int getPlatformPosition();

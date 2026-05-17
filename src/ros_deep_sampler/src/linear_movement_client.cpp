@@ -15,6 +15,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
       this,
       "Movement");
     goal_completed = false;
+    goal_canceled =false;
 
     // this->timer_ = this->create_wall_timer(
     //   std::chrono::milliseconds(500),
@@ -46,6 +47,19 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
   }
 
+  void MoveLinearActionClient::cancel_goal(){
+
+     if (!current_goal_handle_) {
+        RCLCPP_WARN(this->get_logger(), "No active goal handle");
+        return;
+    }
+
+     if(current_goal_handle_){
+      RCLCPP_INFO(this->get_logger(), "Client send request to cancel goal");
+      client_ptr_->async_cancel_goal(current_goal_handle_);
+     }
+  }
+
   void MoveLinearActionClient::goal_response_callback(GoalHandleMovement::SharedPtr goal_handle)
   {
     //auto goal_handle = future.get();
@@ -54,6 +68,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     } else {
       RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
     }
+
+    current_goal_handle_ = goal_handle;
   }
 
   void MoveLinearActionClient::feedback_callback(
@@ -84,6 +100,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
 
   void MoveLinearActionClient::result_callback(const GoalHandleMovement::WrappedResult & result)
   {
+
+    current_goal_handle_.reset();
     switch (result.code) {
       case rclcpp_action::ResultCode::SUCCEEDED:
         break;
@@ -91,7 +109,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
         RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
         return;
       case rclcpp_action::ResultCode::CANCELED:
-        RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
+        RCLCPP_INFO(this->get_logger(), "Goal was canceled");
+        goal_canceled =true;
         return;
       default:
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
@@ -108,8 +127,15 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
     id_to_vel.erase(0x82);
   }
 
-  bool MoveLinearActionClient::get_goal_status(){
-    return goal_completed;
+  int MoveLinearActionClient::get_goal_status(){
+    if(goal_completed){
+      return 1;
+    }
+    if(goal_canceled){
+      return 2;
+    }
+
+    return 0;
   }
 
   void MoveLinearActionClient::set_goal_status(bool status){

@@ -132,6 +132,7 @@ void MissionControl::statesLoop(){
      
         if(!(MissionControl::isSamplerMode(LastStatusMsg))){
           RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+          state_to_abort = state_;
           state_ = State::ABORT;
           break;
         }
@@ -146,7 +147,7 @@ void MissionControl::statesLoop(){
           goal_sent = true;
         }
         
-        if(move_client_->get_goal_status()){
+        if(move_client_->get_goal_status() == 1){
           RCLCPP_INFO(this->get_logger(), "Finishing moving up");
           goal_sent = false;
           move_client_->set_goal_status(goal_sent);
@@ -158,6 +159,7 @@ void MissionControl::statesLoop(){
       case State::MOVE_PLATFORM_DOWN:
         if(!(MissionControl::isSamplerMode(LastStatusMsg))){
           RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+          state_to_abort = state_;
           state_ = State::ABORT;
           break;
         }
@@ -179,7 +181,7 @@ void MissionControl::statesLoop(){
           goal_sent = true;
         }
         
-        if(move_client_->get_goal_status()){
+        if(move_client_->get_goal_status() == 1){
           time_between_states++;
           if(time_between_states > 1){
             RCLCPP_INFO(this->get_logger(), "Finishing moving down");
@@ -197,6 +199,7 @@ void MissionControl::statesLoop(){
       case State::DRILLING:
         if(!(MissionControl::isSamplerMode(LastStatusMsg))){
           RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+          state_to_abort = state_;
           state_ = State::ABORT;
           break;
         }
@@ -218,7 +221,7 @@ void MissionControl::statesLoop(){
           goal_sent = true;
         }
         
-        if(move_client_->get_goal_status()){
+        if(move_client_->get_goal_status() ==1){
           time_between_states++;
           if(time_between_states > 1){
             RCLCPP_INFO(this->get_logger(), "Finishing moving down during drillling");
@@ -236,6 +239,7 @@ void MissionControl::statesLoop(){
         case State::MOVE_DRILL_UP:
           if(!(MissionControl::isSamplerMode(LastStatusMsg))){
             RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+            state_to_abort = state_;
             state_ = State::ABORT;
             break;
           }
@@ -257,7 +261,7 @@ void MissionControl::statesLoop(){
             goal_sent = true;
           }
           
-          if(move_client_->get_goal_status()){
+          if(move_client_->get_goal_status() == 1){
             time_between_states++;
             if(time_between_states > 100){
                 RCLCPP_INFO(this->get_logger(), "Finish moving drill up");
@@ -273,6 +277,7 @@ void MissionControl::statesLoop(){
         case State::MOVE_PLATFORM_UP:
           if(!(MissionControl::isSamplerMode(LastStatusMsg))){
               RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+              state_to_abort = state_;
               state_ = State::ABORT;
               break;
             }
@@ -294,7 +299,7 @@ void MissionControl::statesLoop(){
               goal_sent = true;
             }
             
-            if(move_client_->get_goal_status()){
+            if(move_client_->get_goal_status() ==1){
               time_between_states++;
               if(time_between_states > 100){
                   RCLCPP_INFO(this->get_logger(), "Finish moving drill up");
@@ -302,7 +307,7 @@ void MissionControl::statesLoop(){
                   goal_sent = false;
                   move_client_->set_goal_status(goal_sent);
                   commands.clear();
-                  state_ = State::DONE; 
+                  state_ = State::IDLE; 
                 }
             }   
         break; 
@@ -312,6 +317,13 @@ void MissionControl::statesLoop(){
         break;
 
         case State::ABORT:
+            std::string state_string = to_string(state_to_abort);
+            RCLCPP_INFO(this->get_logger(), "Mission Abortion on state: %s", state_string.c_str());
+            move_client_->cancel_goal();
+            while(move_client_->get_goal_status() != 2){}
+            RCLCPP_INFO(this->get_logger(), "Mission Aborted successfully");
+            state_= State::DONE;
+
         break;
     }
 }
