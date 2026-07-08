@@ -146,7 +146,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
   double MoveLinearActionClient::get_position(int id){
     if(id_to_pos.find(id) != id_to_pos.end()){
       return id_to_pos[id];
-    }else{return 0.0;}
+    }else{return -100.0;}
 
   }
 

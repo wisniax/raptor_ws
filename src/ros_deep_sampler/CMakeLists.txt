@@ -35,6 +35,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
+
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
@@ -123,8 +124,10 @@ target_link_libraries(ros_deep_sampler_node
   ${cpp_typesupport_target}
   libVescCan::libVescCan
   action_server
+ 
   #harware_sampler
 )
+
 
 # Export
 ament_export_dependencies(

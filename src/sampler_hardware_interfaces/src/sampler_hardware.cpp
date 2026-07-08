@@ -25,6 +25,8 @@
 #include <sampler_hardware_interfaces/sampler_hardware.hpp>
 #include <rclcpp/executors.hpp>
 
+
+
 namespace
 {
 /** @brief Sums the total rotation for joint states that wrap from 2*pi to -2*pi
@@ -40,7 +42,7 @@ double sumRotationFromMinus2PiTo2Pi(const double current_wrapped_rad, double tot
 }
 }  // namespace
 
-namespace sampler_hardware_interface
+namespace sampler_hardware_interfaces
 {
 
 static constexpr std::size_t POSITION_INTERFACE_INDEX = 0;
@@ -55,117 +57,193 @@ CallbackReturn SamplerHardware::on_init(const hardware_interface::HardwareCompon
     return CallbackReturn::ERROR;
   }
 
-  const auto get_hardware_parameter = [this](const std::string& parameter_name, const std::string& default_value) {
-    if (auto it = get_hardware_info().hardware_parameters.find(parameter_name);
-        it != get_hardware_info().hardware_parameters.end())
-    {
-      return it->second;
-    }
-    return default_value;
-  };
+  joint_to_can_id_["platform_joint"] = 0x80;
+  joint_to_can_id_["drill_joint"]    = 0x81;
+  joint_to_can_id_["rotor_joint"]    = 0x82;
 
-  if (auto it = get_hardware_info().hardware_parameters.find("trigger_joint_command_threshold");
-      it != get_hardware_info().hardware_parameters.end())
-  {
-    trigger_joint_command_threshold_ = std::stod(it->second);
-  }
+  // // msg.set_data(1.0);
 
-  topic_based_joint_commands_publisher_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
-      get_hardware_parameter("joint_commands_topic", "/robot_joint_commands"), rclcpp::QoS(1));
-  topic_based_joint_states_subscriber_ = get_node()->create_subscription<sensor_msgs::msg::JointState>(
-      get_hardware_parameter("joint_states_topic", "/robot_joint_states"), rclcpp::SensorDataQoS(),
-      [this](const sensor_msgs::msg::JointState::SharedPtr joint_state) { latest_joint_state_ = *joint_state; });
+  // // bool success = pub_platform.Publish(msg);
+
+  // // for (int i = 0; i < 50; ++i)
+  // // {
+  // //     pub_platform.Publish(msg);
+  // //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // // }
+
+  //  if (!success)
+  // {
+  //   RCLCPP_ERROR(get_node()->get_logger(), "Publishing to joint failed");
+  //   return CallbackReturn::ERROR;
+  // }else{
+  //   RCLCPP_INFO(get_node()->get_logger(), "Successfuly published to joint");
+  // }
+
+  
+
+
+
+//   topic_based_joint_commands_publisher_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+//       get_hardware_parameter("joint_commands_topic", "/robot_joint_commands"), rclcpp::QoS(1));
+//   topic_based_joint_states_subscriber_ = get_node()->create_subscription<sensor_msgs::msg::JointState>(
+//       get_hardware_parameter("joint_states_topic", "/robot_joint_states"), rclcpp::SensorDataQoS(),
+//       [this](const sensor_msgs::msg::JointState::SharedPtr joint_state) { latest_joint_state_ = *joint_state; });
+
+  
+  
 
   // if the values on the `joint_states_topic` are wrapped between -2*pi and 2*pi (like they are in Isaac Sim)
   // sum the total joint rotation returned on the `joint_state_values_` interface
-  if (get_hardware_parameter("sum_wrapped_joint_states", "false") == "true")
-  {
-    sum_wrapped_joint_states_ = true;
-  }
+
 
   // TODO(anyone): Remove in a future release after users have migrated to the new plugin name
-  if (get_hardware_info().hardware_plugin_name.find("topic_based_ros2_control") != std::string::npos)
-  {
-    RCLCPP_WARN(get_node()->get_logger(),
-                "Plugin name '%s' is deprecated, upgrade to "
-                "'joint_state_topic_hardware_interface/JointStateTopicSystem' from package"
-                " 'joint_state_topic_hardware_interface' instead.",
-                get_hardware_info().hardware_plugin_name.c_str());
-  }
+//   if (get_hardware_info().hardware_plugin_name.find("topic_based_ros2_control") != std::string::npos)
+//   {
+//     RCLCPP_WARN(get_node()->get_logger(),
+//                 "Plugin name '%s' is deprecated, upgrade to "
+//                 "'joint_state_topic_hardware_interface/JointStateTopicSystem' from package"
+//                 " 'joint_state_topic_hardware_interface' instead.",
+//                 get_hardware_info().hardware_plugin_name.c_str());
+//   }
 
   return CallbackReturn::SUCCESS;
+}
+
+void SamplerHardware::publish_platform_cmd(){
+
+
+}
+
+CallbackReturn SamplerHardware::on_configure(
+    const rclcpp_lifecycle::State &)
+{
+    if (get_node())
+    {
+        platform_cmd_pub_ =
+            get_node()->create_publisher<std_msgs::msg::Float64>(
+                "/platform_joint_cmd", 10);
+
+        // timer_ = get_node()->create_wall_timer(
+        //     std::chrono::milliseconds(10),
+        //     [this]()
+        //     {
+        //         std_msgs::msg::Float64 msg;
+        //         msg.data = 0.4;   // desired joint position
+        //         joint_cmd_pub_->publish(msg);
+        //     });
+        joint_state_sub_ =
+          get_node()->create_subscription<sensor_msgs::msg::JointState>(
+              "/gz_joint_states",
+              10,
+              [this](const sensor_msgs::msg::JointState::SharedPtr msg)
+              {
+                  for (size_t i = 0; i < msg->name.size(); i++)
+                  {
+                      sim_positions_[msg->name[i]] = msg->position[i];
+                  }
+              });
+
+        // timer_ = get_node()->create_wall_timer(
+        // std::chrono::seconds(5),
+        // [this]()
+        // {
+        //     std_msgs::msg::Float64 msg;
+        //     msg.data = 0.4;
+        //     platform_cmd_pub_->publish(msg);
+        // });
+    }
+
+    
+
+    return CallbackReturn::SUCCESS;
+}
+
+
+
+std::vector<hardware_interface::CommandInterface>
+SamplerHardware::export_command_interfaces()
+{
+    std::vector<hardware_interface::CommandInterface> command_interfaces;
+
+    command_interfaces.emplace_back(
+        "platform_joint",
+        hardware_interface::HW_IF_POSITION,
+        &platform_cmd_);
+
+    command_interfaces.emplace_back(
+        "drill_joint",
+        hardware_interface::HW_IF_POSITION,
+        &drill_cmd_);
+
+    command_interfaces.emplace_back(
+        "rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_cmd_);
+
+    return command_interfaces;
+}
+
+std::vector<hardware_interface::StateInterface>
+SamplerHardware::export_state_interfaces()
+{
+    std::vector<hardware_interface::StateInterface> state_interfaces;
+
+    state_interfaces.emplace_back(
+        "platform_joint",
+        hardware_interface::HW_IF_POSITION,
+        &platform_pos_);
+
+    state_interfaces.emplace_back(
+        "drill_joint",
+        hardware_interface::HW_IF_POSITION,
+        &drill_pos_);
+
+    state_interfaces.emplace_back(
+        "rotor_joint",
+        hardware_interface::HW_IF_POSITION,
+        &rotor_pos_);
+
+    state_interfaces.emplace_back(
+        "platform_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &platform_vel_);
+
+    state_interfaces.emplace_back(
+        "drill_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &drill_vel_);
+
+    state_interfaces.emplace_back(
+        "rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_vel_);
+
+    return state_interfaces;
 }
 
 hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time*/,
                                                             const rclcpp::Duration& /*period*/)
 {
-  const auto& joints = get_hardware_info().joints;
-  for (std::size_t i = 0; i < latest_joint_state_.name.size(); ++i)
+
+// Temporary: mirror command as feedback for testing
+  if (sim_positions_.find("platform_joint") != sim_positions_.end())
   {
-    const auto it = std::find_if(joints.begin(), joints.end(),
-                                 [name = latest_joint_state_.name[i]](const hardware_interface::ComponentInfo& joint) {
-                                   return joint.name == name;
-                                 });
-    if (it != joints.end())
-    {
-      if (std::find_if(get_hardware_info().mimic_joints.begin(), get_hardware_info().mimic_joints.end(),
-                       [idx = static_cast<std::size_t>(std::distance(joints.begin(), it))](
-                           const hardware_interface::MimicJoint& mimic_joint) {
-                         return idx == mimic_joint.joint_index;
-                       }) != get_hardware_info().mimic_joints.end())
-      {
-        // mimic joints are updated at the end of this function
-        continue;
-      }
-
-      if (!latest_joint_state_.position.empty() && std::isfinite(latest_joint_state_.position.at(i)))
-      {
-        if (sum_wrapped_joint_states_)
-        {
-          auto name = latest_joint_state_.name[i] + "/" + hardware_interface::HW_IF_POSITION;
-
-          set_state(name, sumRotationFromMinus2PiTo2Pi(latest_joint_state_.position.at(i), get_state(name)));
-        }
-        else
-        {
-          set_state(latest_joint_state_.name[i] + "/" + hardware_interface::HW_IF_POSITION,
-                    latest_joint_state_.position.at(i));
-        }
-      }
-      if (!latest_joint_state_.velocity.empty() && std::isfinite(latest_joint_state_.velocity.at(i)))
-      {
-        set_state(latest_joint_state_.name[i] + "/" + hardware_interface::HW_IF_VELOCITY,
-                  latest_joint_state_.velocity.at(i));
-      }
-      if (!latest_joint_state_.effort.empty() && std::isfinite(latest_joint_state_.effort.at(i)))
-      {
-        set_state(latest_joint_state_.name[i] + "/" + hardware_interface::HW_IF_EFFORT,
-                  latest_joint_state_.effort.at(i));
-      }
-    }
+      platform_pos_ = sim_positions_["platform_joint"];
+      // RCLCPP_INFO(
+      //   get_node()->get_logger(),
+      //   "READ platform: state=%f command=%f",
+      //   platform_pos_,
+      //   platform_cmd_);
   }
 
-  // Update mimic joints
-  for (const auto& mimic_joint : get_hardware_info().mimic_joints)
+  if (sim_positions_.find("drill_joint") != sim_positions_.end())
   {
-    const auto& mimic_joint_name = joints.at(mimic_joint.joint_index).name;
-    const auto& mimicked_joint_name = joints.at(mimic_joint.mimicked_joint_index).name;
-    if (has_state(mimic_joint_name + "/" + hardware_interface::HW_IF_POSITION))
-    {
-      set_state(mimic_joint_name + "/" + hardware_interface::HW_IF_POSITION,
-                mimic_joint.offset +
-                    mimic_joint.multiplier * get_state(mimicked_joint_name + "/" + hardware_interface::HW_IF_POSITION));
-    }
-    if (has_state(mimic_joint_name + "/" + hardware_interface::HW_IF_VELOCITY))
-    {
-      set_state(mimic_joint_name + "/" + hardware_interface::HW_IF_VELOCITY,
-                mimic_joint.multiplier * get_state(mimicked_joint_name + "/" + hardware_interface::HW_IF_VELOCITY));
-    }
-    if (has_state(mimic_joint_name + "/" + hardware_interface::HW_IF_ACCELERATION))
-    {
-      set_state(mimic_joint_name + "/" + hardware_interface::HW_IF_ACCELERATION,
-                mimic_joint.multiplier * get_state(mimicked_joint_name + "/" + hardware_interface::HW_IF_ACCELERATION));
-    }
+      drill_pos_ = sim_positions_["drill_joint"];
+  }
+
+  if (sim_positions_.find("rotor_joint") != sim_positions_.end())
+  {
+      rotor_pos_ = sim_positions_["rotor_joint"];
   }
 
   return hardware_interface::return_type::OK;
@@ -174,67 +252,32 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
 hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*time*/,
                                                              const rclcpp::Duration& /*period*/)
 {
-  const auto& joints = get_hardware_info().joints;
-  // To avoid spamming TopicBased's joint command topic we check the difference between the joint states and
-  // the current joint commands, if it's smaller than a threshold we don't publish it.
-  auto diff = 0.0;
-  for (std::size_t i = 0; i < joints.size(); ++i)
-  {
-    for (const auto& interface : joints[i].command_interfaces)
-    {
-      const bool supported_command_interface = interface.name == hardware_interface::HW_IF_POSITION ||
-                                               interface.name == hardware_interface::HW_IF_VELOCITY ||
-                                               interface.name == hardware_interface::HW_IF_EFFORT;
-      if (!supported_command_interface)
-      {
-        continue;
-      }
-      // sum the absolute difference for all joints
-      diff += std::abs(get_state(joints[i].name + "/" + interface.name) -
-                       get_command(joints[i].name + "/" + interface.name));
-    }
+  if(!(std::isnan(platform_cmd_))){
+    // if(!(std::isnan(last_platform_cmd_)))
+    last_platform_cmd_ = platform_cmd_;
+    last_drill_cmd_ = drill_cmd_;
   }
-  if (diff <= trigger_joint_command_threshold_)
-  {
-    return hardware_interface::return_type::OK;
-  }
+  // last_platform_cmd_ += 0.01;
+  //RCLCPP_INFO(get_node()->get_logger(), "Expected current position: %f", last_platform_cmd_);
 
-  sensor_msgs::msg::JointState joint_state;
-  for (std::size_t i = 0; i < joints.size(); ++i)
-  {
-    joint_state.name.push_back(joints[i].name);
-    joint_state.header.stamp = get_node()->now();
-    // only send commands to the interfaces that are defined for this joint
-    for (const auto& interface : joints[i].command_interfaces)
-    {
-      if (interface.name == hardware_interface::HW_IF_POSITION)
-      {
-        joint_state.position.push_back(get_command(joints[i].name + "/" + interface.name));
-      }
-      else if (interface.name == hardware_interface::HW_IF_VELOCITY)
-      {
-        joint_state.velocity.push_back(get_command(joints[i].name + "/" + interface.name));
-      }
-      else if (interface.name == hardware_interface::HW_IF_EFFORT)
-      {
-        joint_state.effort.push_back(get_command(joints[i].name + "/" + interface.name));
-      }
-      else
-      {
-        RCLCPP_WARN_ONCE(get_node()->get_logger(), "Joint '%s' has unsupported command interfaces found: %s.",
-                         joints[i].name.c_str(), interface.name.c_str());
-      }
-    }
-  }
+  
+
+  // 2. Send command to hardware (CAN / MCU / simulation)
+  
 
   if (rclcpp::ok())
   {
-    topic_based_joint_commands_publisher_->publish(joint_state);
+      std_msgs::msg::Float64 msg;
+      msg.data = last_platform_cmd_;
+      // RCLCPP_INFO(get_node()->get_logger(), "Expected current position: %f", last_platform_cmd_);
+      platform_cmd_pub_->publish(msg);
+    }
+   
+  return hardware_interface::return_type::OK;
   }
 
-  return hardware_interface::return_type::OK;
-}
-}  // end namespace joint_state_topic_hardware_interface
+  
+}// end namespace sampler_hardware_interfaces
 
 #include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(sampler_hardware_interface::SamplerHardware, hardware_interface::SystemInterface)
+PLUGINLIB_EXPORT_CLASS(sampler_hardware_interfaces::SamplerHardware, hardware_interface::SystemInterface)

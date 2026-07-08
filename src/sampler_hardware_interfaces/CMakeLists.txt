@@ -18,6 +18,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(angles REQUIRED)
 find_package(ros2_control_test_assets REQUIRED)
+find_package(gz-transport13 REQUIRED)
 # --------------------------------------------------
 # Build shared library (hardware plugin)
 # --------------------------------------------------
@@ -53,6 +54,10 @@ ament_target_dependencies(${PROJECT_NAME}
 pluginlib_export_plugin_description_file(
   hardware_interface
   sampler_hardware_interfaces.xml
+)
+
+target_link_libraries(${PROJECT_NAME}
+  gz-transport13::core
 )
 
 # --------------------------------------------------

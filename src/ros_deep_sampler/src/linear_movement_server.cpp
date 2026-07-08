@@ -44,6 +44,7 @@ namespace ros_deep_sampler
 
 void MoveLinearActionServer::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
     {
+      // RCLCPP_INFO(this->get_logger(), "Received State Callback");
       for (size_t i = 0; i < msg->name.size(); ++i) {
         const std::string & name = msg->name[i];
         current_position_[name] = msg->position[i];
@@ -112,7 +113,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     // const double actuator_id = goal->actuator_id;
     // const double target_position = goal->position;
     // //const double target_velocity = goal->velocity;
-     const double tolerance = 0.001; // meters
+    const double tolerance = 0.001; // meters
     // const double time_to_position = target_position/goal->velocity;
 
     //RCLCPP_INFO(this->get_logger(), "Goal is %.3f", goal->position);
@@ -124,40 +125,64 @@ double MoveLinearActionServer::get_current_velocity(int id){
     float current_slider_pos;
     float current_slider_vel;
     int current_id;
-
-
+    float final_pos;
+    double dist;
     trajectory_msgs::msg::JointTrajectory traj;
     trajectory_msgs::msg::JointTrajectoryPoint point;
     std::string joint_name;
     for(const auto &cmd: goal->commands){
       
         if (cmd.id == RosCanConstants::VescIds::sampler_platform){ joint_name = "platform_joint";
+            if(cmd.position == -200.0 && cmd.velocity == -200.0){
+              RCLCPP_INFO(this->get_logger(), "Initial calibration");
+              feedback->current_position.clear();
+              double pos = get_current_position(cmd.id);
+              double vel = get_current_velocity(cmd.id);
+
+              feedback->ids.push_back(cmd.id);
+              feedback->current_position.push_back(pos);
+              feedback->current_velocity.push_back(vel);
+              RCLCPP_INFO(this->get_logger(), "Current pos: %f", pos);
+              RCLCPP_INFO(this->get_logger(), "Current vel: %f", vel);
+              goal_handle->publish_feedback(feedback);
+              result->success = true;
+              goal_handle->succeed(result);
+              RCLCPP_INFO(this->get_logger(), "Initial pose of platform send");
+              return;
+       
+            }
             current_slider_ = 1;
             current_id = cmd.id;
-            current_slider_pos = cmd.position;
+            dist = cmd.position;
+            final_pos = dist + get_current_position(cmd.id);
+            current_slider_pos = get_current_position(current_id);
             current_slider_vel = cmd.velocity;
           }
         if (cmd.id == RosCanConstants::VescIds::sampler_drill_mov) {joint_name = "drill_joint";
             current_slider_ = 2;
             current_id = cmd.id;
-            current_slider_pos = cmd.position;
+            dist = cmd.position;
+            final_pos = dist + get_current_position(cmd.id);
+            current_slider_pos = get_current_position(current_id);
             current_slider_vel = cmd.velocity;
           }
        
         if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
     }
-    double dist;
-    if(current_slider_ == 1){
-      dist = prev_platform_pos + current_slider_pos;
-       prev_platform_pos = current_slider_pos;
-    }
-    if(current_slider_ == 2){
-       dist = prev_drill_pos + current_slider_pos;
-       prev_drill_pos = current_slider_pos;
-    }
+    
+    
+    // if(current_slider_ == 1){
+    //   dist = final_pos;
+    //   RCLCPP_INFO(this->get_logger(), "Distance to position: %f", dist);
+    //    //prev_platform_pos = current_slider_pos;
+    // }
+    // if(current_slider_ == 2){
+    //    dist = final_pos;
+    //    //prev_drill_pos = current_slider_pos;
+    // }
     double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(dist)/current_slider_vel : 1.0;  
     RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position );
-    point.positions = {current_slider_pos};
+    point.positions = {dist};
     point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     traj.joint_names.push_back(joint_name);
     
@@ -237,16 +262,17 @@ double MoveLinearActionServer::get_current_velocity(int id){
           //RCLCPP_INFO(this->get_logger(), "Loop id check: %d", cmd.id);
           if (cmd.id == RosCanConstants::VescIds::sampler_platform) {
             joint_name = "platform_joint";
-            //RCLCPP_INFO(this->get_logger(), "Checking id 1");
+            // RCLCPP_INFO(this->get_logger(), "Checking id 1");
           }
           else if (cmd.id == RosCanConstants::VescIds::sampler_drill_mov) joint_name = "drill_joint";
           else if (cmd.id == RosCanConstants::VescIds::sampler_drill) joint_name = "rotor_joint";
 
           double pos = get_current_position(cmd.id);
+          // RCLCPP_INFO(this->get_logger(), "Position of current slider:  %f", pos);
           // optional: double vel = current_velocity_[joint_name];
-          
-
-          if (cmd.id != RosCanConstants::VescIds::sampler_drill && std::fabs(pos - cmd.position) > tolerance) {
+          double result_ = final_pos -pos;
+          // RCLCPP_INFO(this->get_logger(), "Result of calculations:  %f", result_);
+          if (cmd.id != RosCanConstants::VescIds::sampler_drill && std::fabs(result_) > tolerance) {
               all_reached = false;
               break;  // one joint not reached, keep looping
           }

@@ -131,7 +131,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit lower="-0.5" upper="0.4" effort="1000" velocity="0.3"/>
+    <limit lower="-0.5" upper="0.5" effort="5000" velocity="0.5"/>
   </joint> 
 
   <joint name="drill_joint" type="prismatic">
@@ -158,17 +158,55 @@
     <limit effort="500" velocity="5"/> 
   </joint> 
 
-  <gazebo>
+  <!-- <gazebo>
     <plugin
       filename="libgz_ros2_control-system.so"
       name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>__CONTROLLER_CONFIG_PATH__</parameters>
     </plugin>
+  </gazebo> -->
+  <gazebo>
+  <plugin
+    filename="gz-sim-joint-position-controller-system"
+    name="gz::sim::systems::JointPositionController">
+
+    <joint_name>platform_joint</joint_name>
+    <!-- <joint_index>0</joint_index> -->
+
+    <p_gain>200</p_gain>
+    <i_gain>0</i_gain>
+    <d_gain>20</d_gain>
+
+  </plugin>
+
+  <plugin
+    filename="gz-sim-joint-position-controller-system"
+    name="gz::sim::systems::JointPositionController">
+
+    <joint_name>drill_joint</joint_name>
+    <!-- <joint_index>0</joint_index> -->
+
+    <p_gain>150</p_gain>
+    <i_gain>0</i_gain>
+    <d_gain>20</d_gain>
+
+  </plugin>
+
+  
+  <plugin
+  filename="gz-sim-joint-state-publisher-system"
+  name="gz::sim::systems::JointStatePublisher"/>
+
   </gazebo>
 
-  <ros2_control name="GazeboSimSystem" type="system">
-    <hardware>
+  <!-- <ros2_control name="GazeboSimSystem" type="system"> -->
+  <ros2_control name= "SamplerHardwareSystem" type="system">
+    <!-- <hardware>SamplerHardwareSystem
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware> -->
+
+    <hardware>
+      <plugin>sampler_hardware_interfaces/SamplerHardware</plugin>
     </hardware>
 
     <joint name="platform_joint">

@@ -100,10 +100,12 @@ class MissionControl : public rclcpp::Node{
         sampler_motion_interfaces::msg::ActuatorCommand cmd3;
         sampler_motion_interfaces::msg::ActuatorCommand cmd2;
         bool goal_sent;
-        double platform_position = 0.0;
-        double drill_position = 0.0;
+        double platform_position = -100.0;
+        double drill_position = -100.0;
         double drill_velocity = 0.0;
         int time_between_states = 100;
+        const double tolerance = 0.001; // meters
+        bool calibrated_drill = false;
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
 
