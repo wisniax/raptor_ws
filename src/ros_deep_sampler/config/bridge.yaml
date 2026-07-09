@@ -10,6 +10,12 @@
   gz_type_name: "gz.msgs.Double"
   direction: ROS_TO_GZ
 
+- ros_topic_name: "/platform_joint_vel_cmd"
+  gz_topic_name: "/model/sampler/joint/platform_joint/cmd_vel"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
+
 - ros_topic_name: "/drill_joint_cmd"
   gz_topic_name: "/model/sampler/joint/drill_joint/0/cmd_pos"
   ros_type_name: "std_msgs/msg/Float64"
@@ -21,3 +27,9 @@
   ros_type_name: "sensor_msgs/msg/JointState"
   gz_type_name: "gz.msgs.Model"
   direction: GZ_TO_ROS
+
+- ros_topic_name: "/rotor_joint_cmd"
+  gz_topic_name: "/model/sampler/joint/rotor_joint/cmd_vel"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ

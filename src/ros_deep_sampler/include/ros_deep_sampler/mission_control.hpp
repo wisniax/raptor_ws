@@ -43,7 +43,8 @@ class MissionControl : public rclcpp::Node{
 
         enum class State{
             IDLE,
-            MOVE_UP_CALIBRATION,
+            CALIBRATE_PLATFORM,
+            CALIBRATE_DRILL,
             MOVE_PLATFORM_DOWN,
             DRILLING,
             MOVE_DRILL_UP,
@@ -58,7 +59,7 @@ class MissionControl : public rclcpp::Node{
         {
             switch(s) {
                 case State::IDLE: return "IDLE";
-                case State::MOVE_UP_CALIBRATION: return "MOVING up to set origin";
+                case State::CALIBRATE_PLATFORM: return "MOVING up to set origin";
                 case State::MOVE_PLATFORM_DOWN: return "MOVING PLATFORM DOWN";
                 case State::DRILLING: return "DRILLING WITH MOVING DRILL DOWN";
                 case State::MOVE_DRILL_UP: return "MOVING DRILL UP";
@@ -105,7 +106,8 @@ class MissionControl : public rclcpp::Node{
         double drill_velocity = 0.0;
         int time_between_states = 100;
         const double tolerance = 0.001; // meters
-        bool calibrated_drill = false;
+        bool calibrate_drill = false;
+        bool calibrate_platform = false;
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
 

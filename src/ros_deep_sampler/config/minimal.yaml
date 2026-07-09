@@ -14,6 +14,18 @@ controller_manager:
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
+    platform_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
+
+
+
+
+platform_velocity_controller:
+  ros__parameters:
+    joints:
+      - platform_joint
+    interface_name: velocity
+
 
 platform_controller:
   ros__parameters:

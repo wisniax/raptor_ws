@@ -43,6 +43,7 @@ private:
 
   std::unordered_map<std::string, uint8_t> joint_to_can_id_;
   double platform_cmd_;
+  double platform_vel_cmd_;
   double drill_cmd_;
   double rotor_cmd_;
 
@@ -59,6 +60,8 @@ private:
   double rotor_vel_ = 0.0;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr platform_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr drill_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_cmd_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 

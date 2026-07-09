@@ -122,14 +122,22 @@ CallbackReturn SamplerHardware::on_configure(
         platform_cmd_pub_ =
             get_node()->create_publisher<std_msgs::msg::Float64>(
                 "/platform_joint_cmd", 10);
+        
+        drill_cmd_pub_ =
+            get_node()->create_publisher<std_msgs::msg::Float64>(
+                "/drill_joint_cmd", 10);
+
+        rotor_cmd_pub_ =
+            get_node()->create_publisher<std_msgs::msg::Float64>(
+                "/rotor_joint_cmd", 10);
 
         // timer_ = get_node()->create_wall_timer(
-        //     std::chrono::milliseconds(10),
+        //     std::chrono::seconds(5),
         //     [this]()
         //     {
         //         std_msgs::msg::Float64 msg;
         //         msg.data = 0.4;   // desired joint position
-        //         joint_cmd_pub_->publish(msg);
+        //         rotor_cmd_pub_->publish(msg);
         //     });
         joint_state_sub_ =
           get_node()->create_subscription<sensor_msgs::msg::JointState>(
@@ -169,6 +177,11 @@ SamplerHardware::export_command_interfaces()
         "platform_joint",
         hardware_interface::HW_IF_POSITION,
         &platform_cmd_);
+    
+    command_interfaces.emplace_back(
+        "platform_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &platform_vel_cmd_);
 
     command_interfaces.emplace_back(
         "drill_joint",
@@ -255,7 +268,16 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
   if(!(std::isnan(platform_cmd_))){
     // if(!(std::isnan(last_platform_cmd_)))
     last_platform_cmd_ = platform_cmd_;
+  }
+
+  if(!(std::isnan(drill_cmd_))){
+    // if(!(std::isnan(last_platform_cmd_)))
     last_drill_cmd_ = drill_cmd_;
+  }
+
+  if(!(std::isnan(rotor_cmd_))){
+    // if(!(std::isnan(last_platform_cmd_)))
+    last_rotor_cmd_ = rotor_cmd_;
   }
   // last_platform_cmd_ += 0.01;
   //RCLCPP_INFO(get_node()->get_logger(), "Expected current position: %f", last_platform_cmd_);
@@ -269,8 +291,14 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
   {
       std_msgs::msg::Float64 msg;
       msg.data = last_platform_cmd_;
-      // RCLCPP_INFO(get_node()->get_logger(), "Expected current position: %f", last_platform_cmd_);
+      //RCLCPP_INFO(get_node()->get_logger(), "Expected platform position: %f", last_platform_cmd_);
       platform_cmd_pub_->publish(msg);
+
+      msg.data = last_drill_cmd_;
+      drill_cmd_pub_->publish(msg);
+      //RCLCPP_INFO(get_node()->get_logger(), "Expected drill position: %f", last_drill_cmd_);
+      msg.data = last_rotor_cmd_;
+      rotor_cmd_pub_->publish(msg);
     }
    
   return hardware_interface::return_type::OK;

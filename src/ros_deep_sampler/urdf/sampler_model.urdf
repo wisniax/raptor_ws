@@ -155,7 +155,7 @@
 
     <axis xyz="0 0 1"/>
 
-    <limit effort="500" velocity="5"/> 
+    <limit effort="5000" velocity="50"/> 
   </joint> 
 
   <!-- <gazebo>
@@ -183,12 +183,28 @@
     filename="gz-sim-joint-position-controller-system"
     name="gz::sim::systems::JointPositionController">
 
+    <joint_name>platform_joint</joint_name>
+  </plugin>
+
+  <plugin
+    filename="gz-sim-joint-position-controller-system"
+    name="gz::sim::systems::JointPositionController">
+
     <joint_name>drill_joint</joint_name>
     <!-- <joint_index>0</joint_index> -->
 
     <p_gain>150</p_gain>
     <i_gain>0</i_gain>
     <d_gain>20</d_gain>
+
+  </plugin>
+
+  <plugin
+    filename="gz-sim-joint-controller-system"
+    name="gz::sim::systems::JointController">
+    <joint_name>rotor_joint</joint_name>
+
+    <initial_velocity>10</initial_velocity>
 
   </plugin>
 
@@ -211,6 +227,7 @@
 
     <joint name="platform_joint">
       <command_interface name="position"/>
+      <command_interface name="velocity"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
     </joint>

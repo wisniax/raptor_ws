@@ -113,56 +113,22 @@ void MissionControl::statesLoop(){
         //RCLCPP_WARN(this->get_logger(), "Read ptr: %p", LastStatusMsg.get());
         // RCLCPP_INFO(this->get_logger(), "Is sampler mode: %d", MissionControl::isSamplerMode(LastStatusMsg));
         if(MissionControl::isSamplerMode(LastStatusMsg)){
-          if(!goal_sent){
-          cmd1.id = RosCanConstants::VescIds::sampler_platform;
-          cmd1.velocity = -200.0;
-          cmd1.position = -200.0;
-          commands.push_back(cmd1);
-          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          // cmd2.velocity = 0.03;
-          // cmd2.position = 0.22;
-          // commands.push_back(cmd2);
-          // cmd3.id = 3;
-          // cmd3.velocity = 0.0;
-          // cmd3.position = 0.0;
-          // commands.push_back(cmd3);
-          move_client_->send_goal(commands);
-          RCLCPP_INFO(this->get_logger(), "Check for the calibration");
-          goal_sent = true;
-        }
-        
-        if(move_client_->get_goal_status() == 1){
-          if (move_client_->get_position(RosCanConstants::VescIds::sampler_platform) != -100.0){
-            if(move_client_->get_position(RosCanConstants::VescIds::sampler_platform) == 0.0){
-              time_between_states++;
-              if(time_between_states > 100){
-                time_between_states = 0;
-                RCLCPP_INFO(this->get_logger(), "Start mission without calibration");
-                goal_sent = false;
-                move_client_->set_goal_status(goal_sent);
-                state_ = State::MOVE_PLATFORM_DOWN; 
-              }
-            }else{
-              time_between_states++;
-              if(time_between_states > 100){
-                RCLCPP_INFO(this->get_logger(), "Start mission with calibration");
-                goal_sent = false;
-                time_between_states = 0;
-                move_client_->set_goal_status(goal_sent);
-                commands.clear();
-                state_ = State::MOVE_UP_CALIBRATION; 
-                }
-              }
-              
-            }
-            
+          if(!calibrate_platform){
+            state_ = State::CALIBRATE_PLATFORM;
+          }
+          else if(!calibrate_drill){
+            state_ = State::CALIBRATE_DRILL;
+          }
+
+          if(calibrate_platform && calibrate_drill){
+            state_ = State::DONE;
           }
         }
 
       // waiting for mission_start callback
         break;
 
-      case State::MOVE_UP_CALIBRATION:
+      case State::CALIBRATE_PLATFORM:
      
         if(!(MissionControl::isSamplerMode(LastStatusMsg))){
           RCLCPP_INFO(this->get_logger(), "Mission is canceled");
@@ -170,12 +136,13 @@ void MissionControl::statesLoop(){
           state_ = State::ABORT;
           break;
         }
+       
         if(!goal_sent){
-          RCLCPP_INFO(this->get_logger(), "Starting moving up calibration");
+          RCLCPP_INFO(this->get_logger(), "Starting PLATFORM CALIBRATION");
           cmd1.id = RosCanConstants::VescIds::sampler_platform;
-          cmd1.position =  move_client_->get_position(RosCanConstants::VescIds::sampler_platform)  * (-1.0);
+          cmd1.position = 0.6;
           RCLCPP_INFO(this->get_logger(), "position is: %f", cmd1.position);
-          cmd1.velocity = cmd1.position/10.0;
+          cmd1.velocity = cmd1.position/10.0;   //To change
           RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd1.velocity);
           commands.push_back(cmd1);
           // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
@@ -186,16 +153,67 @@ void MissionControl::statesLoop(){
           // cmd3.velocity = 0.0;
           // cmd3.position = 0.0;
           // commands.push_back(cmd3);
-          move_client_->send_goal(commands);
+          move_client_->send_goal(commands, true, false);
           goal_sent = true;
         }
         
         if(move_client_->get_goal_status() == 1){
-          RCLCPP_INFO(this->get_logger(), "Finishing moving up");
-          goal_sent = false;
-          move_client_->set_goal_status(goal_sent);
-          commands.clear();
-          state_ = State::MOVE_PLATFORM_DOWN; 
+          time_between_states++;
+          if(time_between_states >100){
+            RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+            goal_sent = false;
+            calibrate_platform = true;
+            move_client_->set_goal_status(goal_sent);
+            commands.clear();
+            time_between_states = 0;
+            state_ = State::IDLE; 
+          }
+         
+        }
+        
+        break;
+
+      case State::CALIBRATE_DRILL:
+     
+        if(!(MissionControl::isSamplerMode(LastStatusMsg))){
+          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
+          state_to_abort = state_;
+          state_ = State::ABORT;
+          break;
+        }
+
+        if(!goal_sent){
+          RCLCPP_INFO(this->get_logger(), "Starting DRILL CALIBRATION");
+          cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
+          cmd2.position = 0.6;
+          RCLCPP_INFO(this->get_logger(), "position is: %f", cmd2.position);
+          cmd2.velocity = cmd2.position/10.0;
+          RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd2.velocity);
+          commands.push_back(cmd2);
+          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
+          // cmd2.velocity = 0.03;
+          // cmd2.position = 0.22;
+          // commands.push_back(cmd2);
+          // cmd3.id = 3;
+          // cmd3.velocity = 0.0;
+          // cmd3.position = 0.0;
+          // commands.push_back(cmd3);
+          move_client_->send_goal(commands, false, true);
+          goal_sent = true;
+        }
+        
+        if(move_client_->get_goal_status() == 1){
+          time_between_states++;
+          if(time_between_states>100){
+            RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+            goal_sent = false;
+            move_client_->set_goal_status(goal_sent);
+            commands.clear();
+            calibrate_drill = true;
+            time_between_states = 0;
+            state_ = State::IDLE; 
+          }
+          
         }
         
         break;
@@ -210,8 +228,8 @@ void MissionControl::statesLoop(){
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           cmd1.id = RosCanConstants::VescIds::sampler_platform;
-          cmd1.velocity = 0.04;
           cmd1.position = -0.4;
+          cmd1.velocity = cmd1.position/10.0;
           commands.push_back(cmd1);
           // cmd2.id = 2;
           // cmd2.velocity = 0.0;

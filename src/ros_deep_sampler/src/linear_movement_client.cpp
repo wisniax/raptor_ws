@@ -23,7 +23,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
   }
 
 
-  void MoveLinearActionClient::send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands)
+  void MoveLinearActionClient::send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands,
+                                          bool calibrate_p, bool calibrate_d)
   {
     using namespace std::placeholders;
 
@@ -34,6 +35,8 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
 
     auto goal_msg = MoveLinearActionClient::Movement::Goal();
     goal_msg.commands = commands;
+    goal_msg.calibrate_platform = calibrate_p;
+    goal_msg.calibrate_drill = calibrate_d;
 
     RCLCPP_INFO(this->get_logger(), "Sending goal");
 
@@ -146,7 +149,7 @@ MoveLinearActionClient::MoveLinearActionClient(const rclcpp::NodeOptions & optio
   double MoveLinearActionClient::get_position(int id){
     if(id_to_pos.find(id) != id_to_pos.end()){
       return id_to_pos[id];
-    }else{return -100.0;}
+    }else{return unknown_goal;}
 
   }
 

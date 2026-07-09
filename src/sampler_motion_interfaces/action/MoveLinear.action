@@ -1,5 +1,7 @@
 #Goal
 ActuatorCommand[] commands
+bool calibrate_platform
+bool calibrate_drill
 
 ---
 #Result

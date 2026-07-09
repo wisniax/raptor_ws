@@ -21,7 +21,8 @@ public:
   explicit MoveLinearActionClient(const rclcpp::NodeOptions & options);
 
 
-  void send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands);
+  void send_goal(const std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  command,
+                  bool calibrate_p = false, bool calibrate_d = false);
   int get_goal_status();
   void cancel_goal();
   void set_goal_status(bool status);
@@ -46,6 +47,7 @@ private:
 
   bool goal_completed;
   bool goal_canceled;
+  double unknown_goal = -100.0;
 
 };  // class MoveLinearActionClient
 
