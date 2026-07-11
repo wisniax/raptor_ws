@@ -42,6 +42,8 @@ public:
 
   TJCGoalHandle::SharedPtr active_tjc_goal_;
 
+  void send_rotor_velocity(double vel);
+
 
 
 private:

@@ -45,6 +45,7 @@ private:
   double platform_cmd_;
   double platform_vel_cmd_;
   double drill_cmd_;
+  double drill_vel_cmd_;
   double rotor_cmd_;
 
   double last_platform_cmd_ =0.0;

@@ -113,6 +113,12 @@ double MoveLinearActionServer::get_current_velocity(int id){
     std::thread{std::bind(&MoveLinearActionServer::execute, this, _1), goal_handle}.detach();
   }
 
+  void MoveLinearActionServer::send_rotor_velocity(double vel){
+     auto rotor_msg = std_msgs::msg::Float64MultiArray();
+      rotor_msg.data = {vel};
+      rotor_velocity_pub_->publish(rotor_msg);
+  }
+
   void MoveLinearActionServer::execute(const std::shared_ptr<GoalHandleMovement> goal_handle)
   {
     RCLCPP_INFO(this->get_logger(), "Executing goal");
@@ -181,7 +187,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     // }
     double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(dist)/current_slider_vel : 1.0;  
     RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position);
-    point.positions = {dist}; //or final_pos?
+    point.positions = {dist}; //dist or final_pos?
     point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     traj.joint_names.push_back(joint_name);
     
@@ -222,18 +228,14 @@ double MoveLinearActionServer::get_current_velocity(int id){
     active_tjc_goal_ = future_goal.get();
     for (const auto & cmd : goal->commands) {
       if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
-        auto rotor_msg = std_msgs::msg::Float64MultiArray();
-        rotor_msg.data = {cmd.velocity};  // one joint → one value
-          rotor_velocity_pub_->publish(rotor_msg);
+        send_rotor_velocity(cmd.velocity);
       }
     }
 
     while (rclcpp::ok()) {
         // Check if goal was canceled
        if (goal_handle->is_canceling()) {
-          auto rotor_msg = std_msgs::msg::Float64MultiArray();
-          rotor_msg.data = {0.0};
-          rotor_velocity_pub_->publish(rotor_msg);
+           send_rotor_velocity(0.0);
            if(active_tjc_goal_)
             {
                 tjc_client_->async_cancel_goal(active_tjc_goal_);
@@ -282,7 +284,8 @@ double MoveLinearActionServer::get_current_velocity(int id){
         goal_handle->publish_feedback(feedback);
         
         bool all_reached = true;
-        for (const auto & cmd : goal->commands) {
+        if (is_calibration){
+          for (const auto & cmd : goal->commands) {
           std::string joint_name;
           //RCLCPP_INFO(this->get_logger(), "Loop id check: %d", cmd.id);
           if (cmd.id == RosCanConstants::VescIds::sampler_platform) {
@@ -301,35 +304,58 @@ double MoveLinearActionServer::get_current_velocity(int id){
               all_reached = false;
               break;  // one joint not reached, keep looping
           }
-      }
-        // Check if target reached
-        if (all_reached) {
-            if (is_calibration){
-              auto rotor_msg = std_msgs::msg::Float64MultiArray();
-              rotor_msg.data = {0.0};
-              rotor_velocity_pub_->publish(rotor_msg);
-              if (active_tjc_goal_)
-              {
-                  tjc_client_->async_cancel_goal(active_tjc_goal_);
-              }
-
-
-              result->success=true;
-              goal_handle->succeed(result);
-
-              RCLCPP_INFO(
-                this->get_logger(),
-                "Trajectory canceled");
-
-              return;
-            }
-
-            result->success = true;
-            goal_handle->succeed(result);
-            RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached");
-            return;
-        
         }
+
+        if(all_reached){
+          send_rotor_velocity(0.0);
+          if (active_tjc_goal_)
+          {
+              tjc_client_->async_cancel_goal(active_tjc_goal_);
+          }
+
+
+          result->success=true;
+          goal_handle->succeed(result);
+
+          RCLCPP_INFO(
+            this->get_logger(),
+            "Trajectory canceled");
+
+          return;
+          }
+        }else {
+          send_rotor_velocity(0.0);
+            // Wait for TJC result
+          auto result_future =
+              tjc_client_->async_get_result(active_tjc_goal_);
+
+          auto wrapped_result = result_future.get();
+
+          if (wrapped_result.code ==
+              rclcpp_action::ResultCode::SUCCEEDED)
+          {
+              result->success = true;
+              goal_handle->succeed(result);
+          }
+          else
+          {
+              result->success = false;
+              goal_handle->abort(result);
+          }
+
+          return;
+        }
+        
+        // Check if target reached
+        // if (all_reached) {
+            
+
+        //     result->success = true;
+        //     goal_handle->succeed(result);
+        //     RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached");
+        //     return;
+        
+        // }
         
         rate.sleep();
     

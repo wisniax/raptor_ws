@@ -189,6 +189,12 @@ SamplerHardware::export_command_interfaces()
         &drill_cmd_);
 
     command_interfaces.emplace_back(
+        "drill_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &drill_vel_cmd_);
+
+
+    command_interfaces.emplace_back(
         "rotor_joint",
         hardware_interface::HW_IF_VELOCITY,
         &rotor_cmd_);

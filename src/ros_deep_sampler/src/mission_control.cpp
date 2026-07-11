@@ -113,15 +113,14 @@ void MissionControl::statesLoop(){
         //RCLCPP_WARN(this->get_logger(), "Read ptr: %p", LastStatusMsg.get());
         // RCLCPP_INFO(this->get_logger(), "Is sampler mode: %d", MissionControl::isSamplerMode(LastStatusMsg));
         if(MissionControl::isSamplerMode(LastStatusMsg)){
-          if(!calibrate_platform){
-            state_ = State::CALIBRATE_PLATFORM;
-          }
-          else if(!calibrate_drill){
+          if(!calibrate_drill){
             state_ = State::CALIBRATE_DRILL;
+          }else if(!calibrate_platform){
+            state_ = State::CALIBRATE_PLATFORM;
           }
 
           if(calibrate_platform && calibrate_drill){
-            state_ = State::DONE;
+            state_ = State::MOVE_PLATFORM_DOWN;
           }
         }
 
@@ -142,7 +141,7 @@ void MissionControl::statesLoop(){
           cmd1.id = RosCanConstants::VescIds::sampler_platform;
           cmd1.position = 0.6;
           RCLCPP_INFO(this->get_logger(), "position is: %f", cmd1.position);
-          cmd1.velocity = cmd1.position/10.0;   //To change
+          cmd1.velocity = cmd1.position/20.0;   //To change
           RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd1.velocity);
           commands.push_back(cmd1);
           // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
@@ -187,7 +186,7 @@ void MissionControl::statesLoop(){
           cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
           cmd2.position = 0.6;
           RCLCPP_INFO(this->get_logger(), "position is: %f", cmd2.position);
-          cmd2.velocity = cmd2.position/10.0;
+          cmd2.velocity = cmd2.position/20.0;
           RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd2.velocity);
           commands.push_back(cmd2);
           // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
@@ -229,7 +228,7 @@ void MissionControl::statesLoop(){
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           cmd1.id = RosCanConstants::VescIds::sampler_platform;
           cmd1.position = -0.4;
-          cmd1.velocity = cmd1.position/10.0;
+          cmd1.velocity = cmd1.position/20.0;
           commands.push_back(cmd1);
           // cmd2.id = 2;
           // cmd2.velocity = 0.0;
@@ -272,11 +271,11 @@ void MissionControl::statesLoop(){
           // cmd1.position = -0.1;
           // commands.push_back(cmd1);
           cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          cmd2.velocity = 0.04;
           cmd2.position = -0.35;
+          cmd2.velocity = cmd2.position/20.0
           commands.push_back(cmd2);
           cmd3.id = RosCanConstants::VescIds::sampler_drill;
-          cmd3.velocity = 4.0;
+          cmd3.velocity = 10.0;
           cmd3.position = 0.0;
           commands.push_back(cmd3);
           move_client_->send_goal(commands);
