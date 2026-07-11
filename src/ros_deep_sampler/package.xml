@@ -65,6 +65,8 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>trajectory_msgs</depend>
 
+  <depend>control_msgs</depend>
+
  
 
   <depend>backward_ros</depend>

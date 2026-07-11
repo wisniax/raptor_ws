@@ -23,12 +23,20 @@ namespace ros_deep_sampler
       std::bind(&MoveLinearActionServer::handle_cancel, this, _1),
       std::bind(&MoveLinearActionServer::handle_accepted, this, _1));
       //(std::bind(&MoveLinearActionServer::execute, this, _1), goal_handle).detach());
+    
+    // platform_tjc_client_ =
+    //   rclcpp_action::create_client<FollowJointTrajectory>(
+    //       this,
+    //       "/platform_controller/follow_joint_trajectory");
 
-    platform_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
-        "/platform_controller/joint_trajectory", 10);
+    //  = rclcpp_action::create_client<FollowJointTrajectory>(
+    //  this,
+    //  "/drill_position_controller/follow_joint_trajectory");
+    // platform_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+    //     "/platform_controller/joint_trajectory", 10);
       
-    drill_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
-        "/drill_position_controller/joint_trajectory", 10);
+    // drill_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+    //     "/drill_position_controller/joint_trajectory", 10);
 
         // Subscriber to joint states
     joint_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -127,30 +135,13 @@ double MoveLinearActionServer::get_current_velocity(int id){
     int current_id;
     float final_pos;
     double dist;
+    bool is_calibration = goal->calibrate_drill || goal->calibrate_platform;
     trajectory_msgs::msg::JointTrajectory traj;
     trajectory_msgs::msg::JointTrajectoryPoint point;
     std::string joint_name;
     for(const auto &cmd: goal->commands){
       
         if (cmd.id == RosCanConstants::VescIds::sampler_platform){ joint_name = "platform_joint";
-            // if(cmd.position == -200.0 && cmd.velocity == -200.0){
-            //   RCLCPP_INFO(this->get_logger(), "Initial calibration");
-            //   feedback->current_position.clear();
-            //   double pos = get_current_position(cmd.id);
-            //   double vel = get_current_velocity(cmd.id);
-
-            //   feedback->ids.push_back(cmd.id);
-            //   feedback->current_position.push_back(pos);
-            //   feedback->current_velocity.push_back(vel);
-            //   RCLCPP_INFO(this->get_logger(), "Current pos: %f", pos);
-            //   RCLCPP_INFO(this->get_logger(), "Current vel: %f", vel);
-            //   goal_handle->publish_feedback(feedback);
-            //   result->success = true;
-            //   goal_handle->succeed(result);
-            //   RCLCPP_INFO(this->get_logger(), "Initial pose of platform send");
-            //   return;
-       
-            // }
             current_slider_ = 1;
             current_id = cmd.id;
             dist = cmd.position;
@@ -167,7 +158,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
             current_id = cmd.id;
             dist = cmd.position;
             if (goal->calibrate_drill){
-              final_pos = 0.0;
+             final_pos = 0.0;
             }else{
               final_pos = dist + get_current_position(cmd.id);
             }
@@ -190,7 +181,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
     // }
     double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(dist)/current_slider_vel : 1.0;  
     RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position);
-    point.positions = {dist};
+    point.positions = {dist}; //or final_pos?
     point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     traj.joint_names.push_back(joint_name);
     
@@ -200,13 +191,35 @@ double MoveLinearActionServer::get_current_velocity(int id){
     traj.points.push_back(point);
 
     //RCLCPP_INFO(this->get_logger(), "Size of vector commands: %.3d", (goal->commands).size());
-    if(current_slider_==1){
-      platform_pub_->publish(traj);
+    auto tjc_goal = FollowJointTrajectory::Goal();
+    tjc_goal.trajectory = traj;
+    if(current_slider_ == 1)
+    {
+        tjc_client_ =
+          rclcpp_action::create_client<FollowJointTrajectory>(
+            this,
+            "/platform_controller/follow_joint_trajectory");
     }
-    else if(current_slider_ == 2){
-      drill_pub_->publish(traj);
+    if(current_slider_ == 2)
+    {
+        tjc_client_ =
+          rclcpp_action::create_client<FollowJointTrajectory>(
+            this,
+            "/drill_position_controller/follow_joint_trajectory");
     }
+    if(!tjc_client_->wait_for_action_server(
+            std::chrono::seconds(2)))
+    {
+        RCLCPP_ERROR(this->get_logger(),
+            "TJC action server not available");
+        result->success=false;
+        goal_handle->abort(result);
+        return;
+    }
+    auto future_goal =
+        tjc_client_->async_send_goal(tjc_goal);
 
+    active_tjc_goal_ = future_goal.get();
     for (const auto & cmd : goal->commands) {
       if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
         auto rotor_msg = std_msgs::msg::Float64MultiArray();
@@ -218,33 +231,22 @@ double MoveLinearActionServer::get_current_velocity(int id){
     while (rclcpp::ok()) {
         // Check if goal was canceled
        if (goal_handle->is_canceling()) {
-
-          trajectory_msgs::msg::JointTrajectory traj;
-
-          traj.joint_names = {joint_name};
-
-          trajectory_msgs::msg::JointTrajectoryPoint point;
-
-          point.positions = {get_current_position(current_id)};
-          point.velocities = {0.0};
-          point.time_from_start = rclcpp::Duration::from_seconds(0.1);
-
-          traj.points.push_back(point);
-
-          if (current_slider_ == 1) {
-              platform_pub_->publish(traj);
-          } else if (current_slider_ == 2) {
-              drill_pub_->publish(traj);
-          }
-
           auto rotor_msg = std_msgs::msg::Float64MultiArray();
           rotor_msg.data = {0.0};
           rotor_velocity_pub_->publish(rotor_msg);
+           if(active_tjc_goal_)
+            {
+                tjc_client_->async_cancel_goal(active_tjc_goal_);
+            }
 
-          RCLCPP_INFO(this->get_logger(), "Goal canceled at %d", current_slider_);
+            result->success=false;
+            goal_handle->canceled(result);
 
-          goal_handle->canceled(result);
-          return;
+            RCLCPP_INFO(
+              this->get_logger(),
+              "Trajectory canceled");
+
+            return;
         }
 
 
@@ -302,26 +304,26 @@ double MoveLinearActionServer::get_current_velocity(int id){
       }
         // Check if target reached
         if (all_reached) {
-            trajectory_msgs::msg::JointTrajectory hold;
+            if (is_calibration){
+              auto rotor_msg = std_msgs::msg::Float64MultiArray();
+              rotor_msg.data = {0.0};
+              rotor_velocity_pub_->publish(rotor_msg);
+              if (active_tjc_goal_)
+              {
+                  tjc_client_->async_cancel_goal(active_tjc_goal_);
+              }
 
-            hold.joint_names = {joint_name};
 
-            trajectory_msgs::msg::JointTrajectoryPoint p;
-            p.positions = {get_current_position(current_id)};
-            p.time_from_start = rclcpp::Duration::from_seconds(0.01);
+              result->success=true;
+              goal_handle->succeed(result);
 
-            hold.points.push_back(p);
+              RCLCPP_INFO(
+                this->get_logger(),
+                "Trajectory canceled");
 
-
-            if (current_slider_ == 1) {
-                platform_pub_->publish(traj);
-            } else if (current_slider_ == 2) {
-                drill_pub_->publish(traj);
+              return;
             }
 
-            auto rotor_msg = std_msgs::msg::Float64MultiArray();
-            rotor_msg.data = {0.0};
-            rotor_velocity_pub_->publish(rotor_msg);
             result->success = true;
             goal_handle->succeed(result);
             RCLCPP_INFO(this->get_logger(), "Goal succeeded! Reached");

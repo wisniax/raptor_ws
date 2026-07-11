@@ -35,6 +35,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
+find_package(control_msgs REQUIRED)
 
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
@@ -58,7 +59,8 @@ ament_target_dependencies(action_server
   geometry_msgs
   sensor_msgs
   tf2_ros
-  tf2_geometry_msgs    
+  tf2_geometry_msgs
+  control_msgs    
   )
 rclcpp_components_register_node(action_server PLUGIN "ros_deep_sampler::MoveLinearActionServer" EXECUTABLE linear_movement_server)
 

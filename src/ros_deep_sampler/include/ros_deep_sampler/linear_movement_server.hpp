@@ -12,7 +12,8 @@
 #include <string>
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "ros_deep_sampler/RosCanConstants.hpp"
-
+#include "control_msgs/action/follow_joint_trajectory.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 using namespace std::chrono;
 
@@ -28,6 +29,19 @@ public:
   explicit MoveLinearActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
   double get_current_position(int id);
   double get_current_velocity(int id);
+
+  using FollowJointTrajectory =
+    control_msgs::action::FollowJointTrajectory;
+
+  using TJCGoalHandle =
+      rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
+
+  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
+  //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_tjc_client_;
+
+
+  TJCGoalHandle::SharedPtr active_tjc_goal_;
+
 
 
 private:

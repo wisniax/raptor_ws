@@ -14,42 +14,48 @@ controller_manager:
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
-    platform_velocity_controller:
-      type: forward_command_controller/ForwardCommandController
-
-
-
-
-platform_velocity_controller:
-  ros__parameters:
-    joints:
-      - platform_joint
-    interface_name: velocity
-
-
 platform_controller:
   ros__parameters:
     joints:
       - platform_joint
+
     command_interfaces:
       - position
+
     state_interfaces:
       - position
       - velocity
+
+    # Important for FollowJointTrajectory action
+    action_monitor_rate: 20.0
+
+    constraints:
+      goal_time: 1.0
+      stopped_velocity_tolerance: 0.01
+
 
 drill_position_controller:
   ros__parameters:
     joints:
       - drill_joint
+
     command_interfaces:
       - position
+
     state_interfaces:
       - position
       - velocity
 
+    action_monitor_rate: 20.0
+
+    constraints:
+      goal_time: 1.0
+      stopped_velocity_tolerance: 0.01
+
+
 rotor_velocity_controller:
   ros__parameters:
-    joints: 
+    joints:
       - rotor_joint
+
     interface_name: velocity
-  

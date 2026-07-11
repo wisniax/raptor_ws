@@ -65,6 +65,14 @@ def generate_launch_description():
         output="screen",
     )
 
+    platform_velocity_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["platform_velocity_controller"],
+        parameters=[{"use_sim_time": True}],
+        output="screen",
+    )
+
     drill_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -102,6 +110,7 @@ def generate_launch_description():
 
     joint_state_spawner,
     platform_controller_spawner,
+    #platform_velocity_controller_spawner,
     drill_controller_spawner,
     rotor_controller_spawner,
 ])

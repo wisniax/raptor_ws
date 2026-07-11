@@ -130,8 +130,12 @@
     <origin xyz="0.06 0 0" rpy="0 0 0"/>
 
     <axis xyz="0 0 1"/>
+    
+    <dynamics 
+      damping="0.0"
+      friction="0.0"/>
 
-    <limit lower="-0.5" upper="0.5" effort="5000" velocity="0.5"/>
+    <limit lower="-0.5" upper="0.5" effort="5000" velocity="5.0"/>
   </joint> 
 
   <joint name="drill_joint" type="prismatic">
@@ -165,25 +169,19 @@
       <parameters>__CONTROLLER_CONFIG_PATH__</parameters>
     </plugin>
   </gazebo> -->
+  
   <gazebo>
+
   <plugin
-    filename="gz-sim-joint-position-controller-system"
-    name="gz::sim::systems::JointPositionController">
+   filename="gz-sim-joint-position-controller-system"
+   name="gz::sim::systems::JointPositionController">
 
     <joint_name>platform_joint</joint_name>
-    <!-- <joint_index>0</joint_index> -->
 
-    <p_gain>200</p_gain>
+    <p_gain>5000</p_gain>
     <i_gain>0</i_gain>
-    <d_gain>20</d_gain>
+    <d_gain>100</d_gain>
 
-  </plugin>
-
-  <plugin
-    filename="gz-sim-joint-position-controller-system"
-    name="gz::sim::systems::JointPositionController">
-
-    <joint_name>platform_joint</joint_name>
   </plugin>
 
   <plugin
@@ -191,7 +189,6 @@
     name="gz::sim::systems::JointPositionController">
 
     <joint_name>drill_joint</joint_name>
-    <!-- <joint_index>0</joint_index> -->
 
     <p_gain>150</p_gain>
     <i_gain>0</i_gain>
