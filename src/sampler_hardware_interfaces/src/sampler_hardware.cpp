@@ -127,9 +127,9 @@ CallbackReturn SamplerHardware::on_configure(
             get_node()->create_publisher<std_msgs::msg::Float64>(
                 "/drill_joint_cmd", 10);
 
-        rotor_cmd_pub_ =
-            get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/rotor_joint_cmd", 10);
+        // rotor_cmd_pub_ =
+        //     get_node()->create_publisher<std_msgs::msg::Float64>(
+        //         "/rotor_joint_cmd", 10);
 
         // timer_ = get_node()->create_wall_timer(
         //     std::chrono::seconds(5),
@@ -281,10 +281,10 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     last_drill_cmd_ = drill_cmd_;
   }
 
-  if(!(std::isnan(rotor_cmd_))){
-    // if(!(std::isnan(last_platform_cmd_)))
-    last_rotor_cmd_ = rotor_cmd_;
-  }
+//   if(!(std::isnan(rotor_cmd_))){
+//     // if(!(std::isnan(last_platform_cmd_)))
+//     last_rotor_cmd_ = rotor_cmd_;
+//   }
   // last_platform_cmd_ += 0.01;
   //RCLCPP_INFO(get_node()->get_logger(), "Expected current position: %f", last_platform_cmd_);
 
@@ -303,8 +303,8 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
       msg.data = last_drill_cmd_;
       drill_cmd_pub_->publish(msg);
       //RCLCPP_INFO(get_node()->get_logger(), "Expected drill position: %f", last_drill_cmd_);
-      msg.data = last_rotor_cmd_;
-      rotor_cmd_pub_->publish(msg);
+    //   msg.data = last_rotor_cmd_;
+    //   rotor_cmd_pub_->publish(msg);
     }
    
   return hardware_interface::return_type::OK;

@@ -108,6 +108,7 @@ class MissionControl : public rclcpp::Node{
         const double tolerance = 0.001; // meters
         bool calibrate_drill = false;
         bool calibrate_platform = false;
+        int mission_step = 0; // 0 - begining, 1 - get sample; 2 - put sample; 3 - 
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
 

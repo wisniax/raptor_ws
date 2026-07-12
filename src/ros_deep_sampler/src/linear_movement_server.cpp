@@ -24,14 +24,14 @@ namespace ros_deep_sampler
       std::bind(&MoveLinearActionServer::handle_accepted, this, _1));
       //(std::bind(&MoveLinearActionServer::execute, this, _1), goal_handle).detach());
     
-    // platform_tjc_client_ =
-    //   rclcpp_action::create_client<FollowJointTrajectory>(
-    //       this,
-    //       "/platform_controller/follow_joint_trajectory");
+    platform_tjc_client_ =
+      rclcpp_action::create_client<FollowJointTrajectory>(
+          this,
+          "/platform_controller/follow_joint_trajectory");
 
-    //  = rclcpp_action::create_client<FollowJointTrajectory>(
-    //  this,
-    //  "/drill_position_controller/follow_joint_trajectory");
+    drill_tjc_client_ = rclcpp_action::create_client<FollowJointTrajectory>(
+     this,
+     "/drill_position_controller/follow_joint_trajectory");
     // platform_pub_ =this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
     //     "/platform_controller/joint_trajectory", 10);
       
@@ -43,8 +43,8 @@ namespace ros_deep_sampler
             "/joint_states", 10,
             std::bind(&MoveLinearActionServer::jointStateCallback, this, std::placeholders::_1));
 
-    rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
-    "/rotor_velocity_controller/commands", 10);
+    rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64>(
+                "/rotor_joint_cmd", 10);
   
   }
 
@@ -114,9 +114,9 @@ double MoveLinearActionServer::get_current_velocity(int id){
   }
 
   void MoveLinearActionServer::send_rotor_velocity(double vel){
-     auto rotor_msg = std_msgs::msg::Float64MultiArray();
-      rotor_msg.data = {vel};
-      rotor_velocity_pub_->publish(rotor_msg);
+      std_msgs::msg::Float64 msg;
+      msg.data = {vel};
+      rotor_velocity_pub_->publish(msg);
   }
 
   void MoveLinearActionServer::execute(const std::shared_ptr<GoalHandleMovement> goal_handle)
@@ -150,11 +150,12 @@ double MoveLinearActionServer::get_current_velocity(int id){
         if (cmd.id == RosCanConstants::VescIds::sampler_platform){ joint_name = "platform_joint";
             current_slider_ = 1;
             current_id = cmd.id;
-            dist = cmd.position;
             if (goal->calibrate_platform){
-              final_pos = 0.0;
+              final_pos = cmd.position;
+              dist = final_pos;
             }else{
-              final_pos = dist + get_current_position(cmd.id);
+              final_pos = cmd.position;; //- get_current_position(cmd.id);
+              dist = final_pos -  get_current_position(current_id);
             }
             current_slider_pos = get_current_position(current_id);
             current_slider_vel = cmd.velocity;
@@ -164,9 +165,11 @@ double MoveLinearActionServer::get_current_velocity(int id){
             current_id = cmd.id;
             dist = cmd.position;
             if (goal->calibrate_drill){
-             final_pos = 0.0;
+             final_pos = cmd.position;
+             dist = final_pos;
             }else{
-              final_pos = dist + get_current_position(cmd.id);
+             final_pos = cmd.position; //- get_current_position(cmd.id);
+             dist = final_pos -  get_current_position(current_id);
             }
             current_slider_pos = get_current_position(current_id);
             current_slider_vel = cmd.velocity;
@@ -174,20 +177,22 @@ double MoveLinearActionServer::get_current_velocity(int id){
        
         if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
     }
-    
-    
-    // if(current_slider_ == 1){
-    //   dist = final_pos;
-    //   RCLCPP_INFO(this->get_logger(), "Distance to position: %f", dist);
-    //    //prev_platform_pos = current_slider_pos;
-    // }
-    // if(current_slider_ == 2){
-    //    dist = final_pos;
-    //    //prev_drill_pos = current_slider_pos;
-    // }
-    double time_to_position =  (current_slider_vel >= 0.001) ? std::fabs(dist)/current_slider_vel : 1.0;  
+
+    rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
+
+    if(current_slider_ == 1)
+    {
+        tjc_client_ = platform_tjc_client_;
+    }
+    else if(current_slider_ == 2)
+    {
+        tjc_client_ = drill_tjc_client_;
+    }
+   
+    point.positions = {final_pos}; //dist or final_pos?
+    double time_to_position =  std::fabs(dist)/0.02;
+    RCLCPP_INFO(this->get_logger(), "Final position: %f",final_pos);  
     RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position);
-    point.positions = {dist}; //dist or final_pos?
     point.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
     traj.joint_names.push_back(joint_name);
     
@@ -225,13 +230,17 @@ double MoveLinearActionServer::get_current_velocity(int id){
     auto future_goal =
         tjc_client_->async_send_goal(tjc_goal);
 
+
     active_tjc_goal_ = future_goal.get();
     for (const auto & cmd : goal->commands) {
       if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
+        RCLCPP_INFO(this->get_logger(), "Sending velocity to rotor: %f", cmd.velocity);
         send_rotor_velocity(cmd.velocity);
       }
     }
 
+    auto result_future =
+              tjc_client_->async_get_result(active_tjc_goal_);
     while (rclcpp::ok()) {
         // Check if goal was canceled
        if (goal_handle->is_canceling()) {
@@ -298,8 +307,8 @@ double MoveLinearActionServer::get_current_velocity(int id){
           double pos = get_current_position(cmd.id);
           // RCLCPP_INFO(this->get_logger(), "Position of current slider:  %f", pos);
           // optional: double vel = current_velocity_[joint_name];
-          double result_ = final_pos - pos;
-          // RCLCPP_INFO(this->get_logger(), "Result of calculations:  %f", result_);
+          double result_ = 0.0 - pos;
+          //RCLCPP_INFO(this->get_logger(), "Distance to goal is:  %f", result_);
           if (cmd.id != RosCanConstants::VescIds::sampler_drill && std::fabs(result_) > tolerance) {
               all_reached = false;
               break;  // one joint not reached, keep looping
@@ -324,26 +333,31 @@ double MoveLinearActionServer::get_current_velocity(int id){
           return;
           }
         }else {
-          send_rotor_velocity(0.0);
+          
             // Wait for TJC result
-          auto result_future =
-              tjc_client_->async_get_result(active_tjc_goal_);
-
-          auto wrapped_result = result_future.get();
-
-          if (wrapped_result.code ==
-              rclcpp_action::ResultCode::SUCCEEDED)
+          
+          if (result_future.wait_for(std::chrono::seconds(0))
+              == std::future_status::ready)
           {
-              result->success = true;
-              goal_handle->succeed(result);
-          }
-          else
-          {
-              result->success = false;
-              goal_handle->abort(result);
+              auto wrapped_result = result_future.get();
+
+              send_rotor_velocity(0.0);
+
+              if (wrapped_result.code ==
+                  rclcpp_action::ResultCode::SUCCEEDED)
+              {
+                  result->success = true;
+                  goal_handle->succeed(result);
+              }
+              else
+              {
+                  result->success = false;
+                  goal_handle->abort(result);
+              }
+
+              return;
           }
 
-          return;
         }
         
         // Check if target reached

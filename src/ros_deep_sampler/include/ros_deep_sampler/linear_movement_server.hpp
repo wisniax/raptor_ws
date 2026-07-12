@@ -14,6 +14,8 @@
 #include "ros_deep_sampler/RosCanConstants.hpp"
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "std_msgs/msg/float64.hpp"
+
 
 using namespace std::chrono;
 
@@ -36,8 +38,9 @@ public:
   using TJCGoalHandle =
       rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
 
-  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
-  //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_tjc_client_;
+  //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
+  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_tjc_client_;
+  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_tjc_client_;
 
 
   TJCGoalHandle::SharedPtr active_tjc_goal_;
@@ -64,7 +67,7 @@ private:
 
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr drill_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr rotor_velocity_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
   //rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr platform_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
 

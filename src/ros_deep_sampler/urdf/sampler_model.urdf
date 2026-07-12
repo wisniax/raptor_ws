@@ -205,7 +205,7 @@
     name="gz::sim::systems::JointController">
     <joint_name>rotor_joint</joint_name>
 
-    <initial_velocity>10</initial_velocity>
+    <!-- <initial_velocity>0</initial_velocity> -->
 
   </plugin>
 
