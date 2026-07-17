@@ -189,14 +189,9 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		RCLCPP_ERROR(this->get_logger(), "Rover status unknown, calibration not permitted.");
 		return;
 	}
-	if (mLastRoverStatus->control_mode != rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP)
+	if (!isCalibrationAllowedByRoverStatus(mLastRoverStatus))
 	{
-		RCLCPP_ERROR(this->get_logger(), "Rover not in ESTOP, calibration not permitted.");
-		return;
-	}
-	if (mLastRoverStatus->communication_state != rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED)
-	{
-		RCLCPP_ERROR(this->get_logger(), "Rover communication not opened, calibration not permitted.");
+		RCLCPP_ERROR(this->get_logger(), "Current RoverStatus does not allow calibration.");
 		return;
 	}
 	if (!mLastBatteryInfo || mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
@@ -645,6 +640,11 @@ bool CalibrateAxis::isBlackMushroomPressed(const rex_interfaces::msg::BatteryInf
 
 bool CalibrateAxis::isCalibrationAllowedByRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg) const
 {
-	return msg->control_mode == rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP &&
-		   msg->communication_state == rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED;
+	if (!msg)
+		return false;
+
+	bool estop_active = (msg->control_mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP) != 0;
+	bool config_active = (msg->control_mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG) != 0;
+	bool communication_opened = msg->communication_state == rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED;
+	return !estop_active && config_active && communication_opened;
 }
