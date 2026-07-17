@@ -87,6 +87,14 @@ def generate_launch_description():
         arguments=["rotor_velocity_controller"],
         output="screen",
     )
+
+    container_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["container_controller"],
+        output="screen",
+    )
+
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -113,4 +121,5 @@ def generate_launch_description():
     #platform_velocity_controller_spawner,
     drill_controller_spawner,
     rotor_controller_spawner,
+    container_controller_spawner,
 ])

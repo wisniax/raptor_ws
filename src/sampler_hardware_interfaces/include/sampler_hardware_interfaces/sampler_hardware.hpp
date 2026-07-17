@@ -51,6 +51,7 @@ private:
   double last_platform_cmd_ =0.0;
   double last_drill_cmd_ = 0.0;
   double last_rotor_cmd_ =0.0;
+  double last_container_cmd_ = 0.0;
 
   double platform_pos_ = 0.0;
   double drill_pos_ = 0.0;
@@ -60,13 +61,20 @@ private:
   double drill_vel_ = 0.0;
   double rotor_vel_ = 0.0;
 
+  double container_pos_ = 0.0;
+  double container_vel_ = 0.0;
+
+  double container_cmd_ = 0.0;
+
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr platform_cmd_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr drill_cmd_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr container_cmd_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::unordered_map<std::string, double> sim_positions_;
+  std::unordered_map<std::string, double> sim_vel_;
 
   // gz::transport::Node node;
   // gz::msgs::Double msg;

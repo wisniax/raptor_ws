@@ -119,6 +119,49 @@
                izz="0.0004"/>
     </inertial>
   </link>
+  <!--================CONTAINER==================-->
+  <!-- Container link -->
+  <link name="container_link">
+
+    <!-- Visual rectangle -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+
+      <geometry>
+        <box size="0.7 0.1 0.02"/>
+      </geometry>
+
+      <material name="blue">
+        <color rgba="0 0.4 1 1"/>
+      </material>
+    </visual>
+
+    <!-- Collision for Gazebo -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+
+      <geometry>
+        <box size="0.7 0.1 0.02"/>
+      </geometry>
+    </collision>
+
+    <!-- Required for Gazebo physics -->
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+
+      <mass value="1.0"/>
+
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.01"
+        iyz="0"
+        izz="0.01"/>
+    </inertial>
+
+  </link>
+
 
 
   <!--==================JOINTS====================-->
@@ -166,6 +209,27 @@
     <limit effort="5000" velocity="50"/> 
   </joint> 
 
+
+  <joint name="container_joint" type="revolute">
+
+    <parent link="base_link"/>
+    <child link="container_link"/>
+
+    <!-- Position of rotation axis -->
+    <origin xyz="-0.2 0 -0.6" rpy="0 0 1.57"/>
+
+    <!-- Rotation axis -->
+    <axis xyz="0 0 1"/>
+
+    <limit
+        lower="-1.6"
+        upper="1.6"
+        effort="20"
+        velocity="2.0"/>
+
+  </joint>
+
+
   <!-- <gazebo>
     <plugin
       filename="libgz_ros2_control-system.so"
@@ -209,6 +273,18 @@
 
   </plugin>
 
+  <plugin
+    filename="gz-sim-joint-position-controller-system"
+    name="gz::sim::systems::JointPositionController">
+
+    <joint_name>container_joint</joint_name>
+
+    <p_gain>1500</p_gain>
+    <i_gain>0</i_gain>
+    <d_gain>100</d_gain>
+
+  </plugin>
+
   
   <plugin
   filename="gz-sim-joint-state-publisher-system"
@@ -244,6 +320,15 @@
       <command_interface name="velocity"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="container_joint">
+
+    <command_interface name="position"/>
+
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+
     </joint>
     
   </ros2_control>

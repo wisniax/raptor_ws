@@ -26,6 +26,13 @@ class MoveLinearActionServer : public rclcpp::Node
 public:
   using Movement = sampler_motion_interfaces::action::MoveLinear;
   using GoalHandleMovement = rclcpp_action::ServerGoalHandle<Movement>;
+  void generateTrajectory(
+      trajectory_msgs::msg::JointTrajectory &traj,
+      const std::string &joint_name,
+      double start_pos,
+      double final_pos,
+      double max_velocity,
+      bool is_calibration);
 
   //ACTION_TUTORIALS_CPP_PUBLIC
   explicit MoveLinearActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -41,6 +48,8 @@ public:
   //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
   rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_tjc_client_;
   rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_tjc_client_;
+  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr container_tjc_client_;
+
 
 
   TJCGoalHandle::SharedPtr active_tjc_goal_;

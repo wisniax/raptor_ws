@@ -16,6 +16,7 @@ namespace ros_deep_sampler{
 
 using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
+using MeasurementMsg = rex_interfaces::msg::SamplerFeedback;
 
 
 class MissionControl : public rclcpp::Node{
@@ -38,7 +39,9 @@ class MissionControl : public rclcpp::Node{
         
         bool isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg);
         void HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
+        void HandleMeasurementFeedback(const MeasurementMsg::ConstSharedPtr &measurementMsg);
         void HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
+        bool get_measurements();
      
 
         enum class State{
@@ -49,6 +52,7 @@ class MissionControl : public rclcpp::Node{
             DRILLING,
             MOVE_DRILL_UP,
             MOVE_PLATFORM_UP,
+            MEASURE_SAMPLE,
             DONE,
             ABORT
 
@@ -82,6 +86,7 @@ class MissionControl : public rclcpp::Node{
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_;
         rclcpp::Subscription<rex_interfaces::msg::RoverStatus>::SharedPtr mStatus_;
         rclcpp::Publisher<rex_interfaces::msg::SamplerFeedback>::SharedPtr PubFeedback_;
+        rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr MeasurementFeedback_;
         rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr mSamplerCtrl_;
         rclcpp::Publisher<sampler_motion_interfaces::msg::SamplerCanEx>::SharedPtr mPubCanCtrl_;
 
@@ -106,11 +111,16 @@ class MissionControl : public rclcpp::Node{
         double drill_velocity = 0.0;
         int time_between_states = 100;
         const double tolerance = 0.001; // meters
+        int rotation_time = 0;
         bool calibrate_drill = false;
         bool calibrate_platform = false;
-        int mission_step = 0; // 0 - begining, 1 - get sample; 2 - put sample; 3 - 
+        int measurement_step = 0; // 0 - move container, 1 - put sample; 2 - measure; 3 - move container back
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
+
+        //Required Measurements 
+        double weight_a = 0.0;
+        double ph = 0.0;
 
 
 };

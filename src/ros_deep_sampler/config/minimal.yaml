@@ -14,6 +14,9 @@ controller_manager:
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
+    container_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
 platform_controller:
   ros__parameters:
     joints:
@@ -59,3 +62,19 @@ rotor_velocity_controller:
       - rotor_joint
 
     interface_name: velocity
+
+container_controller:
+  ros__parameters:
+      joints:
+        - container_joint
+
+      command_interfaces:
+        - position
+
+      state_interfaces:
+        - position
+        - velocity
+
+      constraints:
+        goal_time: 1.0
+        stopped_velocity_tolerance: 0.01

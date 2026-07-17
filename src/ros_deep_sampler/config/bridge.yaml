@@ -22,6 +22,13 @@
   gz_type_name: "gz.msgs.Double"
   direction: ROS_TO_GZ
 
+- ros_topic_name: "/container_joint_cmd"
+  gz_topic_name: "/model/sampler/joint/container_joint/0/cmd_pos"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
+
+
 - ros_topic_name: "/gz_joint_states"
   gz_topic_name: "/world/empty/model/sampler/joint_state"
   ros_type_name: "sensor_msgs/msg/JointState"

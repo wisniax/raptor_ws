@@ -127,6 +127,10 @@ CallbackReturn SamplerHardware::on_configure(
             get_node()->create_publisher<std_msgs::msg::Float64>(
                 "/drill_joint_cmd", 10);
 
+        container_cmd_pub_ = 
+            get_node()->create_publisher<std_msgs::msg::Float64>(
+                "/container_joint_cmd", 10);                
+
         // rotor_cmd_pub_ =
         //     get_node()->create_publisher<std_msgs::msg::Float64>(
         //         "/rotor_joint_cmd", 10);
@@ -148,6 +152,7 @@ CallbackReturn SamplerHardware::on_configure(
                   for (size_t i = 0; i < msg->name.size(); i++)
                   {
                       sim_positions_[msg->name[i]] = msg->position[i];
+                      sim_vel_[msg->name[i]] = msg->velocity[i];
                   }
               });
 
@@ -198,6 +203,12 @@ SamplerHardware::export_command_interfaces()
         "rotor_joint",
         hardware_interface::HW_IF_VELOCITY,
         &rotor_cmd_);
+    
+    command_interfaces.emplace_back(
+    hardware_interface::CommandInterface(
+        "container_joint",
+        hardware_interface::HW_IF_POSITION,
+        &container_cmd_));
 
     return command_interfaces;
 }
@@ -237,6 +248,18 @@ SamplerHardware::export_state_interfaces()
         hardware_interface::HW_IF_VELOCITY,
         &rotor_vel_);
 
+    state_interfaces.emplace_back(
+    hardware_interface::StateInterface(
+        "container_joint",
+        hardware_interface::HW_IF_POSITION,
+        &container_pos_));
+
+    state_interfaces.emplace_back(
+    hardware_interface::StateInterface(
+        "container_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &container_vel_));
+
     return state_interfaces;
 }
 
@@ -265,6 +288,36 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
       rotor_pos_ = sim_positions_["rotor_joint"];
   }
 
+   if (sim_positions_.find("container_joint") != sim_positions_.end())
+  {
+      container_pos_ = sim_positions_["container_joint"];
+  }
+
+  if (sim_positions_.find("platform_joint") != sim_positions_.end())
+  {
+      platform_vel_ = sim_positions_["platform_joint"];
+      // RCLCPP_INFO(
+      //   get_node()->get_logger(),
+      //   "READ platform: state=%f command=%f",
+      //   platform_pos_,
+      //   platform_cmd_);
+  }
+
+  if (sim_vel_.find("drill_joint") != sim_vel_.end())
+  {
+      drill_vel_ = sim_vel_["drill_joint"];
+  }
+
+  if (sim_vel_.find("rotor_joint") != sim_vel_.end())
+  {
+      rotor_vel_ = sim_vel_["rotor_joint"];
+  }
+
+   if (sim_vel_.find("container_joint") != sim_vel_.end())
+  {
+      container_vel_ = sim_vel_["container_joint"];
+  }
+
   return hardware_interface::return_type::OK;
 }
 
@@ -279,6 +332,10 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
   if(!(std::isnan(drill_cmd_))){
     // if(!(std::isnan(last_platform_cmd_)))
     last_drill_cmd_ = drill_cmd_;
+  }
+  if(!(std::isnan(container_cmd_))){
+    // if(!(std::isnan(last_platform_cmd_)))
+    last_container_cmd_ = container_cmd_;
   }
 
 //   if(!(std::isnan(rotor_cmd_))){
@@ -302,6 +359,9 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
 
       msg.data = last_drill_cmd_;
       drill_cmd_pub_->publish(msg);
+
+      msg.data = last_container_cmd_;
+      container_cmd_pub_->publish(msg);
       //RCLCPP_INFO(get_node()->get_logger(), "Expected drill position: %f", last_drill_cmd_);
     //   msg.data = last_rotor_cmd_;
     //   rotor_cmd_pub_->publish(msg);
