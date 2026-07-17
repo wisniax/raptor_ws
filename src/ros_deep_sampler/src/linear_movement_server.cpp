@@ -226,7 +226,7 @@ double MoveLinearActionServer::get_current_velocity(int id){
 
     auto feedback = std::make_shared<Movement::Feedback>();
     auto result = std::make_shared<Movement::Result>();
-    int current_slider_ = -3;
+    int current_slider_;
     float current_slider_pos;
     float max_slider_vel;
     int current_id;
@@ -288,15 +288,15 @@ double MoveLinearActionServer::get_current_velocity(int id){
           // current_slider_vel = cmd.velocity;
         }
        
-        if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
+        // if(cmd.id == RosCanConstants::VescIds::sampler_drill) break;
 
     }
 
     
-    if(current_slider_  != -3){
-      generateTrajectory(traj, joint_name, get_current_position(current_id), final_pos, 
+
+    generateTrajectory(traj, joint_name, get_current_position(current_id), final_pos, 
                         max_slider_vel, is_calibration);
-    }
+
     
 
     rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
@@ -364,12 +364,12 @@ double MoveLinearActionServer::get_current_velocity(int id){
 
 
     active_tjc_goal_ = future_goal.get();
-    for (const auto & cmd : goal->commands) {
-      if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
-        RCLCPP_INFO(this->get_logger(), "Sending velocity to rotor: %f", cmd.velocity);
-        send_rotor_velocity(cmd.velocity);
-      }
-    }
+    // for (const auto & cmd : goal->commands) {
+    //   if (cmd.id == RosCanConstants::VescIds::sampler_drill) {  // rotor joint
+    //     RCLCPP_INFO(this->get_logger(), "Sending velocity to rotor: %f", cmd.velocity);
+    //     send_rotor_velocity(cmd.velocity);
+    //   }
+    // }
 
     auto result_future =
               tjc_client_->async_get_result(active_tjc_goal_);

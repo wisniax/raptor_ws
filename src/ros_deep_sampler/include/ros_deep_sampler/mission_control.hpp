@@ -41,6 +41,8 @@ class MissionControl : public rclcpp::Node{
         void HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
         void HandleMeasurementFeedback(const MeasurementMsg::ConstSharedPtr &measurementMsg);
         void HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
+        
+        void send_rotor_velocity(double vel);
         bool get_measurements();
      
 
@@ -89,6 +91,7 @@ class MissionControl : public rclcpp::Node{
         rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr MeasurementFeedback_;
         rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr mSamplerCtrl_;
         rclcpp::Publisher<sampler_motion_interfaces::msg::SamplerCanEx>::SharedPtr mPubCanCtrl_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
 
         const std::string node_name = "ros_deep_sampler";
 
