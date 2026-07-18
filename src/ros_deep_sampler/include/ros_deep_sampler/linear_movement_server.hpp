@@ -32,7 +32,9 @@ public:
       double start_pos,
       double final_pos,
       double max_velocity,
-      bool is_calibration);
+      bool is_calibration,
+      double accel_time = 0.5,
+      double dt = 0.02);
 
   //ACTION_TUTORIALS_CPP_PUBLIC
   explicit MoveLinearActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());

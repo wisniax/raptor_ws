@@ -136,9 +136,80 @@ double MoveLinearActionServer::get_current_velocity(int id){
       double start_pos,
       double final_pos,
       double max_velocity,
-      bool is_calibration)
+      bool is_calibration,
+      double accel_time,
+      double dt)
   {
 
+      // traj.joint_names.clear();
+      // traj.points.clear();
+
+      // if(is_calibration){
+      //   trajectory_msgs::msg::JointTrajectoryPoint p;
+      //   p.positions = {final_pos}; //dist or final_pos?
+      //   double time_to_position =  std::fabs(final_pos)/0.02;
+      //   RCLCPP_INFO(this->get_logger(), "Final position: %f",final_pos);  
+      //   RCLCPP_INFO(this->get_logger(), "Time to position: %f",time_to_position);
+      //   p.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
+      //   traj.joint_names.push_back(joint_name);
+      //   traj.points.push_back(p);
+      //   return;
+        
+      //   //point.velocities = {0.0}; // or cmd.velocity if continuous joint
+        
+        
+      // }
+
+      // traj.joint_names.push_back(joint_name);
+
+      // const double distance = final_pos - start_pos;
+      // const double abs_dist = std::fabs(distance);
+
+      // if (abs_dist < 1e-6)
+      //     return;
+
+      // // Fractions of total motion
+      // const std::vector<double> fractions =
+      // {
+      //     0.0,
+      //     0.10,
+      //     0.50,
+      //     0.90,
+      //     1.00
+      // };
+
+      // // Desired velocity at each waypoint
+      // const std::vector<double> velocity_scale =
+      // {
+      //     0.0,
+      //     0.4,
+      //     1.0,
+      //     0.4,
+      //     0.0
+      // };
+
+      // double total_time = abs_dist / max_velocity;
+
+      // // Give a little more time for accel/decel
+      // total_time *= 1.2;
+
+      // for (size_t i = 0; i < fractions.size(); ++i)
+      // {
+      //     trajectory_msgs::msg::JointTrajectoryPoint p;
+
+      //     p.positions.push_back(
+      //         start_pos + fractions[i] * distance);
+
+      //     p.velocities.push_back(
+      //         velocity_scale[i] * max_velocity *
+      //         (distance >= 0.0 ? 1.0 : -1.0));
+
+      //     p.time_from_start =
+      //         rclcpp::Duration::from_seconds(
+      //             fractions[i] * total_time);
+
+      //     traj.points.push_back(p);
+      // }
       traj.joint_names.clear();
       traj.points.clear();
 
@@ -152,62 +223,86 @@ double MoveLinearActionServer::get_current_velocity(int id){
         traj.joint_names.push_back(joint_name);
         traj.points.push_back(p);
         return;
-        
-        //point.velocities = {0.0}; // or cmd.velocity if continuous joint
-        
-        
       }
 
       traj.joint_names.push_back(joint_name);
 
-      const double distance = final_pos - start_pos;
-      const double abs_dist = std::fabs(distance);
+      double distance = final_pos - start_pos;
+      double direction = (distance >= 0.0) ? 1.0 : -1.0;
+      distance = std::abs(distance);
 
-      if (abs_dist < 1e-6)
-          return;
+      // acceleration
+      double accel = max_velocity / accel_time;
 
-      // Fractions of total motion
-      const std::vector<double> fractions =
+      // distance during acceleration
+      double accel_dist = 0.5 * accel * accel_time * accel_time;
+
+      double cruise_dist = distance - 2.0 * accel_dist;
+      double cruise_time = 0.0;
+
+      // Triangle profile if motion is too short
+      if (cruise_dist < 0.0)
       {
-          0.0,
-          0.10,
-          0.50,
-          0.90,
-          1.00
-      };
-
-      // Desired velocity at each waypoint
-      const std::vector<double> velocity_scale =
-      {
-          0.0,
-          0.4,
-          1.0,
-          0.4,
-          0.0
-      };
-
-      double total_time = abs_dist / max_velocity;
-
-      // Give a little more time for accel/decel
-      total_time *= 1.2;
-
-      for (size_t i = 0; i < fractions.size(); ++i)
-      {
-          trajectory_msgs::msg::JointTrajectoryPoint p;
-
-          p.positions.push_back(
-              start_pos + fractions[i] * distance);
-
-          p.velocities.push_back(
-              velocity_scale[i] * max_velocity *
-              (distance >= 0.0 ? 1.0 : -1.0));
-
-          p.time_from_start =
-              rclcpp::Duration::from_seconds(
-                  fractions[i] * total_time);
-
-          traj.points.push_back(p);
+          accel_time = std::sqrt(distance / accel);
+          accel_dist = distance / 2.0;
+          cruise_dist = 0.0;
+          cruise_time = 0.0;
+          max_velocity = accel * accel_time;
       }
+      else
+      {
+          cruise_time = cruise_dist / max_velocity;
+      }
+
+      double total_time = 2.0 * accel_time + cruise_time;
+
+      for (double t = 0.0; t <= total_time + 1e-6; t += dt)
+      {
+          double pos;
+          double vel;
+
+          if (t < accel_time)
+          {
+              // acceleration
+              vel = accel * t;
+              pos = 0.5 * accel * t * t;
+          }
+          else if (t < accel_time + cruise_time)
+          {
+              // cruise
+              double tc = t - accel_time;
+              vel = max_velocity;
+              pos = accel_dist + max_velocity * tc;
+          }
+          else
+          {
+              // deceleration
+              double td = t - accel_time - cruise_time;
+              vel = max_velocity - accel * td;
+
+              pos = accel_dist +
+                    cruise_dist +
+                    max_velocity * td -
+                    0.5 * accel * td * td;
+          }
+
+          trajectory_msgs::msg::JointTrajectoryPoint point;
+
+          point.positions.push_back(
+              start_pos + direction * pos);
+
+          point.velocities.push_back(
+              direction * vel);
+
+          point.time_from_start =
+              rclcpp::Duration::from_seconds(t);
+
+          traj.points.push_back(point);
+      }
+
+      // Ensure exact endpoint
+      traj.points.back().positions[0] = final_pos;
+      traj.points.back().velocities[0] = 0.0;
   }
 
   void MoveLinearActionServer::execute(const std::shared_ptr<GoalHandleMovement> goal_handle)
