@@ -4,7 +4,7 @@ MotorControl::MotorControl(const rclcpp::NodeOptions & options) : Node("motor_co
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
-	mState = DriveStop;
+	mState = EStop;
 	mSetWheelsOriginCtd = 0;
 	mLastBatteryInfo = std::make_shared<const rex_interfaces::msg::BatteryInfo>();
 	mLastRoverStatus = std::make_shared<const rex_interfaces::msg::RoverStatus>();
@@ -120,57 +120,67 @@ void MotorControl::setWheelsOrigin()
 
 void MotorControl::setCorrectState()
 {
+    int32_t mode = mLastRoverStatus->control_mode;
+
+    if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
+    {
+        stopMotors();
+        mState = State::EStop;
+        return;
+    }
+
+    // NONE, ESTOP
+    if (mode == rex_interfaces::msg::RoverStatus::CONTROL_MODE_NONE ||
+        (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP))
+    {
+        if (mode == 0)
+            RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
+                                  "CONTROL_MODE is NONE! Treating as ESTOP.");
+
+        stopMotors();
+        mState = State::EStop;
+        return;
+    }
+
 	if (mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
 	{
 		mState = State::DriveStop;
 		return;
 	}
 
-	switch (mState)
-	{
-	case State::DriveStop:
-		mState = State::PrepDriving;
-		mSetWheelsOriginCtd = 20;
-		RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
-		break;
+    // STOP
+    if (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP)
+    {
+        mState = State::DriveStop;
+        return;
+    }
 
-	case State::PrepDriving:
-		if (mSetWheelsOriginCtd != 0)
-			break;
-		RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+    // CONFIG, DRIVE, DRIVE_AUTONOMY
+    if (mode & (rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE |
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE_AUTONOMY |
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG))
+    {
+        if (mState == State::DriveStop)
+        {
+            mState = State::Driving;
+            return;
+        }
 
-		if (mLastRoverStatus->control_mode == mLastRoverStatus->CONTROL_MODE_ESTOP)
-			mState = State::EStop;
-		else if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
-			mState = State::EStop;
-		else
-			mState = State::Driving;
-		break;
+        if (mState == State::EStop)
+        {
+            mState = State::PrepDriving;
+            mSetWheelsOriginCtd = 20;
+            RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
+        }
+        else if (mSetWheelsOriginCtd == 0)
+        {
+            if (mState == State::PrepDriving) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+            mState = State::Driving;
+        }
+    }
 
-	case State::EStop:
-		if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
-			break;
-		else if (mLastRoverStatus->control_mode != mLastRoverStatus->CONTROL_MODE_ESTOP)
-			mState = State::Driving;
-		break;
-
-	case State::Driving:
-		if (mLastRoverStatus->control_mode == mLastRoverStatus->CONTROL_MODE_ESTOP)
-		{
-			stopMotors();
-			mState = State::EStop;
-		}
-		else if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
-		{
-			stopMotors();
-			mState = State::EStop;
-		}
-		break;
-
-	default:
-		break;
-	}
 }
+
 void MotorControl::handleTimerClb()
 {
 	if (mState != State::PrepDriving)
