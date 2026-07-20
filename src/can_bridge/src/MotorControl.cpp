@@ -177,8 +177,10 @@ void MotorControl::setCorrectState()
             if (mState == State::PrepDriving) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
             mState = State::Driving;
         }
+        return;
     }
 
+    mState = State::DriveStop;
 }
 
 void MotorControl::handleTimerClb()

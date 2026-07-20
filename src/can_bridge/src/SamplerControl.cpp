@@ -23,8 +23,30 @@ SamplerControl::SamplerControl(const rclcpp::NodeOptions & options) : Node("samp
 
 bool SamplerControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
-	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
-		   msg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER;
+    int32_t mode = msg->control_mode;
+
+    if (msg->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
+    {
+        return false;
+    }
+
+    // NONE, ESTOP
+    if (mode == RoverStatusMsg::CONTROL_MODE_NONE ||
+        (mode & RoverStatusMsg::CONTROL_MODE_ESTOP))
+    {
+        if (mode == 0)
+            RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
+                                  "CONTROL_MODE is NONE! Treating as ESTOP.");
+
+        return false;
+    }
+
+    // DEEP_SAMPLER, SURFACE_SAMPLER, DEEP_SAMPLER_AUTONOMY, SURFACE_SAMPLER_AUTONOMY, CONFIG
+    return mode & (RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER |
+            RoverStatusMsg::CONTROL_MODE_SURFACE_SAMPLER |
+            RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER_AUTONOMY |
+            RoverStatusMsg::CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY |
+            RoverStatusMsg::CONTROL_MODE_CONFIG);
 }
 
 void SamplerControl::stopSampler()
