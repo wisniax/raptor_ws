@@ -107,7 +107,8 @@ class MissionControl : public rclcpp::Node{
 
 
         std::string mission_commands;
-        std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands;
+        std::vector<JointMovement::JointCommand> commands;
+        //std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands;
         sampler_motion_interfaces::msg::ActuatorCommand cmd1;
         sampler_motion_interfaces::msg::ActuatorCommand cmd3;
         sampler_motion_interfaces::msg::ActuatorCommand cmd2;

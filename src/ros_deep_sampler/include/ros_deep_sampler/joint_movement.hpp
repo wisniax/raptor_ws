@@ -26,13 +26,27 @@ class  JointMovement{
         
         explicit JointMovement(rclcpp::Node *node);
 
-        void movePlatform(double pos, double vel, bool calibrated);
+        struct JointCommand
+        {
+            int id;
+            double position;
+            double max_velocity;
+            bool calibration = false;
+        };
+
+        void movePlatform(double pos, double vel);
+        void calibratePlatform(double vel);
         void moveDrill(double pos, double vel, bool calibrated);
+        void calibrateDrill(double vel);
         void moveContainer(double pos, double vel, bool calibrated);
+        void calibrateContainer(double vel);
+
+        void moveJoints(const std::vector<JointCommand>& commands);
+        std::string getJointName(int id);
 
         void send_rotor_velocity(double vel);
 
-        
+        void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, int current_slider);
         void generateTrajectory(
             trajectory_msgs::msg::JointTrajectory &traj,
             const std::string &joint_name,
@@ -48,15 +62,15 @@ class  JointMovement{
         double get_current_position(int id);
         double get_current_velocity(int id);
 
-        bool isMoving() const;
-
-        bool goalReached() const;
+        // bool isMoving() const;
+        bool isTrajectoryFinished();
+        //bool goalReached() const;
 
         bool goalFailed() const;
 
-        void cancel_movement();
+        void cancelMovement();
         void stop_movement();
-
+      
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
         using FollowJointTrajectory =
@@ -66,7 +80,7 @@ class  JointMovement{
             rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
 
     private:
-        rclcpp::Node::SharedPtr node_;
+        rclcpp::Node *node_;
         //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_client_;
@@ -74,15 +88,20 @@ class  JointMovement{
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
 
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
-
+        
+        rclcpp_action::Client<FollowJointTrajectory>::SharedPtr active_client_;
         TJCGoalHandle::SharedPtr active_tjc_goal_;
-
+        std::shared_future<TJCGoalHandle::WrappedResult> result_future_;
 
         std::unordered_map<std::string, double> current_position_;
         std::unordered_map<std::string, double> current_velocity_;
 
+        bool trajectory_finished_;
+
         double prev_platform_pos = 0.0;
         double prev_drill_pos = 0.0;
+
+        
 };
 
 
