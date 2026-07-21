@@ -11,6 +11,8 @@ namespace ros_deep_sampler{
     missionTimer_ = this->create_timer(std::chrono::milliseconds(10), std::bind(&MissionControl::statesLoop, this));
     move_client_ = std::make_shared<MoveLinearActionClient>(
     rclcpp::NodeOptions());
+
+    joints_ = std::make_unique<JointMovement>(this);
     
     
     sub_ = this->create_subscription<std_msgs::msg::String>(

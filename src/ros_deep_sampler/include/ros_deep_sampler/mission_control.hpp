@@ -10,6 +10,7 @@
 #include <string>
 #include <iostream>
 #include "ros_deep_sampler/RosCanConstants.hpp"
+#include "ros_deep_sampler/joint_movement.hpp"
 
 
 namespace ros_deep_sampler{
@@ -81,6 +82,8 @@ class MissionControl : public rclcpp::Node{
         void AppFeedbackPublish();
         int getPlatformPosition();
 
+
+        std::unique_ptr<JointMovement> joints_;
        
         //rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr SubStatus;
         std::shared_ptr<MoveLinearActionClient> move_client_;
