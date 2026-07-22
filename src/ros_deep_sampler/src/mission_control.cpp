@@ -9,9 +9,7 @@ namespace ros_deep_sampler{
   {
 
     missionTimer_ = this->create_timer(std::chrono::milliseconds(10), std::bind(&MissionControl::statesLoop, this));
-    move_client_ = std::make_shared<MoveLinearActionClient>(
-    rclcpp::NodeOptions());
-
+ 
     joints_ = std::make_unique<JointMovement>(this);
     
     
@@ -174,21 +172,6 @@ void MissionControl::statesLoop(){
        
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting PLATFORM CALIBRATION");
-          // cmd1.id = RosCanConstants::VescIds::sampler_platform;
-          // cmd1.position = 0.6;
-          // RCLCPP_INFO(this->get_logger(), "position is: %f", cmd1.position);
-          // cmd1.velocity = 0.0;   //To change
-          // RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd1.velocity);
-          // commands.push_back(cmd1);
-          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          // cmd2.velocity = 0.03;
-          // cmd2.position = 0.22;
-          // commands.push_back(cmd2);
-          // cmd3.id = 3;
-          // cmd3.velocity = 0.0;
-          // cmd3.position = 0.0;
-          // commands.push_back(cmd3);
-          // move_client_->send_goal(commands, true, false);
           joints_->calibratePlatform(0.02);
           goal_sent = true;
         }
@@ -200,6 +183,8 @@ void MissionControl::statesLoop(){
           goal_sent = false;
           calibrate_platform = true;
           joints_->cancelMovement();
+       
+          joints_->setTrajectoryStatus(false);
           time_between_states = 0;
           state_ = State::IDLE; 
           //}
@@ -219,21 +204,6 @@ void MissionControl::statesLoop(){
 
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting DRILL CALIBRATION");
-          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          // cmd2.position = 0.6;
-          // RCLCPP_INFO(this->get_logger(), "position is: %f", cmd2.position);
-          // cmd2.velocity = 0.0;
-          // RCLCPP_INFO(this->get_logger(), "Velocity is: %f", cmd2.velocity);
-          // commands.push_back(cmd2);
-          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          // cmd2.velocity = 0.03;
-          // cmd2.position = 0.22;
-          // commands.push_back(cmd2);
-          // cmd3.id = 3;
-          // cmd3.velocity = 0.0;
-          // cmd3.position = 0.0;
-          // commands.push_back(cmd3);
-          // move_client_->send_goal(commands, false, true);
           joints_->calibrateDrill(0.02);
           goal_sent = true;
         }
@@ -245,6 +215,8 @@ void MissionControl::statesLoop(){
           goal_sent = false;
           calibrate_drill = true;
           joints_->cancelMovement();
+          //while(joints_->isGoalCanceled() != 1){}
+          joints_->setTrajectoryStatus(false);
           time_between_states = 0;
           state_ = State::IDLE; 
           //}
@@ -261,6 +233,7 @@ void MissionControl::statesLoop(){
           break;
         }
         if(!goal_sent){
+          //joints_->setGoalStatus(false);
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           JointMovement::JointCommand cmd;
           cmd.id = 1;
@@ -295,17 +268,6 @@ void MissionControl::statesLoop(){
         }
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting drilling");
-          // cmd1.id = 1;
-          // cmd1.velocity = 0.04;
-          // cmd1.position = -0.1;
-          // commands.push_back(cmd1);
-          // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-          // cmd2.position = -0.35;
-          // cmd2.velocity = 0.2;
-          // commands.push_back(cmd2);
-          // send_rotor_velocity(15.0);
-          // move_client_->send_goal(commands);
-          JointMovement::JointCommand cmd;
           cmd.id = 2;
           cmd.position = -0.35;
           cmd.max_velocity = 0.2;
@@ -340,11 +302,6 @@ void MissionControl::statesLoop(){
           }
           if(!goal_sent){
             RCLCPP_INFO(this->get_logger(), "Moving drill up");
-            // cmd1.id = 1;
-            // cmd1.velocity = 0.0;
-            // cmd1.position = 0.0
-            // commands.push_back(cmd1);
-
             JointMovement::JointCommand cmd;
             cmd.id = 2;
             cmd.position = 0.01;
@@ -376,19 +333,6 @@ void MissionControl::statesLoop(){
             }
             if(!goal_sent){
               RCLCPP_INFO(this->get_logger(), "Moving Platform up");
-              // cmd1.id = RosCanConstants::VescIds::sampler_platform;
-              // cmd1.velocity = 0.2;
-              // cmd1.position = 0.01;
-              // commands.push_back(cmd1);
-              // cmd2.id = 2;
-              // cmd2.velocity = 0.04;
-              // cmd2.position = 0.1;
-              // commands.push_back(cmd2);
-              // cmd3.id = 3;
-              // cmd3.velocity = 0.0;
-              // cmd3.position = 0.0;
-              // commands.push_back(cmd3);
-              // move_client_->send_goal(commands);
               JointMovement::JointCommand cmd;
               cmd.id = 1;
               cmd.position = 0.01;
@@ -405,7 +349,7 @@ void MissionControl::statesLoop(){
                   time_between_states =0;
                   goal_sent = false;
                   // move_client_->set_goal_status(goal_sent);
-                  // commands.clear();
+                  commands.clear();
                   state_ = State::MEASURE_SAMPLE; 
                 }
             }   
@@ -422,19 +366,6 @@ void MissionControl::statesLoop(){
             case 0:
               if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Starting moving container");
-                // cmd1.id = 1;
-                // cmd1.velocity = 0.04;
-                // cmd1.position = -0.1;
-                // commands.push_back(cmd1);
-                // cmd1.id = RosCanConstants::VescIds::sampler_container_a;
-                // cmd1.position = -1.57;
-                // cmd1.velocity = 0.6;
-                // commands.push_back(cmd1);
-                // cmd3.id = RosCanConstants::VescIds::sampler_drill;
-                // cmd3.velocity = 15.0;
-                // cmd3.position = 0.0;
-                // commands.push_back(cmd3);
-                //move_client_->send_goal(commands);
                 JointMovement::JointCommand cmd;
                 cmd.id = 3;
                 cmd.position = -1.57;
@@ -448,17 +379,6 @@ void MissionControl::statesLoop(){
             case 1:
               if(!goal_sent){
                   RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
-                  // cmd1.id = 1;
-                  // cmd1.velocity = 0.04;
-                  // cmd1.position = -0.1;
-                  // commands.push_back(cmd1);
-                  // cmd4.id = RosCanConstants::VescIds::sampler_container_a;
-                  // cmd4.position = -1.57;
-                  // cmd4.velocity = 0.1;
-                  // commands.push_back(cmd2);
-                  // cmd3.id = RosCanConstants::VescIds::sampler_drill_mov;
-                  // cmd3.velocity = 0.1;
-                  // cmd3.position = -0.2;
                   JointMovement::JointCommand cmd;
                   cmd.id = 2;
                   cmd.position = -0.2;
@@ -471,45 +391,19 @@ void MissionControl::statesLoop(){
               break;
 
             case 2:
-                if(rotation_time == 0.0){
-                  send_rotor_velocity(5.0);
+                if(rotation_time == 0){
+                  joints_->send_rotor_velocity(5.0);
                 }
-              // if(!goal_sent){
-              //     RCLCPP_INFO(this->get_logger(), "Put sample in the scale");
-              //     // cmd1.id = 1;
-              //     // cmd1.velocity = 0.04;
-              //     // cmd1.position = -0.1;
-              //     // commands.push_back(cmd1);
-              //     // cmd4.id = RosCanConstants::VescIds::sampler_container_a;
-              //     // cmd4.position = -1.57;
-              //     // cmd4.velocity = 0.1;
-              //     // commands.push_back(cmd2);
-              //     send_rotor_velocity(5.0);
-              //     move_client_->send_goal(commands);
-              //     goal_sent = true;
-              //   }
               rotation_time ++;
-              if(rotation_time > 300){
-                rotation_time = 0;
-                send_rotor_velocity(0.0);
-              //  move_client_ ->cancel_goal();
-              //   while(move_client_->get_goal_status() != 2){}
-              //   commands.clear();
-                // cmd2.id = RosCanConstants::VescIds::sampler_drill_mov;
-                // cmd2.position = 0.01;
-                // cmd2.velocity = 0.2;
-                // commands.push_back(cmd2);
+              if(rotation_time > 300 && !goal_sent){
+                joints_->send_rotor_velocity(0.0);
                 JointMovement::JointCommand cmd;
                 cmd.id = 2;
                 cmd.position = 0.01;
                 cmd.max_velocity = 0.2;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
-                // cmd3.id = RosCanConstants::VescIds::sampler_drill;
-                // cmd3.velocity = 0.0;
-                // cmd3.position = 0.0;
-                // commands.push_back(cmd3);
-                //move_client_->send_goal(commands);
+
                 goal_sent = true;
                 // move_client_->set_goal_status(goal_sent);
               }
@@ -521,25 +415,12 @@ void MissionControl::statesLoop(){
               if(get_measurements()){
                 if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Starting moving container back");
-                // cmd1.id = 1;
-                // cmd1.velocity = 0.04;
-                // cmd1.position = -0.1;
-                // commands.push_back(cmd1);
-                // cmd1.id = RosCanConstants::VescIds::sampler_container_a;
-                // cmd1.position = 0.01;
-                // cmd1.velocity = 0.6;
-                // commands.push_back(cmd1);
                 JointMovement::JointCommand cmd;
                 cmd.id = 3;
                 cmd.position = 0.01;
                 cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
-                // cmd3.id = RosCanConstants::VescIds::sampler_drill;
-                // cmd3.velocity = 15.0;
-                // cmd3.position = 0.0;
-                // commands.push_back(cmd3);
-                //move_client_->send_goal(commands);
                 goal_sent = true;
                 }
               }
@@ -554,6 +435,7 @@ void MissionControl::statesLoop(){
               RCLCPP_INFO(this->get_logger(), "Measurement step is: %d", measurement_step);
               time_between_states = 0;
               goal_sent = false;
+              joints_->setTrajectoryStatus(false);
               //move_client_->set_goal_status(goal_sent);
               commands.clear();
               if(measurement_step == 4){
@@ -574,8 +456,9 @@ void MissionControl::statesLoop(){
         case State::ABORT:
             std::string state_string = to_string(state_to_abort);
             RCLCPP_INFO(this->get_logger(), "Mission Abortion on state: %s", state_string.c_str());
-            move_client_->cancel_goal();
-            while(move_client_->get_goal_status() != 2){}
+            //move_client_->cancel_goal();
+            joints_->cancelMovement();
+            // while(joints_->isGoalCanceled() != 1){}
             RCLCPP_INFO(this->get_logger(), "Mission Aborted successfully");
             state_= State::DONE;
 
@@ -620,9 +503,7 @@ void MissionControl::AppFeedbackPublish(){
 
 }
 
-std::shared_ptr<MoveLinearActionClient> MissionControl::get_move_client() {
-    return move_client_;
-}
+
 
 
 

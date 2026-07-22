@@ -255,6 +255,10 @@ void JointMovement::calibrateDrill(double vel){
 
 }
 
+void JointMovement::setTrajectoryStatus(bool status){
+    trajectory_finished_ = status;
+}
+
 void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, int current_slider){
     
     if(current_slider == 1)
@@ -282,7 +286,7 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
     auto options =
         rclcpp_action::Client<FollowJointTrajectory>::SendGoalOptions();
 
-
+    trajectory_finished_ = false;
     options.goal_response_callback =
         [this](TJCGoalHandle::SharedPtr handle)
         {
@@ -299,20 +303,22 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
                 "Trajectory accepted");
 
             active_tjc_goal_ = handle;
-            trajectory_finished_ = false;
+           
         };
 
 
     options.result_callback =
         [this](const TJCGoalHandle::WrappedResult &result)
         {
+            trajectory_finished_ = true;
+            active_tjc_goal_.reset();
             switch(result.code)
             {
                 case rclcpp_action::ResultCode::SUCCEEDED:
                     RCLCPP_INFO(
                         node_->get_logger(),
                         "Trajectory finished");
-                    trajectory_finished_ = true;
+                    
                     break;
 
                 case rclcpp_action::ResultCode::CANCELED:

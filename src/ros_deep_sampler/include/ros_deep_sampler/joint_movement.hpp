@@ -56,6 +56,7 @@ class  JointMovement{
             bool is_calibration,
             double accel_time = 0.5,
             double dt = 0.02);
+        void setTrajectoryStatus(bool status);
 
         //ACTION_TUTORIALS_CPP_PUBLIC
         
@@ -69,6 +70,8 @@ class  JointMovement{
         bool goalFailed() const;
 
         void cancelMovement();
+        bool isGoalCanceled();
+        void setGoalStatus(bool status);
         void stop_movement();
       
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
@@ -97,9 +100,11 @@ class  JointMovement{
         std::unordered_map<std::string, double> current_velocity_;
 
         bool trajectory_finished_;
+        bool goal_canceled = false;
 
         double prev_platform_pos = 0.0;
         double prev_drill_pos = 0.0;
+
 
         
 };
