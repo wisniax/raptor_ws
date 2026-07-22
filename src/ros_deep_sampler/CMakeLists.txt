@@ -37,32 +37,11 @@ find_package(trajectory_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(control_msgs REQUIRED)
 
+
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-
-add_library(action_server SHARED
-  src/linear_movement_server.cpp
-  src/linear_movement_client.cpp)
-target_include_directories(action_server PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_definitions(action_server
-  PRIVATE "ros_deep_sampler_BUILDING_DLL")
-ament_target_dependencies(action_server
-  "sampler_motion_interfaces"
-  "rclcpp"
-  "rclcpp_action"
-  "rclcpp_components"
-  trajectory_msgs
-  geometry_msgs
-  sensor_msgs
-  tf2_ros
-  tf2_geometry_msgs
-  control_msgs    
-  )
-rclcpp_components_register_node(action_server PLUGIN "ros_deep_sampler::MoveLinearActionServer" EXECUTABLE linear_movement_server)
 
 
 install(
@@ -102,9 +81,6 @@ install(DIRECTORY config
 add_executable(ros_deep_sampler_node 
   src/main.cpp
   src/mission_control.cpp
-  src/linear_movement_client.cpp
-  src/linear_movement_server.cpp
-  src/hardware_interface_bridge.cpp
   src/joint_movement.cpp
   src/RosCanConstants.cpp
 )
@@ -112,9 +88,11 @@ add_executable(ros_deep_sampler_node
 ament_target_dependencies(ros_deep_sampler_node
   rclcpp
   std_msgs
-  rex_interfaces
-  sampler_motion_interfaces        
+  rex_interfaces       
   rclcpp_action
+  sensor_msgs
+  trajectory_msgs
+  control_msgs
   
 )
 
@@ -126,7 +104,7 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC
 target_link_libraries(ros_deep_sampler_node
   ${cpp_typesupport_target}
   libVescCan::libVescCan
-  action_server
+  #action_server
  
   #harware_sampler
 )
@@ -145,11 +123,11 @@ install(TARGETS
 )
 
 
-install(TARGETS
-  action_server
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+# install(TARGETS
+#   action_server
+#   ARCHIVE DESTINATION lib
+#   LIBRARY DESTINATION lib
+#   RUNTIME DESTINATION bin)
 
 
 if(BUILD_TESTING)

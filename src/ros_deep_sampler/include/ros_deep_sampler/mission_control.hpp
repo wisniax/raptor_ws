@@ -3,9 +3,6 @@
 #include "rex_interfaces/msg/sampler_control.hpp"
 #include "rex_interfaces/msg/sampler_feedback.hpp"
 #include "rex_interfaces/msg/rover_status.hpp"
-#include "ros_deep_sampler/linear_movement_client.hpp"
-#include "ros_deep_sampler/linear_movement_server.hpp"
-#include "sampler_motion_interfaces/msg/sampler_can_ex.hpp"
 #include <chrono>
 #include <string>
 #include <iostream>
@@ -24,7 +21,6 @@ class MissionControl : public rclcpp::Node{
     public:
         explicit MissionControl(const rclcpp::NodeOptions & options);
          
-        std::shared_ptr<MoveLinearActionClient> get_move_client();
 
         int check_drilling();
 
@@ -86,14 +82,13 @@ class MissionControl : public rclcpp::Node{
         std::unique_ptr<JointMovement> joints_;
        
         //rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr SubStatus;
-        std::shared_ptr<MoveLinearActionClient> move_client_;
+
         std_msgs::msg::String::SharedPtr SubStatus;
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_;
         rclcpp::Subscription<rex_interfaces::msg::RoverStatus>::SharedPtr mStatus_;
         rclcpp::Publisher<rex_interfaces::msg::SamplerFeedback>::SharedPtr PubFeedback_;
         rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr MeasurementFeedback_;
         rclcpp::Subscription<rex_interfaces::msg::SamplerControl>::SharedPtr mSamplerCtrl_;
-        rclcpp::Publisher<sampler_motion_interfaces::msg::SamplerCanEx>::SharedPtr mPubCanCtrl_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
 
         const std::string node_name = "ros_deep_sampler";
@@ -109,9 +104,6 @@ class MissionControl : public rclcpp::Node{
         std::string mission_commands;
         std::vector<JointMovement::JointCommand> commands;
         //std::vector<sampler_motion_interfaces::msg::ActuatorCommand>  commands;
-        sampler_motion_interfaces::msg::ActuatorCommand cmd1;
-        sampler_motion_interfaces::msg::ActuatorCommand cmd3;
-        sampler_motion_interfaces::msg::ActuatorCommand cmd2;
         bool goal_sent;
         double platform_position = -100.0;
         double drill_position = -100.0;

@@ -43,7 +43,6 @@ namespace ros_deep_sampler{
     rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64>(
               "/rotor_joint_cmd", 10);
 
-    //mPubCanCtrl_ = this->create_publisher<sampler_motion_interfaces::msg::SamplerCanEx>("/SamplerCanCom", 100);
 
     
     rex_interfaces::msg::RoverStatus init_msg;
@@ -268,6 +267,7 @@ void MissionControl::statesLoop(){
         }
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting drilling");
+          JointMovement::JointCommand cmd;
           cmd.id = 2;
           cmd.position = -0.35;
           cmd.max_velocity = 0.2;

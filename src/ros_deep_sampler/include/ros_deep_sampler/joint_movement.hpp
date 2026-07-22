@@ -1,5 +1,4 @@
 #include <memory>
-#include "sampler_motion_interfaces/action/move_linear.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "ros_deep_sampler/visibility_control.h"
