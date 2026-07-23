@@ -261,13 +261,14 @@ void JointMovement::setTrajectoryStatus(bool status){
 
 void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, int current_slider){
     
-    if(current_slider == 1)
+    if(current_slider == MissionMsg::PLATFORM)
         active_client_ = platform_client_;
-    else if(current_slider == 2)
+    else if(current_slider == MissionMsg::DRILL)
         active_client_ = drill_client_;
-    else if(current_slider == 3)
+    else if(current_slider == MissionMsg::CONTAINER_A)
         active_client_ = container_client_;
 
+    current_slider_ = current_slider;
 
     if(!active_client_->wait_for_action_server(
         std::chrono::seconds(2)))
@@ -275,6 +276,7 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
         RCLCPP_ERROR(
             node_->get_logger(),
             "JTC unavailable");
+            goal_state = MissionMsg::GOAL_FAILED;
         return;
     }
 
@@ -295,13 +297,14 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
                 RCLCPP_ERROR(
                     node_->get_logger(),
                     "Trajectory rejected");
+                goal_state = MissionMsg::GOAL_FAILED;
                 return;
             }
 
             RCLCPP_INFO(
                 node_->get_logger(),
                 "Trajectory accepted");
-
+            goal_state = MissionMsg::GOAL_ACCEPTED;
             active_tjc_goal_ = handle;
            
         };
@@ -318,19 +321,21 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
                     RCLCPP_INFO(
                         node_->get_logger(),
                         "Trajectory finished");
-                    
+                    goal_state = MissionMsg::GOAL_SUCCEEDED;
                     break;
 
                 case rclcpp_action::ResultCode::CANCELED:
                     RCLCPP_INFO(
                         node_->get_logger(),
                         "Trajectory canceled");
+                    goal_state = MissionMsg::GOAL_CANCELED;
                     break;
 
                 default:
                     RCLCPP_ERROR(
                         node_->get_logger(),
                         "Trajectory failed");
+                    goal_state = MissionMsg::GOAL_FAILED;
                     break;
             }
         };
@@ -370,5 +375,10 @@ void JointMovement::cancelMovement()
 
 }
 
+void JointMovement::JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg){
+    feedbackMsg->joint_id = current_slider_;
+    feedbackMsg->goal_state = goal_state;
+
+}
 
 }

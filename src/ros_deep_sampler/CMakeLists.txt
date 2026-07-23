@@ -88,7 +88,8 @@ add_executable(ros_deep_sampler_node
 ament_target_dependencies(ros_deep_sampler_node
   rclcpp
   std_msgs
-  rex_interfaces       
+  rex_interfaces   
+  sampler_motion_interfaces    
   rclcpp_action
   sensor_msgs
   trajectory_msgs
@@ -114,6 +115,7 @@ target_link_libraries(ros_deep_sampler_node
 ament_export_dependencies(
   rosidl_default_runtime
   rex_interfaces 
+  sampler_motion_interfaces
 )
 
 # Install

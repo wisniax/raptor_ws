@@ -14,11 +14,12 @@
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/float64.hpp"
-
+#include "sampler_motion_interfaces/msg/sampler_mission.hpp"
 
 
 
 namespace ros_deep_sampler{
+using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
 
 class  JointMovement{
     public:
@@ -58,7 +59,7 @@ class  JointMovement{
         void setTrajectoryStatus(bool status);
 
         //ACTION_TUTORIALS_CPP_PUBLIC
-        
+        void JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg);
         double get_current_position(int id);
         double get_current_velocity(int id);
 
@@ -97,6 +98,8 @@ class  JointMovement{
 
         std::unordered_map<std::string, double> current_position_;
         std::unordered_map<std::string, double> current_velocity_;
+        uint8_t current_slider_ = 5; //Means nothing
+        uint8_t goal_state = MissionMsg::GOAL_IDLE;
 
         bool trajectory_finished_;
         bool goal_canceled = false;

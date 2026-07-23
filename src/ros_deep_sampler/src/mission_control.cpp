@@ -12,13 +12,8 @@ namespace ros_deep_sampler{
  
     joints_ = std::make_unique<JointMovement>(this);
     
-    
-    sub_ = this->create_subscription<std_msgs::msg::String>(
-    "/command",
-    10,
-    std::bind(&MissionControl::MissionCheck, this, std::placeholders::_1));   
 
-    mStatus_ = this->create_subscription<rex_interfaces::msg::RoverStatus>(
+    mRoverStatus_ = this->create_subscription<rex_interfaces::msg::RoverStatus>(
     "/MQTT/RoverStatus",
     10,
     std::bind(&MissionControl::HandleRoverStatus, this, std::placeholders::_1)); 
@@ -43,7 +38,13 @@ namespace ros_deep_sampler{
     rotor_velocity_pub_ = this->create_publisher<std_msgs::msg::Float64>(
               "/rotor_joint_cmd", 10);
 
-
+    mMissionCmd_ = this->create_subscription<MissionCmd>("/MQTT/MissionCommand", 10,
+                    std::bind(&MissionControl::HandleMissionCmd, this, std::placeholders::_1));
+    
+    missionCmdMsg = std::make_shared<MissionCmd>();
+    missionFeedbackMsg = std::make_shared<MissionMsg>();
+    missionCmdMsg->mission_cmd = MissionCmd::IDLE;
+    missionFeedbackMsg->mission_state = 10; //Means nothing, not IDLDE either
     
     rex_interfaces::msg::RoverStatus init_msg;
     init_msg.communication_state = RoverStatusMsg::COMMUNICATION_STATE_CLOSED;
@@ -71,14 +72,44 @@ void MissionControl::send_rotor_velocity(double vel){
       rotor_velocity_pub_->publish(msg);
 }
 
+void MissionControl::HandleMissionCmd(const MissionCmd &missionCmd){
+  missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
+}
+
+uint8_t MissionControl::CheckMissionCmd(){
+  return missionCmdMsg->mission_cmd;
+}
+
+
+bool MissionControl::checkFlags(uint8_t current_mission_cmd)
+{
+    if (current_mission_cmd == MissionCmd::ABORT)
+    {
+        state_to_abort = state_;
+        state_ = State::ABORT;
+        return false;
+    }
+
+    if (current_mission_cmd == MissionCmd::STOP)
+    {
+        state_to_stop = state_;
+        state_ = State::STOP;
+        return false;
+    }
+
+    if (!isSamplerMode(LastStatusMsg))
+    {
+        state_to_stop = state_;
+        state_ = State::STOP;
+        return false;
+    }
+
+    return true;
+}
 /////
 
 bool MissionControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
-  // RCLCPP_INFO(this->get_logger(), "Com state mode of msg: %d", msg->communication_state);
-  // RCLCPP_INFO(this->get_logger(), "Control mode of msg: %d", msg->control_mode);
-  // RCLCPP_INFO(this->get_logger(), "Com state Opened: %d", RoverStatusMsg::COMMUNICATION_STATE_OPENED);
-  // RCLCPP_INFO(this->get_logger(), "Control mode sampler: %d", RoverStatusMsg::CONTROL_MODE_SAMPLER);
 
 	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
 		   msg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER;
@@ -89,33 +120,13 @@ void MissionControl::HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &s
 	if (isSamplerMode(LastStatusMsg))
 		LastCtrlMsg = samplerCtlMsg;
 
- //sampler_motion_interfaces::msg::SamplerCanEx msg;
- //msg.platform_pos = LastCtrlMsg->platform_movement
-
-  
-	// else
-	// 	RCLCPP_WARN_THROTTLE(mNh->get_logger(), *mNh->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
-	// 						 "When non-sampler mode is selected, incoming SamplerControl MQTT messages are discarded.");
 }
 
 void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
-  // RCLCPP_INFO(this->get_logger(), "Recieved status with mode: %f", roverStatusMsg->control_mode);
-	// bool stop_sampler = false;
-	// if (!isSamplerMode(roverStatusMsg) && isSamplerMode(LastStatusMsg))
-	// 	stop_sampler = true;
 
-	// if (isSamplerMode(roverStatusMsg) && !isSamplerMode(LastStatusMsg))
-	// 	stop_sampler = true;
-  // RCLCPP_INFO(this->get_logger(), "Recieved Rover status msg");
-  // RCLCPP_INFO(this->get_logger(), "Com state mode: %d", roverStatusMsg->communication_state);
-  // RCLCPP_INFO(this->get_logger(), "COntrol mode: %d", roverStatusMsg->control_mode);
-  // RCLCPP_WARN(this->get_logger(), "Callback ptr: %p", roverStatusMsg.get());
-  // RCLCPP_WARN(this->get_logger(), "Stored ptr: %p", LastStatusMsg.get());
 	LastStatusMsg = roverStatusMsg;
 
-	// if (stop_sampler)
-	// 	stopSampler();
 }
 
 void MissionControl::HandleMeasurementFeedback(const MeasurementMsg::ConstSharedPtr &measurementMsg){
@@ -133,11 +144,13 @@ bool MissionControl::get_measurements(){
 //////
 void MissionControl::statesLoop(){
     // RCLCPP_INFO(this->get_logger(), "statesLoop running");
+    uint8_t current_mission_cmd = CheckMissionCmd();
+    missionFeedbackMsg->mission_state = to_Feedback(state_);
+    getFeedback(missionFeedbackMsg);
+
     switch(state_){
       case State::IDLE:
-        //RCLCPP_WARN(this->get_logger(), "Read ptr: %p", LastStatusMsg.get());
-        // RCLCPP_INFO(this->get_logger(), "Is sampler mode: %d", MissionControl::isSamplerMode(LastStatusMsg));
-        if(MissionControl::isSamplerMode(LastStatusMsg)){
+        if(MissionControl::isSamplerMode(LastStatusMsg) && current_mission_cmd == MissionCmd::START){
           if(!calibrate_drill){
             state_ = State::CALIBRATE_DRILL;
           }else if(!calibrate_platform){
@@ -145,27 +158,16 @@ void MissionControl::statesLoop(){
           }
 
           if(calibrate_platform && calibrate_drill){
-            // calibrate_drill = false;
-            // calibrate_platform =false;
-            // if(mission_begining == 0){
-            //   mission_begining = false;
             state_ = State::MOVE_PLATFORM_DOWN;
             }
 
             
           }
-        //   }
-        // }
-
       // waiting for mission_start callback
         break;
 
       case State::CALIBRATE_PLATFORM:
-     
-        if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-          state_to_abort = state_;
-          state_ = State::ABORT;
+        if (!checkFlags(current_mission_cmd)){
           break;
         }
        
@@ -194,10 +196,7 @@ void MissionControl::statesLoop(){
 
       case State::CALIBRATE_DRILL:
      
-        if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-          state_to_abort = state_;
-          state_ = State::ABORT;
+        if (!checkFlags(current_mission_cmd)){
           break;
         }
 
@@ -206,6 +205,7 @@ void MissionControl::statesLoop(){
           joints_->calibrateDrill(0.02);
           goal_sent = true;
         }
+        
         
         if(std::fabs(0.0 - joints_->get_current_position(2)) < 0.01){
           // time_between_states++;
@@ -225,12 +225,10 @@ void MissionControl::statesLoop(){
       break;
 
       case State::MOVE_PLATFORM_DOWN:
-        if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-          state_to_abort = state_;
-          state_ = State::ABORT;
+         if (!checkFlags(current_mission_cmd)){
           break;
         }
+
         if(!goal_sent){
           //joints_->setGoalStatus(false);
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
@@ -259,12 +257,10 @@ void MissionControl::statesLoop(){
         break;
 
       case State::DRILLING:
-        if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-          RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-          state_to_abort = state_;
-          state_ = State::ABORT;
+        if (!checkFlags(current_mission_cmd)){
           break;
         }
+
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting drilling");
           JointMovement::JointCommand cmd;
@@ -294,10 +290,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::MOVE_DRILL_UP:
-          if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-            RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-            state_to_abort = state_;
-            state_ = State::ABORT;
+           if (!checkFlags(current_mission_cmd)){
             break;
           }
           if(!goal_sent){
@@ -325,12 +318,9 @@ void MissionControl::statesLoop(){
         break; 
         
         case State::MOVE_PLATFORM_UP:
-          if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-              RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-              state_to_abort = state_;
-              state_ = State::ABORT;
-              break;
-            }
+          if (!checkFlags(current_mission_cmd)){
+            break;
+          }
             if(!goal_sent){
               RCLCPP_INFO(this->get_logger(), "Moving Platform up");
               JointMovement::JointCommand cmd;
@@ -356,10 +346,7 @@ void MissionControl::statesLoop(){
         break; 
 
         case State::MEASURE_SAMPLE:
-          if(!(MissionControl::isSamplerMode(LastStatusMsg))){
-            RCLCPP_INFO(this->get_logger(), "Mission is canceled");
-            state_to_abort = state_;
-            state_ = State::ABORT;
+           if (!checkFlags(current_mission_cmd)){
             break;
           }
           switch(measurement_step){
@@ -453,6 +440,9 @@ void MissionControl::statesLoop(){
         case State::DONE:
         break;
 
+        case State::STOP:
+        break;
+
         case State::ABORT:
             std::string state_string = to_string(state_to_abort);
             RCLCPP_INFO(this->get_logger(), "Mission Abortion on state: %s", state_string.c_str());
@@ -466,40 +456,29 @@ void MissionControl::statesLoop(){
     }
 }
 
-
-void MissionControl::MissionCheck(std_msgs::msg::String::SharedPtr msg){
-  RCLCPP_INFO(this->get_logger(), "Received: %s", msg->data.c_str());
-  mission_commands= msg->data;
-
-    // if (msg->data == "mission_start"){
-     
-    //     if(state_ == State::IDLE){
-    //         state_ = State::MOVING;
-    //         RCLCPP_INFO(this->get_logger(), "Current state: %s", to_string(state_).c_str());            
-    //         //move_client_->send_goal();
-    //     }
-
-    //}
-  
-  
-  //RCLCPP_INFO(this->get_logger(), "Current state: %s", to_string(state_).c_str());
+void MissionControl::getFeedback(MissionMsg::SharedPtr &feedbackMsg){
+  feedbackMsg->platform_pos = joints_->get_current_position(MissionMsg::PLATFORM);
+  feedbackMsg->drill_pos = joints_->get_current_position(MissionMsg::DRILL);
+  feedbackMsg->drill_rot_vel = joints_->get_current_velocity(MissionMsg::ROTOR);
+  feedbackMsg->container_a_pos = joints_->get_current_velocity(MissionMsg::CONTAINER_A);
+  joints_->JointStateFeedback(feedbackMsg);
 }
 
-
 void MissionControl::AppFeedbackPublish(){
-  platform_position = joints_->get_current_position(1);
-  drill_position = joints_->get_current_position(2);
+  RCLCPP_INFO(this->get_logger(), "Current state is =  %d", missionFeedbackMsg->mission_state);
+  RCLCPP_INFO(this->get_logger(), "Platform pos =  %f", missionFeedbackMsg->platform_pos);
+  RCLCPP_INFO(this->get_logger(), "Drill pos =  %f", missionFeedbackMsg->drill_pos);
+  RCLCPP_INFO(this->get_logger(), "Drill vel =  %f", missionFeedbackMsg->drill_rot_vel);
+  RCLCPP_INFO(this->get_logger(), "Current Joint =  %d", missionFeedbackMsg->joint_id);
+  RCLCPP_INFO(this->get_logger(), "Current goal state =  %d", missionFeedbackMsg->goal_state);
+ 
   
-  drill_velocity = joints_->get_current_velocity(4);
-  RCLCPP_INFO(this->get_logger(), "Platform pos =  %f", platform_position);
-  RCLCPP_INFO(this->get_logger(), "Drill pos =  %f", drill_position);
-  RCLCPP_INFO(this->get_logger(), "Drill vel =  %f", drill_velocity);
-  rex_interfaces::msg::SamplerFeedback msg;
-  msg.platform_pos = platform_position;
-  msg.drill_pos = drill_position;
-  msg.drill_rot_vel = drill_velocity;
+  // rex_interfaces::msg::SamplerFeedback msg;
+  // msg.platform_pos = platform_position;
+  // msg.drill_pos = drill_position;
+  // msg.drill_rot_vel = drill_velocity;
 
-  PubFeedback_->publish(msg);
+  // PubFeedback_->publish(msg);
 
 }
 
