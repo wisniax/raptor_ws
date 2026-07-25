@@ -148,17 +148,17 @@ void MotorControl::setCorrectState()
 		return;
 	}
 
-    // STOP
-    if (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP)
+    // CONFIG
+    if (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG)
     {
-        mState = State::DriveStop;
+        mState = State::Config;
         return;
     }
 
-    // CONFIG, DRIVE, DRIVE_AUTONOMY
+    // STOP, DRIVE, DRIVE_AUTONOMY
     if (mode & (rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE |
                 rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE_AUTONOMY |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG))
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP))
     {
         if (mState == State::DriveStop)
         {
