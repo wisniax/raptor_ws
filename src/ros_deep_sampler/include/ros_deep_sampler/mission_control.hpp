@@ -49,6 +49,8 @@ class MissionControl : public rclcpp::Node{
         void send_rotor_velocity(double vel);
         bool get_measurements();
 
+        bool drillStuck();
+
     private:
      
 
@@ -58,6 +60,7 @@ class MissionControl : public rclcpp::Node{
             CALIBRATE_DRILL,
             MOVE_PLATFORM_DOWN,
             DRILLING,
+            RECOVER_DRILL,
             MOVE_DRILL_UP,
             MOVE_PLATFORM_UP,
             MEASURE_SAMPLE,
@@ -66,7 +69,31 @@ class MissionControl : public rclcpp::Node{
             STOP
 
         };
-        
+
+        enum class MEASURE_STATE{
+            MOVE_CONTAINER,
+            MOVE_DRILL_CLOSER,
+            PUT_SAMPLE,
+            MOVE_CONTAINER_BACK,
+            FINISH
+        };
+
+        enum class RECOVER_STATE{
+            LIFT_UP,
+            WAIT,
+            CHECK_ROTATION
+        };
+
+
+        const double MIN_SPEED = 3.0;
+        const double MAX_CURRENT = 3.0;
+        const double MIN_TIME = 0.5;
+        const int MAX_RECOVERY_ATTEMPT = 5;
+        bool stall_timer_running_ = false;
+        rclcpp::Time stall_start_time_;
+        int recovery_attempt = 0;
+        RECOVER_STATE recover_state = RECOVER_STATE::LIFT_UP;
+
 
         std::string to_string(State s)
         {
@@ -89,9 +116,11 @@ class MissionControl : public rclcpp::Node{
                 case State::CALIBRATE_PLATFORM: return MissionMsg::STATE_CALIBRATE_PLATFORM;
                 case State::MOVE_PLATFORM_DOWN: return MissionMsg::STATE_MOVE_PLATFORM_DOWN;
                 case State::DRILLING: return  MissionMsg::STATE_DRILLING;
+                case State::RECOVER_DRILL: return MissionMsg::STATE_RECOVER_DRILL;
                 case State::MOVE_DRILL_UP: return MissionMsg::STATE_MOVE_DRILL_UP;
                 case State::MOVE_PLATFORM_UP: return MissionMsg::STATE_MOVE_PLATFORM_UP;
                 case State::MEASURE_SAMPLE: return MissionMsg::STATE_MEASUREMENTS;
+                case State::STOP: return MissionMsg::STATE_STOP;
                 case State::ABORT: return MissionMsg::STATE_ABORT;
                 case State::DONE: return MissionMsg::STATE_DONE;
                 default: return 10;
@@ -144,7 +173,8 @@ class MissionControl : public rclcpp::Node{
         int rotation_time = 0;
         bool calibrate_drill = false;
         bool calibrate_platform = false;
-        int measurement_step = 0; // 0 - move container, 1 - put sample; 2 - measure; 3 - move container back
+        bool mission_in_stop = false;
+        MEASURE_STATE measurement_step = MEASURE_STATE::MOVE_CONTAINER; // 0 - move container, 1 - put sample; 2 - measure; 3 - move container back
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
 

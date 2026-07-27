@@ -289,6 +289,7 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
         rclcpp_action::Client<FollowJointTrajectory>::SendGoalOptions();
 
     trajectory_finished_ = false;
+    goal_state = MissionMsg::GOAL_SENT;
     options.goal_response_callback =
         [this](TJCGoalHandle::SharedPtr handle)
         {
@@ -376,8 +377,12 @@ void JointMovement::cancelMovement()
 }
 
 void JointMovement::JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg){
+    if(prev_goal_state == MissionMsg::GOAL_ACCEPTED){
+        goal_state = MissionMsg::GOAL_EXECUTING;
+    }
     feedbackMsg->joint_id = current_slider_;
     feedbackMsg->goal_state = goal_state;
+    prev_goal_state = goal_state;
 
 }
 

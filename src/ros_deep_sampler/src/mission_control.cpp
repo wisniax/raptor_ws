@@ -44,7 +44,7 @@ namespace ros_deep_sampler{
     missionCmdMsg = std::make_shared<MissionCmd>();
     missionFeedbackMsg = std::make_shared<MissionMsg>();
     missionCmdMsg->mission_cmd = MissionCmd::IDLE;
-    missionFeedbackMsg->mission_state = 10; //Means nothing, not IDLDE either
+    missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
     
     rex_interfaces::msg::RoverStatus init_msg;
     init_msg.communication_state = RoverStatusMsg::COMMUNICATION_STATE_CLOSED;
@@ -54,7 +54,7 @@ namespace ros_deep_sampler{
 
     RCLCPP_INFO(this->get_logger(), "Constructor executed");
 
-    
+    stall_start_time_ = this->now();
 
 
     // mPubFeedback.platform_position = this->platform_position;
@@ -138,6 +138,27 @@ bool MissionControl::get_measurements(){
   if (weight_a != 0.0 && ph != 0.0){
     return true;
   }else{return false;}
+}
+
+bool MissionControl::drillStuck(){
+
+    if (std::abs(joints_->get_current_velocity(missionFeedbackMsg->ROTOR)) < MIN_SPEED)
+    {
+        if (!stall_timer_running_)
+        {
+            stall_start_time_ = this->now();
+            stall_timer_running_ = true;
+        }
+
+        if ((this->now() - stall_start_time_).seconds() > MIN_TIME)
+            return true;
+    }
+    else
+    {
+        stall_timer_running_ = false;
+    }
+
+    return false;
 }
 
 
@@ -272,6 +293,18 @@ void MissionControl::statesLoop(){
           joints_->send_rotor_velocity(15.0);
           goal_sent = true;
         }
+
+        if (drillStuck()){
+          RCLCPP_INFO(this->get_logger(), "Drill got stuck");
+          joints_->send_rotor_velocity(0.0);
+          joints_->cancelMovement();
+          joints_->setTrajectoryStatus(false);
+          time_between_states = 0;
+          goal_sent = false;
+          commands.clear();
+          state_ = State::RECOVER_DRILL;
+          break;
+        }
         
         if(joints_->isTrajectoryFinished() ==1){
           time_between_states++;
@@ -282,6 +315,7 @@ void MissionControl::statesLoop(){
             // move_client_->set_goal_status(goal_sent);
             commands.clear();
             joints_->send_rotor_velocity(0.0);
+            recovery_attempt = 0;
             state_ = State::MOVE_DRILL_UP; 
           }
           
@@ -338,8 +372,8 @@ void MissionControl::statesLoop(){
                   RCLCPP_INFO(this->get_logger(), "Finish moving Platform up");
                   time_between_states =0;
                   goal_sent = false;
-                  // move_client_->set_goal_status(goal_sent);
                   commands.clear();
+                  joints_->setTrajectoryStatus(false);
                   state_ = State::MEASURE_SAMPLE; 
                 }
             }   
@@ -350,7 +384,7 @@ void MissionControl::statesLoop(){
             break;
           }
           switch(measurement_step){
-            case 0:
+            case MEASURE_STATE::MOVE_CONTAINER:
               if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Starting moving container");
                 JointMovement::JointCommand cmd;
@@ -359,11 +393,12 @@ void MissionControl::statesLoop(){
                 cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
+                measurement_step = MEASURE_STATE::MOVE_DRILL_CLOSER;
                 goal_sent = true;
               }
               break;
 
-            case 1:
+            case MEASURE_STATE::MOVE_DRILL_CLOSER:
               if(!goal_sent){
                   RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
                   JointMovement::JointCommand cmd;
@@ -372,12 +407,13 @@ void MissionControl::statesLoop(){
                   cmd.max_velocity = 0.1;
                   commands.push_back(cmd);
                   joints_->moveJoints(commands);
+                  measurement_step = MEASURE_STATE::PUT_SAMPLE;
                   // move_client_->send_goal(commands);
                   goal_sent = true;
                 }
               break;
 
-            case 2:
+            case MEASURE_STATE::PUT_SAMPLE:
                 if(rotation_time == 0){
                   joints_->send_rotor_velocity(5.0);
                 }
@@ -390,7 +426,8 @@ void MissionControl::statesLoop(){
                 cmd.max_velocity = 0.2;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
-
+                measurement_step = MEASURE_STATE::MOVE_CONTAINER_BACK;
+                rotation_time =0;
                 goal_sent = true;
                 // move_client_->set_goal_status(goal_sent);
               }
@@ -398,7 +435,7 @@ void MissionControl::statesLoop(){
               break;
               
               
-            case 3:
+            case MEASURE_STATE::MOVE_CONTAINER_BACK:
               if(get_measurements()){
                 if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Starting moving container back");
@@ -409,6 +446,7 @@ void MissionControl::statesLoop(){
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
                 goal_sent = true;
+                measurement_step = MEASURE_STATE::FINISH;
                 }
               }
               break;
@@ -418,20 +456,18 @@ void MissionControl::statesLoop(){
           if(joints_->isTrajectoryFinished() ==1){
             time_between_states++;
             if(time_between_states > 100){
-              measurement_step ++;
-              RCLCPP_INFO(this->get_logger(), "Measurement step is: %d", measurement_step);
+              //RCLCPP_INFO(this->get_logger(), "Measurement step is: %d", measurement_step);
               time_between_states = 0;
               goal_sent = false;
               joints_->setTrajectoryStatus(false);
               //move_client_->set_goal_status(goal_sent);
               commands.clear();
-              if(measurement_step == 4){
+              if(measurement_step == MEASURE_STATE::FINISH){
                 RCLCPP_INFO(this->get_logger(), "Finish measurements");
                 state_ = State::DONE; 
               }
                
             }
-            
           
           }
         break;
@@ -440,10 +476,101 @@ void MissionControl::statesLoop(){
         case State::DONE:
         break;
 
+        case State::RECOVER_DRILL:
+          if (!checkFlags(current_mission_cmd)){
+            break;
+          }
+          if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
+              state_to_abort = state_;
+              state_ = State::ABORT;
+            }
+
+          switch(recover_state){
+            case RECOVER_STATE::LIFT_UP:
+            if(!goal_sent){
+              RCLCPP_INFO(this->get_logger(), "Lift drill a bit up to recover");
+              JointMovement::JointCommand cmd;
+              cmd.id = missionFeedbackMsg->DRILL;
+              cmd.position = joints_->get_current_position(cmd.id) + 0.05;
+              cmd.max_velocity = 0.1;
+              commands.push_back(cmd);
+              joints_->moveJoints(commands);
+              joints_->send_rotor_velocity(-5.0);
+              goal_sent = true;
+              stall_timer_running_ = false;
+            }
+
+            if(joints_->isTrajectoryFinished() ==1){
+              time_between_states++;
+              if(time_between_states > 50){
+                RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+                time_between_states = 0;
+                goal_sent = false;
+                joints_->setTrajectoryStatus(false);
+                commands.clear();
+                recover_state = RECOVER_STATE::WAIT;
+                break;
+              }
+            }
+            break;
+
+            case RECOVER_STATE::WAIT:
+              rotation_time++;
+              if(rotation_time>10){
+                 joints_->send_rotor_velocity(12.0);
+                 stall_timer_running_ = false;
+                 rotation_time = 0;
+                 recover_state = RECOVER_STATE::CHECK_ROTATION;
+              }
+            break;
+            case RECOVER_STATE::CHECK_ROTATION:
+              time_between_states++;
+              if(time_between_states > 100){
+                time_between_states =0;
+                if (drillStuck()){
+                  joints_->send_rotor_velocity(0.0);
+                  goal_sent = false;
+                  recover_state = RECOVER_STATE::LIFT_UP;
+                  recovery_attempt++;
+                }else{
+                  joints_->send_rotor_velocity(0.0);
+                  goal_sent = false;
+                  recover_state = RECOVER_STATE::LIFT_UP;
+                  recovery_attempt = 0;
+                  state_ = State::DRILLING;
+                  break;
+                }
+              }
+
+            break;
+          }
+          
+
+        break;
+
         case State::STOP:
+          if(!mission_in_stop){
+            std::string state_string = to_string(state_to_stop);
+            RCLCPP_INFO(this->get_logger(), "Mission STOP on state: %s", state_string.c_str());
+            joints_->send_rotor_velocity(0.0);
+            //move_client_->cancel_goal();
+            joints_->cancelMovement();
+            // while(joints_->isGoalCanceled() != 1){}
+            mission_in_stop = true;
+            RCLCPP_INFO(this->get_logger(), "Mission Stopped successfully");
+            state_= State::STOP;
+          }
+          if(MissionControl::isSamplerMode(LastStatusMsg) && current_mission_cmd == MissionCmd::START){
+            state_ = state_to_stop;
+            std::string state_string = to_string(state_to_stop);
+            RCLCPP_INFO(this->get_logger(), "Continue the mission from state: %s", state_string.c_str());
+            mission_in_stop = false;
+          }
+        
         break;
 
         case State::ABORT:
+            joints_->send_rotor_velocity(0.0);
             std::string state_string = to_string(state_to_abort);
             RCLCPP_INFO(this->get_logger(), "Mission Abortion on state: %s", state_string.c_str());
             //move_client_->cancel_goal();

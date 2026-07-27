@@ -1,7 +1,5 @@
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-#include "ros_deep_sampler/visibility_control.h"
 
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
@@ -100,6 +98,7 @@ class  JointMovement{
         std::unordered_map<std::string, double> current_velocity_;
         uint8_t current_slider_ = 5; //Means nothing
         uint8_t goal_state = MissionMsg::GOAL_IDLE;
+        uint8_t prev_goal_state = MissionMsg::GOAL_IDLE;
 
         bool trajectory_finished_;
         bool goal_canceled = false;
