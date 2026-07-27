@@ -38,8 +38,7 @@ private:
 		DriveStop,
 		PrepDriving,
 		EStop,
-		Driving,
-        Config
+		Driving
 	};
 
 	can_msgs::msg::Frame encodeMotorVel(const rex_interfaces::msg::VescMotorCommand &vescMotorCommand, const VESC_Id_t vescId);

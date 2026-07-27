@@ -4,7 +4,7 @@ MotorControl::MotorControl(const rclcpp::NodeOptions & options) : Node("motor_co
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
-	mState = EStop;
+	mState = DriveStop;
 	mSetWheelsOriginCtd = 0;
 	mLastBatteryInfo = std::make_shared<const rex_interfaces::msg::BatteryInfo>();
 	mLastRoverStatus = std::make_shared<const rex_interfaces::msg::RoverStatus>();
@@ -44,6 +44,7 @@ void MotorControl::handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::Con
 	mLastBatteryInfo = msg;
 	setCorrectState();
 }
+
 void MotorControl::handleRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg)
 {
 	mLastRoverStatus = msg;
@@ -142,45 +143,37 @@ void MotorControl::setCorrectState()
         return;
     }
 
+    // Black Mushroom
 	if (mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
 	{
 		mState = State::DriveStop;
 		return;
 	}
 
-    // CONFIG
-    if (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG)
-    {
-        mState = State::Config;
-        return;
-    }
-
-    // STOP, DRIVE, DRIVE_AUTONOMY
+    // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY
     if (mode & (rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE |
                 rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE_AUTONOMY |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP))
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP |
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DEEP_SAMPLER |
+                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DEEP_SAMPLER_AUTONOMY))
     {
         if (mState == State::DriveStop)
-        {
-            mState = State::Driving;
-            return;
-        }
-
-        if (mState == State::EStop)
         {
             mState = State::PrepDriving;
             mSetWheelsOriginCtd = 20;
             RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
+            return;
         }
-        else if (mSetWheelsOriginCtd == 0)
+        if (mState == State::PrepDriving)
         {
-            if (mState == State::PrepDriving) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
-            mState = State::Driving;
+            if (mSetWheelsOriginCtd == 0) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+            else return;
         }
+        mState = State::Driving;
         return;
     }
 
-    mState = State::DriveStop;
+    mState = State::EStop;
 }
 
 void MotorControl::handleTimerClb()
