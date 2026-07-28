@@ -50,7 +50,7 @@ void SamplerControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &rov
         stopSampler();
 }
 
-void MotorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
+void SamplerControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
 {
     mLastBatteryInfo = msg;
 }
