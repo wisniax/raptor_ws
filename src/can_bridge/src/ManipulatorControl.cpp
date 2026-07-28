@@ -57,11 +57,17 @@ void ManipulatorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr 
     mLastBatteryInfo = msg;
 }
 
-bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg)
+bool ManipulatorControl::isManipulatorMode()
 {
-    int32_t mode = msg->control_mode;
+    // Black Mushroom
+    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
+    {
+        return false;
+    }
 
-    if (msg->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
+    int32_t mode = mLastRoverStatus->control_mode;
+
+    if (mLastRoverStatus->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
     {
         return false;
     }
@@ -74,12 +80,6 @@ bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr 
             RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
                                   "CONTROL_MODE is NONE! Treating as ESTOP.");
 
-        return false;
-    }
-
-    // Black Mushroom
-    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
-    {
         return false;
     }
 

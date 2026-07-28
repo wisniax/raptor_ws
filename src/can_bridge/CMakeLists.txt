@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
 
-
 project(can_bridge)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -55,6 +54,7 @@ add_library(manipulator_control_component SHARED src/ManipulatorControl.cpp)
 add_library(sampler_status_forwarder_component SHARED src/SamplerStatusForwarder.cpp)
 add_library(sampler_control_component SHARED src/SamplerControl.cpp)
 add_library(battery_info_forwarder_component SHARED src/BatteryInfoForwarder.cpp)
+add_library(config_control_component SHARED src/ConfigControl.cpp)
 
 target_link_libraries(vesc_status_handler_component can_bridge_common)
 target_link_libraries(status_message_component can_bridge_common)
@@ -63,6 +63,7 @@ target_link_libraries(manipulator_control_component can_bridge_common)
 target_link_libraries(sampler_status_forwarder_component can_bridge_common)
 target_link_libraries(sampler_control_component can_bridge_common)
 target_link_libraries(battery_info_forwarder_component can_bridge_common)
+target_link_libraries(config_control_component can_bridge_common)
 
 ament_target_dependencies(vesc_status_handler_component
         rclcpp
@@ -120,6 +121,14 @@ ament_target_dependencies(battery_info_forwarder_component
         can_msgs
         rex_interfaces
         )
+ament_target_dependencies(config_control_component
+        rclcpp
+        rclcpp_components
+        std_msgs
+        std_srvs
+        can_msgs
+        rex_interfaces
+        )
 
 rclcpp_components_register_node(
         vesc_status_handler_component
@@ -155,6 +164,11 @@ rclcpp_components_register_node(
         battery_info_forwarder_component
         PLUGIN "BatteryInfoForwarder"
         EXECUTABLE battery_info_forwarder
+)
+rclcpp_components_register_node(
+        config_control_component
+        PLUGIN "ConfigControl"
+        EXECUTABLE config_control
 )
 
 ament_export_targets(export_vesc_status_handler_component)
@@ -202,6 +216,13 @@ install(TARGETS sampler_control_component
 ament_export_targets(export_battery_info_forwarder_component)
 install(TARGETS battery_info_forwarder_component
         EXPORT export_battery_info_forwarder_component
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        )
+ament_export_targets(export_config_control_component)
+install(TARGETS config_control_component
+        EXPORT export_config_control_component
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin

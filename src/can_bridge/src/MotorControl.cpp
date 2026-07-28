@@ -121,6 +121,13 @@ void MotorControl::setWheelsOrigin()
 
 void MotorControl::setCorrectState()
 {
+    // Black Mushroom
+    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
+    {
+        mState = State::DriveStop;
+        return;
+    }
+
     int32_t mode = mLastRoverStatus->control_mode;
 
     if (mLastRoverStatus->communication_state != mLastRoverStatus->COMMUNICATION_STATE_OPENED)
@@ -142,13 +149,6 @@ void MotorControl::setCorrectState()
         mState = State::EStop;
         return;
     }
-
-    // Black Mushroom
-	if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
-	{
-		mState = State::DriveStop;
-		return;
-	}
 
     // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY
     if (mode & (RoverStatusMsg::CONTROL_MODE_DRIVE |
@@ -234,7 +234,7 @@ void MotorControl::sendMotorVel(const WheelsMsg::ConstSharedPtr &msg)
 		mRawCanPub->publish(*iter);
 }
 
-can_msgs::msg::Frame MotorControl::encodeMotorVel(const rex_interfaces::msg::VescMotorCommand &vescMotorCommand, const VESC_Id_t vescId)
+can_msgs::msg::Frame MotorControl::encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId)
 {
 	VESC_CommandFrame cmdf;
 	VESC_ZeroMemory(&cmdf, sizeof(cmdf));

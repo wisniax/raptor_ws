@@ -57,6 +57,12 @@ void MotorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
 
 bool SamplerControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
+    // Black Mushroom
+    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
+    {
+        return false;
+    }
+
     int32_t mode = msg->control_mode;
 
     if (msg->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
@@ -72,12 +78,6 @@ bool SamplerControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
             RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
                                   "CONTROL_MODE is NONE! Treating as ESTOP.");
 
-        return false;
-    }
-
-    // Black Mushroom
-    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
-    {
         return false;
     }
 

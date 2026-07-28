@@ -33,7 +33,7 @@ private:
     void handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
     void handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg);
 
-    bool isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg);
+    bool isManipulatorMode();
 
     can_msgs::msg::Frame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
 
