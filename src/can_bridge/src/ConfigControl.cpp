@@ -1,4 +1,4 @@
-#include "can_bridge/MotorControl.hpp"
+#include "can_bridge/ConfigControl.hpp"
 
 ConfigControl::ConfigControl(const rclcpp::NodeOptions & options) : Node("config_control", options)
 {
