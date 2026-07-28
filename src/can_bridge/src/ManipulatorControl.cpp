@@ -24,7 +24,7 @@ ManipulatorControl::ManipulatorControl(const rclcpp::NodeOptions & options) : No
 
 void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::ConstSharedPtr& manipulatorCtlMsg)
 {
-    if (!isManipulatorMode(mLastRoverStatus))
+    if (!isManipulatorMode())
     {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
                              "When non-manipulator mode is selected, incoming ManipulatorControl messages are discarded.");

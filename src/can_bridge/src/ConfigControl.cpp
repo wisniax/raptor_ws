@@ -24,7 +24,7 @@ ConfigControl::ConfigControl(const rclcpp::NodeOptions & options) : Node("config
 
 void ConfigControl::handleCalibrationMotorCommand(const VescMotorMsg::ConstSharedPtr &msg)
 {
-    if (!isManipulatorMode(mLastRoverStatus))
+    if (!isConfigMode())
     {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
                              "Calibration command sent not during CONFIG!");
