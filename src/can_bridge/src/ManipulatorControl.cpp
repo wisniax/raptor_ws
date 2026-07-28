@@ -4,17 +4,57 @@ ManipulatorControl::ManipulatorControl(const rclcpp::NodeOptions & options) : No
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
-	mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
+    mLastRoverStatus = std::make_shared<const RoverStatusMsg>();
+    mLastBatteryInfo = std::make_shared<const BatteryInfoMsg>();
 
-    mManipulatorCtlSub = this->create_subscription<rex_interfaces::msg::ManipulatorControl>(
-		RosCanConstants::RosTopics::can_manipulator_ctl, qos, 
-		std::bind(&ManipulatorControl::handleManipulatorCtl, this, std::placeholders::_1));
+    mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
+
+    mManipulatorCtlSub = this->create_subscription<ManipulatorControlMsg>(
+            RosCanConstants::RosTopics::can_manipulator_ctl, qos,
+		    std::bind(&ManipulatorControl::handleManipulatorCtl, this, std::placeholders::_1));
 
     mRoverStatusSub = this->create_subscription<RoverStatusMsg>(
             RosCanConstants::RosTopics::mqtt_rover_status, qos,
-            std::bind(&ManipulatorControl::handleRoverStatusClb, this, std::placeholders::_1));
+            std::bind(&ManipulatorControl::handleRoverStatus, this, std::placeholders::_1));
 
-    mRoverStatusMsgLast = std::make_shared<const RoverStatusMsg>();
+    mBatteryInfoSub = this->create_subscription<BatteryInfoMsg>(
+            RosCanConstants::RosTopics::can_battery_info, qos,
+            std::bind(&ManipulatorControl::handleBatteryInfo, this, std::placeholders::_1));
+}
+
+void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::ConstSharedPtr& manipulatorCtlMsg)
+{
+    if (!isManipulatorMode(mLastRoverStatus))
+    {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
+                             "When non-manipulator mode is selected, incoming ManipulatorControl messages are discarded.");
+        return;
+    }
+
+    // 7 since there are 6 axes + 1 gripper
+    std::array<can_msgs::msg::Frame, 7> sendQueue;
+    auto sendQueueIter = sendQueue.begin();
+
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[1], RosCanConstants::VescIds::manipulator_axis_2);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[2], RosCanConstants::VescIds::manipulator_axis_3);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[3], RosCanConstants::VescIds::manipulator_axis_4);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[4], RosCanConstants::VescIds::manipulator_axis_5);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[5], RosCanConstants::VescIds::manipulator_axis_6);
+    *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).gripper, RosCanConstants::VescIds::manipulator_gripper);
+
+    for (auto iter = sendQueue.begin(); iter < sendQueue.end(); iter++)
+        mRawCanPub->publish(*iter);
+}
+
+void ManipulatorControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
+{
+    mLastRoverStatus = roverStatusMsg;
+}
+
+void ManipulatorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
+{
+    mLastBatteryInfo = msg;
 }
 
 bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg)
@@ -37,40 +77,15 @@ bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr 
         return false;
     }
 
-    // ROBOTIC_ARM, ROBOTIC_ARM_AUTONOMY, CONFIG
-    return mode & (RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM |
-                   RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM_AUTONOMY  |
-                   RoverStatusMsg::CONTROL_MODE_CONFIG);
-}
-
-void ManipulatorControl::handleRoverStatusClb(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
-{
-    mRoverStatusMsgLast = roverStatusMsg;
-}
-
-void ManipulatorControl::handleManipulatorCtl(const rex_interfaces::msg::ManipulatorControl::ConstSharedPtr& manipulatorCtlMsg)
-{
-    if (!isManipulatorMode(mRoverStatusMsgLast))
+    // Black Mushroom
+    if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
     {
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
-                             "When non-manipulator mode is selected, incoming ManipulatorControl messages are discarded.");
-        return;
+        return false;
     }
 
-	// 7 since there are 6 axes + 1 gripper
-	std::array<can_msgs::msg::Frame, 7> sendQueue;
-	auto sendQueueIter = sendQueue.begin();
-
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[1], RosCanConstants::VescIds::manipulator_axis_2);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[2], RosCanConstants::VescIds::manipulator_axis_3);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[3], RosCanConstants::VescIds::manipulator_axis_4);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[4], RosCanConstants::VescIds::manipulator_axis_5);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[5], RosCanConstants::VescIds::manipulator_axis_6);
-	*sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).gripper, RosCanConstants::VescIds::manipulator_gripper);
-
-	for (auto iter = sendQueue.begin(); iter < sendQueue.end(); iter++)
-		mRawCanPub->publish(*iter);
+    // ROBOTIC_ARM, ROBOTIC_ARM_AUTONOMY
+    return mode & (RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM |
+                   RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM_AUTONOMY);
 }
 
 can_msgs::msg::Frame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)

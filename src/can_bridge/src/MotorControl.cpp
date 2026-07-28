@@ -6,27 +6,27 @@ MotorControl::MotorControl(const rclcpp::NodeOptions & options) : Node("motor_co
 
 	mState = DriveStop;
 	mSetWheelsOriginCtd = 0;
-	mLastBatteryInfo = std::make_shared<const rex_interfaces::msg::BatteryInfo>();
-	mLastRoverStatus = std::make_shared<const rex_interfaces::msg::RoverStatus>();
+	mLastRoverStatus = std::make_shared<const RoverStatusMsg>();
+    mLastBatteryInfo = std::make_shared<const BatteryInfoMsg>();
 
 	mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
 
-    mSetMotorVelSub = this->create_subscription<rex_interfaces::msg::Wheels>(
-		RosCanConstants::RosTopics::can_set_motor_vel,
-		qos, std::bind(&MotorControl::handleSetMotorVel, this, std::placeholders::_1));
+    mSetMotorVelSub = this->create_subscription<WheelsMsg>(
+            RosCanConstants::RosTopics::can_set_motor_vel, qos,
+            std::bind(&MotorControl::handleSetMotorVel, this, std::placeholders::_1));
 
-    mBatteryInfoSub = this->create_subscription<rex_interfaces::msg::BatteryInfo>(
-		RosCanConstants::RosTopics::can_battery_info,
-		qos, std::bind(&MotorControl::handleBatteryInfo, this, std::placeholders::_1));
+    mRoverStatusSub = this->create_subscription<RoverStatusMsg>(
+		    RosCanConstants::RosTopics::mqtt_rover_status, qos,
+            std::bind(&MotorControl::handleRoverStatus, this, std::placeholders::_1));
 
-    mRoverStatusSub = this->create_subscription<rex_interfaces::msg::RoverStatus>(
-		RosCanConstants::RosTopics::mqtt_rover_status,
-		qos, std::bind(&MotorControl::handleRoverStatus, this, std::placeholders::_1));
+    mBatteryInfoSub = this->create_subscription<BatteryInfoMsg>(
+            RosCanConstants::RosTopics::can_battery_info, qos,
+            std::bind(&MotorControl::handleBatteryInfo, this, std::placeholders::_1));
 
 	mTimer = this->create_timer(std::chrono::milliseconds(500), std::bind(&MotorControl::handleTimerClb, this));
 }
 
-void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
+void MotorControl::handleSetMotorVel(const WheelsMsg::ConstSharedPtr &msg)
 {
 	if (mState != State::Driving)
 	{
@@ -39,21 +39,21 @@ void MotorControl::handleSetMotorVel(const rex_interfaces::msg::Wheels::ConstSha
 	sendMotorVel(msg);
 }
 
-void MotorControl::handleBatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
-{
-	mLastBatteryInfo = msg;
-	setCorrectState();
-}
-
-void MotorControl::handleRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg)
+void MotorControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &msg)
 {
 	mLastRoverStatus = msg;
 	setCorrectState();
 }
 
+void MotorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
+{
+    mLastBatteryInfo = msg;
+    setCorrectState();
+}
+
 void MotorControl::stopMotors()
 {
-	rex_interfaces::msg::Wheels rover_wheels_velocity_temp;
+    WheelsMsg rover_wheels_velocity_temp;
 
 	rover_wheels_velocity_temp.header.stamp = this->now();
 
@@ -82,12 +82,12 @@ void MotorControl::stopMotors()
 	rover_wheels_velocity_temp.rear_right.drive.set_value = 0.0;
 	rover_wheels_velocity_temp.rear_left.drive.set_value = 0.0;
 
-	sendMotorVel(std::make_shared<const rex_interfaces::msg::Wheels>(rover_wheels_velocity_temp));
+	sendMotorVel(std::make_shared<const WheelsMsg>(rover_wheels_velocity_temp));
 }
 
 void MotorControl::setWheelsOrigin()
 {
-	rex_interfaces::msg::Wheels rover_wheels_velocity_temp;
+    WheelsMsg rover_wheels_velocity_temp;
 
 	rover_wheels_velocity_temp.header.stamp = this->now();
 
@@ -116,7 +116,7 @@ void MotorControl::setWheelsOrigin()
 	rover_wheels_velocity_temp.rear_right.drive.set_value = 0.0;
 	rover_wheels_velocity_temp.rear_left.drive.set_value = 0.0;
 
-	sendMotorVel(std::make_shared<const rex_interfaces::msg::Wheels>(rover_wheels_velocity_temp));
+	sendMotorVel(std::make_shared<const WheelsMsg>(rover_wheels_velocity_temp));
 }
 
 void MotorControl::setCorrectState()
@@ -131,8 +131,8 @@ void MotorControl::setCorrectState()
     }
 
     // NONE, ESTOP
-    if (mode == rex_interfaces::msg::RoverStatus::CONTROL_MODE_NONE ||
-        (mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP))
+    if (mode == RoverStatusMsg::CONTROL_MODE_NONE ||
+        (mode & RoverStatusMsg::CONTROL_MODE_ESTOP))
     {
         if (mode == 0)
             RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
@@ -144,18 +144,18 @@ void MotorControl::setCorrectState()
     }
 
     // Black Mushroom
-	if (mLastBatteryInfo->hotswap_status & rex_interfaces::msg::BatteryInfo::DRIVE_STOP)
+	if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
 	{
 		mState = State::DriveStop;
 		return;
 	}
 
     // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY
-    if (mode & (rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DRIVE_AUTONOMY |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_STOP |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DEEP_SAMPLER |
-                rex_interfaces::msg::RoverStatus::CONTROL_MODE_DEEP_SAMPLER_AUTONOMY))
+    if (mode & (RoverStatusMsg::CONTROL_MODE_DRIVE |
+                RoverStatusMsg::CONTROL_MODE_DRIVE_AUTONOMY |
+                RoverStatusMsg::CONTROL_MODE_STOP |
+                RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER |
+                RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER_AUTONOMY))
     {
         if (mState == State::DriveStop)
         {
@@ -185,7 +185,7 @@ void MotorControl::handleTimerClb()
 	setCorrectState();
 }
 
-void MotorControl::sendMotorVel(const rex_interfaces::msg::Wheels::ConstSharedPtr &msg)
+void MotorControl::sendMotorVel(const WheelsMsg::ConstSharedPtr &msg)
 {
 	// 8 since there are 4 wheels, each being vesc + stepper combo
 	std::array<can_msgs::msg::Frame, 8> sendQueue;
@@ -266,7 +266,7 @@ can_msgs::msg::Frame MotorControl::encodeMotorVel(const rex_interfaces::msg::Ves
 	return fr;
 }
 
-rex_interfaces::msg::Wheels::ConstSharedPtr MotorControl::GetLastSentFrame() const
+WheelsMsg::ConstSharedPtr MotorControl::GetLastSentFrame() const
 {
 	return mLastSentFrame;
 }
