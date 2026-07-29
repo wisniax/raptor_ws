@@ -203,6 +203,14 @@ SamplerHardware::export_command_interfaces()
         "rotor_joint",
         hardware_interface::HW_IF_VELOCITY,
         &rotor_cmd_);
+    command_interfaces.emplace_back(
+        "vacuum_rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_cmd_);
+    command_interfaces.emplace_back(
+        "brush_rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_cmd_);
     
     command_interfaces.emplace_back(
     hardware_interface::CommandInterface(
@@ -229,11 +237,6 @@ SamplerHardware::export_state_interfaces()
         &drill_pos_);
 
     state_interfaces.emplace_back(
-        "rotor_joint",
-        hardware_interface::HW_IF_POSITION,
-        &rotor_pos_);
-
-    state_interfaces.emplace_back(
         "platform_joint",
         hardware_interface::HW_IF_VELOCITY,
         &platform_vel_);
@@ -246,6 +249,26 @@ SamplerHardware::export_state_interfaces()
     state_interfaces.emplace_back(
         "rotor_joint",
         hardware_interface::HW_IF_VELOCITY,
+        &rotor_vel_);
+    state_interfaces.emplace_back(
+        "rotor_joint",
+        hardware_interface::HW_IF_POSITION,
+        &rotor_vel_);
+    state_interfaces.emplace_back(
+        "vacuum_rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_vel_);
+    state_interfaces.emplace_back(
+        "vacuum_rotor_joint",
+        hardware_interface::HW_IF_POSITION,
+        &rotor_vel_);
+    state_interfaces.emplace_back(
+        "brush_rotor_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &rotor_vel_);
+     state_interfaces.emplace_back(
+        "brush_rotor_joint",
+        hardware_interface::HW_IF_POSITION,
         &rotor_vel_);
 
     state_interfaces.emplace_back(
@@ -283,19 +306,19 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
       drill_pos_ = sim_positions_["drill_joint"];
   }
 
-  if (sim_positions_.find("rotor_joint") != sim_positions_.end())
-  {
-      rotor_pos_ = sim_positions_["rotor_joint"];
-  }
+//   if (sim_positions_.find("rotor_joint") != sim_positions_.end())
+//   {
+//       rotor_pos_ = sim_positions_["rotor_joint"];
+//   }
 
    if (sim_positions_.find("container_joint") != sim_positions_.end())
   {
       container_pos_ = sim_positions_["container_joint"];
   }
 
-  if (sim_positions_.find("platform_joint") != sim_positions_.end())
+  if (sim_vel_.find("platform_joint") != sim_vel_.end())
   {
-      platform_vel_ = sim_positions_["platform_joint"];
+      platform_vel_ = sim_vel_["platform_joint"];
       // RCLCPP_INFO(
       //   get_node()->get_logger(),
       //   "READ platform: state=%f command=%f",

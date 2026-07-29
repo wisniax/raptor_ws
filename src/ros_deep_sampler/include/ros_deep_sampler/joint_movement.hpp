@@ -29,7 +29,7 @@ class  JointMovement{
             DRILL,
             CONTAINER,
             DRILL_ROTOR,
-            VACCUM_ROTOR,
+            VACUUM_ROTOR,
             BRUSH_ROTOR,
             FLAP_JOINT
         };
@@ -97,6 +97,8 @@ class  JointMovement{
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr container_client_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_velocity_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr vacuum_rotor_velocity_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr brush_rotor_velocity_pub_;
 
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
         

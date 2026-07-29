@@ -102,19 +102,7 @@ class MissionControl : public rclcpp::Node{
         RECOVER_STATE recover_state = RECOVER_STATE::LIFT_UP;
 
 
-        std::string to_string(State s)
-        {
-            switch(s) {
-                case State::IDLE: return "IDLE";
-                case State::CALIBRATE_PLATFORM: return "MOVING up to set origin";
-                case State::MOVE_PLATFORM_DOWN: return "MOVING PLATFORM DOWN";
-                case State::DRILLING: return "DRILLING WITH MOVING DRILL DOWN";
-                case State::MOVE_DRILL_UP: return "MOVING DRILL UP";
-                case State::MOVE_PLATFORM_UP: return "MOVING PLATFORM UP";
-                case State::DONE: return "DONE";
-                default: return "UNKNOWN";
-            }
-        }
+        std::string to_string(State s);
         
         uint8_t to_Feedback(State s);
 

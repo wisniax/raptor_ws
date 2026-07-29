@@ -87,6 +87,18 @@ def generate_launch_description():
         arguments=["rotor_velocity_controller"],
         output="screen",
     )
+    vacuum_rotor_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["vacuum_rotor_velocity_controller"],
+        output="screen",
+    )
+    brush_rotor_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["brush_rotor_velocity_controller"],
+        output="screen",
+    )
 
     container_controller_spawner = Node(
         package="controller_manager",
@@ -121,5 +133,7 @@ def generate_launch_description():
     #platform_velocity_controller_spawner,
     drill_controller_spawner,
     rotor_controller_spawner,
+    vacuum_rotor_controller_spawner,
+    brush_rotor_controller_spawner,
     container_controller_spawner,
 ])

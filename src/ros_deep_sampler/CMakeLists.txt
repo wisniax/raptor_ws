@@ -81,6 +81,7 @@ install(DIRECTORY config
 add_executable(ros_deep_sampler_node 
   src/main.cpp
   src/mission_control.cpp
+  src/mission_states.cpp
   src/joint_movement.cpp
   src/RosCanConstants.cpp
 )

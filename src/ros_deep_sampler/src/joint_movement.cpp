@@ -24,6 +24,12 @@ JointMovement::JointMovement(rclcpp::Node *node)
     rotor_velocity_pub_ =
         node_->create_publisher<std_msgs::msg::Float64>(
             "/rotor_joint_cmd", 10);
+    vacuum_rotor_velocity_pub_ =
+        node_->create_publisher<std_msgs::msg::Float64>(
+            "/vacuum_rotor_joint_cmd", 10);
+    brush_rotor_velocity_pub_ =
+        node_->create_publisher<std_msgs::msg::Float64>(
+            "/brush_rotor_joint_cmd", 10);
 
     joint_sub_ =
         node_->create_subscription<sensor_msgs::msg::JointState>(
@@ -71,6 +77,12 @@ double JointMovement::get_current_velocity(JointsIds id){
   if(id == JointsIds::CONTAINER){
     return current_velocity_["container_joint"];
   }
+  if(id == JointsIds::VACUUM_ROTOR){
+    return current_velocity_["vacuum_rotor_joint"];
+  }
+  if(id == JointsIds::BRUSH_ROTOR){
+    return current_velocity_["brush_rotor_joint"];
+  }
   
 
 }
@@ -80,6 +92,12 @@ void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
       msg.data = {vel};
       if(rotor_id == JointsIds::DRILL_ROTOR){
         rotor_velocity_pub_->publish(msg);
+      }
+      if(rotor_id == JointsIds::VACUUM_ROTOR){
+        vacuum_rotor_velocity_pub_->publish(msg);
+      }
+      if(rotor_id == JointsIds::BRUSH_ROTOR){
+        brush_rotor_velocity_pub_->publish(msg);
       }
       
   }

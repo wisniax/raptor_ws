@@ -119,6 +119,100 @@
                izz="0.0004"/>
     </inertial>
   </link>
+
+ <!-- ===================== VACUUM BODY================== -->
+  <link name="vaccum_body_link">
+
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.15"/>
+      </geometry>
+
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+
+      <material name="blue">
+        <color rgba="0.2 0.3 0.8 1"/>
+      </material>
+    </visual>
+
+
+    <collision>
+      <geometry>
+        <box size="0.4 0.3 0.5"/>
+      </geometry>
+    </collision>
+
+
+    <inertial>
+      <mass value="5"/>
+      <origin xyz="0 0 0"/>
+
+      <inertia
+        ixx="0.2"
+        ixy="0"
+        ixz="0"
+        iyy="0.2"
+        iyz="0"
+        izz="0.2"/>
+    </inertial>
+
+  </link>
+  <!-- ===================== VACUUM Rotation ================== -->
+  <link name="vacuum_rotor_link">
+    <visual>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0022" ixy="0.0" ixz="0.0"
+               iyy="0.0022" iyz="0.0"
+               izz="0.0004"/>
+    </inertial>
+  </link>
+
+   <!-- ===================== BRUSH Rotation ================== -->
+  <link name="brush_rotor_link">
+    <visual>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0022" ixy="0.0" ixz="0.0"
+               iyy="0.0022" iyz="0.0"
+               izz="0.0004"/>
+    </inertial>
+  </link>
+
   <!--================CONTAINER==================-->
   <!-- Container link -->
   <link name="container_link">
@@ -128,7 +222,7 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
 
       <geometry>
-        <box size="0.7 0.1 0.02"/>
+        <box size="0.7 0.2 0.02"/>
       </geometry>
 
       <material name="blue">
@@ -196,7 +290,6 @@
 
     <limit lower="-0.5" upper="0.5" effort="5000" velocity="0.5"/>
   </joint> 
-
   <joint name="rotor_joint" type="continuous">
     <parent link="drill_link"/>
     <child link="rotor_link"/>
@@ -209,7 +302,37 @@
     <limit effort="5000" velocity="50"/> 
   </joint> 
 
+  <joint name="vaccum_fixed_joint" type="fixed">
+    <parent link="platform_link"/>
+    <child link="vaccum_body_link"/>
 
+    <origin xyz="0.2 0 -0.25" rpy="0 0 0"/>
+
+  </joint> 
+  <joint name="vacuum_rotor_joint" type="continuous">
+    <parent link="vaccum_body_link"/>
+    <child link="vacuum_rotor_link"/>
+
+   
+    <origin xyz="0 0 0.075" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit effort="5000" velocity="50"/> 
+  </joint> 
+  <joint name="brush_rotor_joint" type="continuous">
+    <parent link="vaccum_body_link"/>
+    <child link="brush_rotor_link"/>
+
+   
+    <origin xyz="0 0 -0.075" rpy="0 0 0"/>
+
+    <axis xyz="0 0 1"/>
+
+    <limit effort="5000" velocity="50"/> 
+  </joint> 
+
+  
   <joint name="container_joint" type="revolute">
 
     <parent link="base_link"/>
@@ -274,6 +397,23 @@
   </plugin>
 
   <plugin
+    filename="gz-sim-joint-controller-system"
+    name="gz::sim::systems::JointController">
+    <joint_name>vacuum_rotor_joint</joint_name>
+
+    <!-- <initial_velocity>10</initial_velocity> -->
+
+  </plugin>
+  <plugin
+    filename="gz-sim-joint-controller-system"
+    name="gz::sim::systems::JointController">
+    <joint_name>brush_rotor_joint</joint_name>
+
+    <!-- <initial_velocity>-10</initial_velocity> -->
+
+  </plugin>
+
+  <plugin
     filename="gz-sim-joint-position-controller-system"
     name="gz::sim::systems::JointPositionController">
 
@@ -317,6 +457,16 @@
     </joint>
 
      <joint name="rotor_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="vacuum_rotor_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="brush_rotor_joint">
       <command_interface name="velocity"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>

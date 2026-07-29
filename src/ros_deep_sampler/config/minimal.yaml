@@ -13,6 +13,10 @@ controller_manager:
 
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
+    vacuum_rotor_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
+    brush_rotor_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
 
     container_controller:
       type: joint_trajectory_controller/JointTrajectoryController
@@ -60,6 +64,18 @@ rotor_velocity_controller:
   ros__parameters:
     joints:
       - rotor_joint
+
+    interface_name: velocity
+vacuum_rotor_velocity_controller:
+  ros__parameters:
+    joints:
+      - vacuum_rotor_joint
+
+    interface_name: velocity
+brush_rotor_velocity_controller:
+  ros__parameters:
+    joints:
+      - brush_rotor_joint
 
     interface_name: velocity
 

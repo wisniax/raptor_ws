@@ -60,6 +60,8 @@ private:
   double platform_vel_ = 0.0;
   double drill_vel_ = 0.0;
   double rotor_vel_ = 0.0;
+  double vacuum_rotor_vel_ = 0.0;
+  double brush_rotor_vel_ = 0.0;
 
   double container_pos_ = 0.0;
   double container_vel_ = 0.0;
