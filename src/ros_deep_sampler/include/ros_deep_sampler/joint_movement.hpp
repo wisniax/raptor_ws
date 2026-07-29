@@ -24,9 +24,19 @@ class  JointMovement{
         
         explicit JointMovement(rclcpp::Node *node);
 
-        struct JointCommand
+        enum class JointsIds{
+            PLATFORM,
+            DRILL,
+            CONTAINER,
+            DRILL_ROTOR,
+            VACCUM_ROTOR,
+            BRUSH_ROTOR,
+            FLAP_JOINT
+        };
+
+         struct JointCommand
         {
-            int id;
+            JointsIds id;
             double position;
             double max_velocity;
             bool calibration = false;
@@ -40,11 +50,11 @@ class  JointMovement{
         void calibrateContainer(double vel);
 
         void moveJoints(const std::vector<JointCommand>& commands);
-        std::string getJointName(int id);
+        std::string getJointName(JointsIds id);
 
-        void send_rotor_velocity(double vel);
+        void send_rotor_velocity(JointsIds id, double vel);
 
-        void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, int current_slider);
+        void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, JointsIds current_slider);
         void generateTrajectory(
             trajectory_msgs::msg::JointTrajectory &traj,
             const std::string &joint_name,
@@ -58,8 +68,8 @@ class  JointMovement{
 
         //ACTION_TUTORIALS_CPP_PUBLIC
         void JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg);
-        double get_current_position(int id);
-        double get_current_velocity(int id);
+        double get_current_position(JointsIds id);
+        double get_current_velocity(JointsIds id);
 
         // bool isMoving() const;
         bool isTrajectoryFinished();
@@ -96,7 +106,7 @@ class  JointMovement{
 
         std::unordered_map<std::string, double> current_position_;
         std::unordered_map<std::string, double> current_velocity_;
-        uint8_t current_slider_ = 5; //Means nothing
+        JointsIds current_slider_  = JointsIds::PLATFORM; 
         uint8_t goal_state = MissionMsg::GOAL_IDLE;
         uint8_t prev_goal_state = MissionMsg::GOAL_IDLE;
 
@@ -105,6 +115,8 @@ class  JointMovement{
 
         double prev_platform_pos = 0.0;
         double prev_drill_pos = 0.0;
+
+
 
 
         

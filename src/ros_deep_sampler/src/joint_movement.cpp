@@ -46,39 +46,42 @@ void JointMovement::jointStateCallback(const sensor_msgs::msg::JointState::Share
     
   }
 
-double JointMovement::get_current_position(int id){
-  if(id == 1){
+double JointMovement::get_current_position(JointsIds id){
+  if(id == JointsIds::PLATFORM){
     return current_position_["platform_joint"];
   }
-  if(id == 2){
+  if(id == JointsIds::DRILL){
     return current_position_["drill_joint"];
   }
-  if(id == 3){
+  if(id == JointsIds::CONTAINER){
     return current_position_["container_joint"];
   }
 
 }
-double JointMovement::get_current_velocity(int id){
-  if(id == 1){
+double JointMovement::get_current_velocity(JointsIds id){
+  if(id == JointsIds::PLATFORM){
     return current_velocity_["platform_joint"];
   }
-  if(id == 2){
+  if(id == JointsIds::DRILL){
     return current_velocity_["drill_joint"];
   }
-  if(id == 4){
+  if(id == JointsIds::DRILL_ROTOR){
     return current_velocity_["rotor_joint"];
   }
-  if(id == 3){
+  if(id == JointsIds::CONTAINER){
     return current_velocity_["container_joint"];
   }
   
 
 }
 
-void JointMovement::send_rotor_velocity(double vel){
+void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
       std_msgs::msg::Float64 msg;
       msg.data = {vel};
-      rotor_velocity_pub_->publish(msg);
+      if(rotor_id == JointsIds::DRILL_ROTOR){
+        rotor_velocity_pub_->publish(msg);
+      }
+      
   }
 
   void JointMovement::generateTrajectory(
@@ -191,23 +194,23 @@ void JointMovement::calibratePlatform(double vel){
     traj.joint_names.push_back(joint_name);
     traj.points.push_back(p);
 
-    sendTrajectory(traj, 1);
+    sendTrajectory(traj, JointsIds::PLATFORM);
 
     return;
 
 }
 
-std::string JointMovement::getJointName(int id)
+std::string JointMovement::getJointName(JointsIds id)
 {
     switch(id)
     {
-        case 1:
+        case JointsIds::PLATFORM:
             return "platform_joint";
 
-        case 2:
+        case JointsIds::DRILL:
             return "drill_joint";
 
-        case 3:
+        case JointsIds::CONTAINER:
             return "container_joint";
 
         default:
@@ -249,7 +252,7 @@ void JointMovement::calibrateDrill(double vel){
     traj.joint_names.push_back(joint_name);
     traj.points.push_back(p);
 
-    sendTrajectory(traj, 2);
+    sendTrajectory(traj, JointsIds::DRILL);
 
     return;
 
@@ -259,13 +262,13 @@ void JointMovement::setTrajectoryStatus(bool status){
     trajectory_finished_ = status;
 }
 
-void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, int current_slider){
+void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, JointsIds current_slider){
     
-    if(current_slider == MissionMsg::PLATFORM)
+    if(current_slider == JointsIds::PLATFORM)
         active_client_ = platform_client_;
-    else if(current_slider == MissionMsg::DRILL)
+    else if(current_slider == JointsIds::DRILL)
         active_client_ = drill_client_;
-    else if(current_slider == MissionMsg::CONTAINER_A)
+    else if(current_slider == JointsIds::CONTAINER)
         active_client_ = container_client_;
 
     current_slider_ = current_slider;
@@ -380,7 +383,6 @@ void JointMovement::JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg){
     if(prev_goal_state == MissionMsg::GOAL_ACCEPTED){
         goal_state = MissionMsg::GOAL_EXECUTING;
     }
-    feedbackMsg->joint_id = current_slider_;
     feedbackMsg->goal_state = goal_state;
     prev_goal_state = goal_state;
 

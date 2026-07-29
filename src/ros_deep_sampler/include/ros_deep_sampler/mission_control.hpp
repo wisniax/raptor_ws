@@ -55,27 +55,34 @@ class MissionControl : public rclcpp::Node{
      
 
         enum class State{
-            IDLE,
-            CALIBRATE_PLATFORM,
-            CALIBRATE_DRILL,
-            MOVE_PLATFORM_DOWN,
-            DRILLING,
-            RECOVER_DRILL,
-            MOVE_DRILL_UP,
-            MOVE_PLATFORM_UP,
-            MEASURE_SAMPLE,
-            DONE,
-            ABORT,
-            STOP
+        IDLE,
+        CALIBRATE_PLATFORM,
+        CALIBRATE_DRILL,
+        CALIBRATE_CONTAINER,
 
-        };
+        MOVE_PLATFORM_DOWN,
+        GET_SURFACE_SAMPLE,
+        DRILLING,
+        RECOVER_DRILL,
 
-        enum class MEASURE_STATE{
-            MOVE_CONTAINER,
-            MOVE_DRILL_CLOSER,
-            PUT_SAMPLE,
-            MOVE_CONTAINER_BACK,
-            FINISH
+        MOVE_DRILL_UP,
+        MOVE_PLATFORM_UP,
+
+        MOVE_CONTAINER,
+        MOVE_DRILL_CLOSER,
+        PUT_DEEP_SAMPLE,
+        HIDE_DRILL,
+
+        MOVE_PLATFORM_CLOSER,
+        PUT_SURFACE_SAMPLE,
+        MOVE_PLATFORM_BACK,
+        HIDE_CONTAINER,
+
+        MEASURE_SAMPLES,
+
+        STOP,
+        ABORT,
+        DONE
         };
 
         enum class RECOVER_STATE{
@@ -109,23 +116,7 @@ class MissionControl : public rclcpp::Node{
             }
         }
         
-        uint8_t to_Feedback(State s)
-        {
-            switch(s) {
-                case State::IDLE: return MissionMsg::STATE_IDLE;
-                case State::CALIBRATE_PLATFORM: return MissionMsg::STATE_CALIBRATE_PLATFORM;
-                case State::MOVE_PLATFORM_DOWN: return MissionMsg::STATE_MOVE_PLATFORM_DOWN;
-                case State::DRILLING: return  MissionMsg::STATE_DRILLING;
-                case State::RECOVER_DRILL: return MissionMsg::STATE_RECOVER_DRILL;
-                case State::MOVE_DRILL_UP: return MissionMsg::STATE_MOVE_DRILL_UP;
-                case State::MOVE_PLATFORM_UP: return MissionMsg::STATE_MOVE_PLATFORM_UP;
-                case State::MEASURE_SAMPLE: return MissionMsg::STATE_MEASUREMENTS;
-                case State::STOP: return MissionMsg::STATE_STOP;
-                case State::ABORT: return MissionMsg::STATE_ABORT;
-                case State::DONE: return MissionMsg::STATE_DONE;
-                default: return 10;
-            }
-        }
+        uint8_t to_Feedback(State s);
 
         State state_ = State::IDLE;
         State state_to_abort = State::IDLE;
@@ -174,7 +165,7 @@ class MissionControl : public rclcpp::Node{
         bool calibrate_drill = false;
         bool calibrate_platform = false;
         bool mission_in_stop = false;
-        MEASURE_STATE measurement_step = MEASURE_STATE::MOVE_CONTAINER; // 0 - move container, 1 - put sample; 2 - measure; 3 - move container back
+       
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
 
