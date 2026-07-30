@@ -22,14 +22,14 @@ JointMovement::JointMovement(rclcpp::Node *node)
             "/container_controller/follow_joint_trajectory");
 
     rotor_velocity_pub_ =
-        node_->create_publisher<std_msgs::msg::Float64>(
-            "/rotor_joint_cmd", 10);
+        node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/rotor_velocity_controller/commands", 10);
     vacuum_rotor_velocity_pub_ =
-        node_->create_publisher<std_msgs::msg::Float64>(
-            "/vacuum_rotor_joint_cmd", 10);
+        node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/vacuum_rotor_velocity_controller/commands", 10);
     brush_rotor_velocity_pub_ =
-        node_->create_publisher<std_msgs::msg::Float64>(
-            "/brush_rotor_joint_cmd", 10);
+        node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/brush_rotor_velocity_controller/commands", 10);
 
     joint_sub_ =
         node_->create_subscription<sensor_msgs::msg::JointState>(
@@ -88,7 +88,7 @@ double JointMovement::get_current_velocity(JointsIds id){
 }
 
 void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
-      std_msgs::msg::Float64 msg;
+      std_msgs::msg::Float64MultiArray msg;
       msg.data = {vel};
       if(rotor_id == JointsIds::DRILL_ROTOR){
         rotor_velocity_pub_->publish(msg);

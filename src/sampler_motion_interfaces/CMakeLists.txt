@@ -12,7 +12,8 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ActuatorCommand.msg"
-  "msg/SamplerCanEx.msg"
+  "msg/SamplerCanCmd.msg"
+  "msg/SamplerCanFeedback.msg"
   "msg/SamplerMission.msg"
   "msg/SamplerMissionCmd.msg"
   "action/MoveLinear.action"

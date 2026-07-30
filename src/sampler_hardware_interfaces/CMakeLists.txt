@@ -19,11 +19,15 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(angles REQUIRED)
 find_package(ros2_control_test_assets REQUIRED)
 find_package(gz-transport13 REQUIRED)
+find_package(rex_interfaces REQUIRED)
+find_package(libVescCan REQUIRED)
+find_package(sampler_motion_interfaces REQUIRED)
 # --------------------------------------------------
 # Build shared library (hardware plugin)
 # --------------------------------------------------
 add_library(${PROJECT_NAME} SHARED
   src/sampler_hardware.cpp
+  src/RosCanConstants.cpp
 )
 
 # --------------------------------------------------
@@ -34,6 +38,8 @@ target_include_directories(${PROJECT_NAME}
     include
 )
 
+
+
 # --------------------------------------------------
 # Dependencies for the library
 # --------------------------------------------------
@@ -43,7 +49,13 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rclcpp_lifecycle
   angles
+  rex_interfaces
+  sampler_motion_interfaces
   ros2_control_test_assets
+)
+ament_export_dependencies(
+  rex_interfaces 
+  sampler_motion_interfaces
 )
 
 
@@ -56,10 +68,15 @@ pluginlib_export_plugin_description_file(
   sampler_hardware_interfaces.xml
 )
 
+
 target_link_libraries(${PROJECT_NAME}
   gz-transport13::core
 )
+target_link_libraries(${PROJECT_NAME}
+  ${cpp_typesupport_target}
+  libVescCan::libVescCan
 
+)
 # --------------------------------------------------
 # Export libraries (optional but recommended)
 # --------------------------------------------------
