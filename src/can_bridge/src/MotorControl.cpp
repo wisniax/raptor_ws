@@ -160,7 +160,7 @@ void MotorControl::setCorrectState()
         if (mState == State::DriveStop)
         {
             mState = State::PrepDriving;
-            mSetWheelsOriginCtd = 20;
+            mSetWheelsOriginCtd = 10;
             RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
             return;
         }
