@@ -368,6 +368,7 @@ void CalibrateAxis::handleRoverStatus(const rex_interfaces::msg::RoverStatus::Co
 
 	if (wasCalibrationAllowed && !isCalibrationAllowed)
 	{
+		// Likely redundant as can_bridge *shouldn't* let those CAN frames pass
 		if (mMode == Mode::SetPos || mMode == Mode::SetVelocity)
 			stopMotor(mCurrentMotorID);
 		modeNothing();
@@ -643,8 +644,5 @@ bool CalibrateAxis::isCalibrationAllowedByRoverStatus(const rex_interfaces::msg:
 	if (!msg)
 		return false;
 
-	bool estop_active = (msg->control_mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_ESTOP) != 0;
-	bool config_active = (msg->control_mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG) != 0;
-	bool communication_opened = msg->communication_state == rex_interfaces::msg::RoverStatus::COMMUNICATION_STATE_OPENED;
-	return !estop_active && config_active && communication_opened;
+	return (msg->control_mode & rex_interfaces::msg::RoverStatus::CONTROL_MODE_CONFIG) != 0;
 }
