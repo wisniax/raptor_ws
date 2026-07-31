@@ -77,41 +77,7 @@ CallbackReturn SamplerHardware::on_configure(
     const rclcpp_lifecycle::State &)
 {
     if (get_node())
-    {
-        platform_cmd_pub_ =
-            get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/platform_joint_cmd", 10);
-        
-        drill_cmd_pub_ =
-            get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/drill_joint_cmd", 10);
-
-        container_cmd_pub_ = 
-            get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/container_joint_cmd", 10);                
-
-        rotor_cmd_pub_ =
-             get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/rotor_joint_cmd", 10);
-        vacuum_rotor_cmd_pub_ =
-             get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/vacuum_rotor_joint_cmd", 10);
-        brush_rotor_cmd_pub_ =
-             get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/brush_rotor_joint_cmd", 10);
-            joint_state_sub_ =
-            get_node()->create_subscription<sensor_msgs::msg::JointState>(
-                "/gz_joint_states",
-              10,
-              [this](const sensor_msgs::msg::JointState::SharedPtr msg)
-              {
-                  for (size_t i = 0; i < msg->name.size(); i++)
-                  {
-                      sim_positions_[msg->name[i]] = msg->position[i];
-                      sim_vel_[msg->name[i]] = msg->velocity[i];
-                  }
-              });
-        
+    {   
         sampler_can_feedback_sub_ = get_node()->create_subscription<SamplerCanFeedback>(
             RosCanConstants::RosTopics::can_sampler_feedback, 10,
             std::bind(&SamplerHardware::feedbackCallback, this, std::placeholders::_1));
@@ -124,14 +90,6 @@ CallbackReturn SamplerHardware::on_configure(
             10,
             std::bind(&SamplerHardware::HandleRoverStatus, this, std::placeholders::_1)); 
 
-        // timer_ = get_node()->create_wall_timer(
-        // std::chrono::seconds(5),
-        // [this]()
-        // {
-        //     std_msgs::msg::Float64 msg;
-        //     msg.data = 0.4;
-        //     platform_cmd_pub_->publish(msg);
-        // });
     }
 
     
@@ -270,45 +228,6 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
                                                             const rclcpp::Duration& /*period*/)
 {
 
-// Temporary: mirror command as feedback for testing
-  if (sim_positions_.find("platform_joint") != sim_positions_.end())
-  {
-      platform_pos_ = sim_positions_["platform_joint"];
-  }
-  if (sim_positions_.find("drill_joint") != sim_positions_.end())
-  {
-      drill_pos_ = sim_positions_["drill_joint"];
-  }
-  if (sim_positions_.find("container_joint") != sim_positions_.end())
-  {
-      container_pos_ = sim_positions_["container_joint"];
-  }
-
-  if (sim_vel_.find("platform_joint") != sim_vel_.end())
-  {
-      platform_vel_ = sim_vel_["platform_joint"];
-  }
-  if (sim_vel_.find("drill_joint") != sim_vel_.end())
-  {
-      drill_vel_ = sim_vel_["drill_joint"];
-  }
-  if (sim_vel_.find("container_joint") != sim_vel_.end())
-  {
-      container_vel_ = sim_vel_["container_joint"];
-  }
-  if (sim_vel_.find("rotor_joint") != sim_vel_.end())
-  {
-    rotor_vel_ = sim_vel_["rotor_joint"];
-  }
-  if (sim_vel_.find("vacuum_rotor_joint") != sim_vel_.end())
-  {
-    vacuum_rotor_vel_ = sim_vel_["vacuum_rotor_joint"];
-  }
-  if (sim_vel_.find("brush_rotor_joint") != sim_vel_.end())
-  {
-    brush_rotor_vel_ = sim_vel_["brush_rotor_joint"];
-  }
-
 
   if(real_positions_.find(RosCanConstants::VescIds::sampler_platform) != real_positions_.end()){
     platform_pos_ = real_positions_[RosCanConstants::VescIds::sampler_platform];
@@ -416,28 +335,6 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     
     sampler_can_cmd_pub_->publish(cmd_);
 
-    //RCLCPP_INFO(get_node()->get_logger(), "Expected platform position: %f", last_platform_cmd_);
-    std_msgs::msg::Float64 msg;
-    msg.data = platform_cmd_;
-    platform_cmd_pub_->publish(msg);
-
-    msg.data = drill_cmd_;
-    drill_cmd_pub_->publish(msg);
-
-    msg.data = container_cmd_;
-    container_cmd_pub_->publish(msg);
-
-    msg.data = rotor_cmd_;
-    rotor_cmd_pub_->publish(msg);
-
-    msg.data = vacuum_rotor_cmd_;
-    vacuum_rotor_cmd_pub_->publish(msg);
-
-    msg.data = brush_rotor_cmd_;
-    brush_rotor_cmd_pub_->publish(msg);
-      //RCLCPP_INFO(get_node()->get_logger(), "Expected drill position: %f", last_drill_cmd_);
-    //   msg.data = last_rotor_cmd_;
-    //   rotor_cmd_pub_->publish(msg);
     }
    
   return hardware_interface::return_type::OK;
