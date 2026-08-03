@@ -12,6 +12,7 @@
 #include <iostream>
 #include "std_msgs/msg/float64.hpp"
 #include "sampler_hardware_interfaces/RosCanConstants.hpp"
+#include <libVescCan/VESC_Consts.h>
 
 
 namespace sampler_hardware_interfaces
@@ -99,6 +100,10 @@ private:
 
   bool sampler_mode = false;
   bool set_pos = false;
+
+  const uint8_t pos_command = VESC_COMMAND_SET_POS;
+  const uint8_t duty_command = VESC_COMMAND_SET_DUTY;
+  const uint8_t rpm_command = VESC_COMMAND_SET_RPM;
 
   // gz::transport::Node node;
   // gz::msgs::Double msg;

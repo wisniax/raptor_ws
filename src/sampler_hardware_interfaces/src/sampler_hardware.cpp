@@ -270,20 +270,20 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
                                                              const rclcpp::Duration& /*period*/)
 {
 
-  uint8_t command;
-  if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_AUTONOMY){
-    command = VESC_COMMAND_SET_DUTY;
-    sampler_mode = true;
+  // uint8_t command;
+  // if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_AUTONOMY){
+  //   command = VESC_COMMAND_SET_DUTY;
+  //   sampler_mode = true;
    
-  }
-  else if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER){
-    command = VESC_COMMAND_SET_POS;
-    sampler_mode = true;
-    //set_pos = true;
-  }else{
-    command = VESC_COMMAND_SET_DUTY;
-    sampler_mode = false;
-  }
+  // }
+  // else if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER){
+  //   command = VESC_COMMAND_SET_POS;
+  //   sampler_mode = true;
+  //   //set_pos = true;
+  // }else{
+  //   command = VESC_COMMAND_SET_DUTY;
+  //   sampler_mode = false;
+  // }
     cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
     cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
     cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
@@ -291,47 +291,48 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
     cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a;
     cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b;
-  
+
+    cmd_.command_id[0] = pos_command;
+    cmd_.command_id[1] = pos_command;
+    cmd_.command_id[2] = pos_command;
+    cmd_.command_id[3] = rpm_command;
+    cmd_.command_id[4] = rpm_command;
+    cmd_.command_id[5] = rpm_command;
+    cmd_.command_id[6] = rpm_command;
+
+
+    cmd_.set_value[0] = platform_cmd_;
+    cmd_.set_value[1] = drill_cmd_;
+    cmd_.set_value[2] = container_cmd_;
+    cmd_.set_value[3] = rotor_cmd_;
+    cmd_.set_value[4] = vacuum_rotor_cmd_;
+    cmd_.set_value[5] = brush_rotor_cmd_;
+    cmd_.set_value[6] = 0.0;
 
   if (rclcpp::ok())
   {
 
-    if(sampler_mode){
-        cmd_.command_id[0] = command;
-        cmd_.command_id[1] = command;
-        cmd_.command_id[2] = command;
-        cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
-        cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
-        cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
-        cmd_.command_id[6] = VESC_COMMAND_SET_RPM;
-
-
-        cmd_.set_value[0] = platform_cmd_;
-        cmd_.set_value[1] = drill_cmd_;
-        cmd_.set_value[2] = container_cmd_;
-        cmd_.set_value[3] = rotor_cmd_;
-        cmd_.set_value[4] = vacuum_rotor_cmd_;
-        cmd_.set_value[5] = brush_rotor_cmd_;
-        cmd_.set_value[6] = 0.0;
-    }else{
+    // if(sampler_mode){
+       
+    // }else{
         
-        cmd_.command_id[0] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[1] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[2] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[3] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[4] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[5] = VESC_COMMAND_SET_DUTY;
-        cmd_.command_id[6] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[0] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[1] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[2] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[3] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[4] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[5] = VESC_COMMAND_SET_DUTY;
+    //     cmd_.command_id[6] = VESC_COMMAND_SET_DUTY;
 
 
-        cmd_.set_value[0] = 0.0;
-        cmd_.set_value[1] = 0.0;
-        cmd_.set_value[2] = 0.0;
-        cmd_.set_value[3] = 0.0;
-        cmd_.set_value[4] = 0.0;
-        cmd_.set_value[5] = 0.0;
-        cmd_.set_value[6] = 0.0;
-    }
+    //     cmd_.set_value[0] = 0.0;
+    //     cmd_.set_value[1] = 0.0;
+    //     cmd_.set_value[2] = 0.0;
+    //     cmd_.set_value[3] = 0.0;
+    //     cmd_.set_value[4] = 0.0;
+    //     cmd_.set_value[5] = 0.0;
+    //     cmd_.set_value[6] = 0.0;
+    // }
     
     sampler_can_cmd_pub_->publish(cmd_);
 

@@ -51,6 +51,7 @@ namespace ros_deep_sampler{
     init_msg.pad_connected = false;
     init_msg.control_mode = RoverStatusMsg::CONTROL_MODE_ESTOP;
     LastStatusMsg = std::make_shared<const RoverStatusMsg>(init_msg);
+    LastCtrlMsg = std::make_shared<const SamplerControlMsg>();
 
     RCLCPP_INFO(this->get_logger(), "Constructor executed");
 
@@ -76,56 +77,103 @@ void MissionControl::HandleMissionCmd(const MissionCmd &missionCmd){
   missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
 }
 
-uint8_t MissionControl::CheckMissionCmd(){
+uint8_t MissionControl::getMissionCmd(){
   return missionCmdMsg->mission_cmd;
 }
 
+// void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd &missionCmd){
+//     JointMovement::JointCommand cmd;
+//     cmd.id = JointMovement::JointsIds::PLATFORM;
+//     cmd.position = missionCmd->platform_movement;
+//     cmd.max_velocity = 0.1;
+//     commands.push_back(cmd);
+//     joints_->moveJoints(commands);
+// }
 
-bool MissionControl::checkFlags(uint8_t current_mission_cmd)
+
+bool MissionControl::checkCommands(uint8_t current_mission_cmd)
 {
+
+    if(ctrlType_ != CONTROL_TYPE::AUTONOMY){
+          state_to_stop = state_;
+          state_ = State::STOP;
+          return false;
+        }
+    if (current_mission_cmd == MissionCmd::STOP){
+        state_to_stop = state_;
+        state_ = State::STOP;
+        return false;
+    }
+
     if (current_mission_cmd == MissionCmd::ABORT)
     {
         state_to_abort = state_;
         state_ = State::ABORT;
         return false;
     }
-
-    if (current_mission_cmd == MissionCmd::STOP)
+    if (current_mission_cmd == MissionCmd::RESTART)
     {
-        state_to_stop = state_;
-        state_ = State::STOP;
-        return false;
-    }
+        missionCmdMsg->mission_cmd = MissionCmd::STOP;
+        missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
 
-    if (!isSamplerMode(LastStatusMsg))
-    {
-        state_to_stop = state_;
-        state_ = State::STOP;
+        calibrate_drill = false;
+        calibrate_platform = false;
+        mission_in_stop = false;
+        stall_timer_running_ = false;
+
+        recovery_attempt = 0;
+        recover_state = RECOVER_STATE::LIFT_UP;
+
+        state_to_abort = State::IDLE;
+        state_to_stop = State::IDLE;
+
+        state_ = State::IDLE;
+
+        goal_sent = false;
+
+        rotation_time = 0;
+
         return false;
     }
 
     return true;
+
 }
 /////
 
-bool MissionControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
-{
-
-	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
-		   msg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER;
+void MissionControl::setControlType(const RoverStatusMsg::ConstSharedPtr &msg){
+    if (msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
+		   msg->control_mode == (CONTROL_MODE_DEEP_SAMPLER_AUTONOMY | CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY)){
+        ctrlType_ = CONTROL_TYPE::AUTONOMY; 
+        return;
+        }
+    if (msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
+		   msg->control_mode == (CONTROL_MODE_DEEP_SAMPLER | CONTROL_MODE_SURFACE_SAMPLER)){
+        ctrlType_ = CONTROL_TYPE::MANUAL; 
+        return;
+        }
+    ctrlType_ = CONTROL_TYPE::NO_SAMPLER;
+    return;
 }
+
+// bool MissionControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
+// {
+
+// 	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
+// 		   msg->control_mode == (CONTROL_MODE_DEEP_SAMPLER_AUTONOMY | CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY);
+// }
 
 void MissionControl::HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg)
 {
-	if (isSamplerMode(LastStatusMsg))
+	if (ctrlType_ == CONTROL_TYPE::MANUAL)
 		LastCtrlMsg = samplerCtlMsg;
 
 }
 
 void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
-
-	LastStatusMsg = roverStatusMsg;
+    setControlType(roverStatusMsg);
+	// LastStatusMsg = roverStatusMsg;
 
 }
 
