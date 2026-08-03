@@ -5,13 +5,16 @@ namespace ros_deep_sampler{
 
 void MissionControl::statesLoop(){
     // RCLCPP_INFO(this->get_logger(), "statesLoop running");
-    uint8_t current_mission_cmd = CheckMissionCmd();
+    uint8_t current_mission_cmd = missionCmdMsg->mission_cmd;
     missionFeedbackMsg->mission_state = to_Feedback(state_);
     getFeedback(missionFeedbackMsg);
 
     switch(state_){
       case State::IDLE:
-        if(isSamplerMode(LastStatusMsg) && current_mission_cmd == MissionCmd::START){
+      if(!checkCommands(current_mission_cmd)){
+        break;
+      }
+        if(ctrlType_ == CONTROL_TYPE::AUTONOMY && current_mission_cmd == MissionCmd::START){
           if(!calibrate_drill){
             state_ = State::CALIBRATE_DRILL;
           }else if(!calibrate_platform){
@@ -24,11 +27,14 @@ void MissionControl::statesLoop(){
 
             
           }
+        if(ctrlType_ == CONTROL_TYPE::MANUAL && current_mission_cmd == MissionCmd::START){
+          state_ = State::STOP;
+        }
       // waiting for mission_start callback
         break;
 
       case State::CALIBRATE_PLATFORM:
-        if (!checkFlags(current_mission_cmd)){
+        if (!checkCommands(current_mission_cmd)){
           break;
         }
        
@@ -57,7 +63,7 @@ void MissionControl::statesLoop(){
 
       case State::CALIBRATE_DRILL:
      
-        if (!checkFlags(current_mission_cmd)){
+        if (!checkCommands(current_mission_cmd)){
           break;
         }
 
@@ -86,7 +92,7 @@ void MissionControl::statesLoop(){
       break;
 
       case State::MOVE_PLATFORM_DOWN:
-         if (!checkFlags(current_mission_cmd)){
+         if (!checkCommands(current_mission_cmd)){
           break;
         }
 
@@ -118,7 +124,7 @@ void MissionControl::statesLoop(){
         break;
 
       case State::GET_SURFACE_SAMPLE:
-         if (!checkFlags(current_mission_cmd)){
+         if (!checkCommands(current_mission_cmd)){
           break;
         }
         if(rotation_time == 0){
@@ -138,7 +144,7 @@ void MissionControl::statesLoop(){
       break;
 
       case State::DRILLING:
-        if (!checkFlags(current_mission_cmd)){
+        if (!checkCommands(current_mission_cmd)){
           break;
         }
 
@@ -184,7 +190,7 @@ void MissionControl::statesLoop(){
         break;
 
       case State::MOVE_DRILL_UP:
-           if (!checkFlags(current_mission_cmd)){
+           if (!checkCommands(current_mission_cmd)){
             break;
           }
           if(!goal_sent){
@@ -212,7 +218,7 @@ void MissionControl::statesLoop(){
       break; 
         
       case State::MOVE_PLATFORM_UP:
-          if (!checkFlags(current_mission_cmd)){
+          if (!checkCommands(current_mission_cmd)){
             break;
           }
             if(!goal_sent){
@@ -240,7 +246,7 @@ void MissionControl::statesLoop(){
       break; 
 
       case State::MOVE_CONTAINER:
-           if (!checkFlags(current_mission_cmd)){
+           if (!checkCommands(current_mission_cmd)){
             break;
           }
       
@@ -268,7 +274,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::MOVE_DRILL_CLOSER:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(!goal_sent){
@@ -295,7 +301,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::PUT_DEEP_SAMPLE:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
                 break;
               }
             if(rotation_time == 0){
@@ -313,7 +319,7 @@ void MissionControl::statesLoop(){
         break;
           
         case State::HIDE_DRILL:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(!goal_sent){
@@ -340,7 +346,7 @@ void MissionControl::statesLoop(){
           break;
 
         case State::MOVE_PLATFORM_CLOSER:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(!goal_sent){
@@ -367,7 +373,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::PUT_SURFACE_SAMPLE:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
                 break;
               }
             if(rotation_time == 0){
@@ -385,7 +391,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::MOVE_PLATFORM_BACK:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(!goal_sent){
@@ -412,7 +418,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::HIDE_CONTAINER:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(!goal_sent){
@@ -438,7 +444,7 @@ void MissionControl::statesLoop(){
         break;
 
         case State::MEASURE_SAMPLES:
-            if (!checkFlags(current_mission_cmd)){
+            if (!checkCommands(current_mission_cmd)){
               break;
             }
             if(get_measurements()){
@@ -449,10 +455,19 @@ void MissionControl::statesLoop(){
 
       
         case State::DONE:
+        if(!checkCommands(current_mission_cmd)){
+          break;
+        }
+
+        if (ctrlType_ == CONTROL_TYPE::AUTONOMY && current_mission_cmd == MissionCmd::START){
+          calibrate_drill = false;
+          calibrate_platform = false;
+          state_ = State::IDLE;
+        }
         break;
 
         case State::RECOVER_DRILL:
-          if (!checkFlags(current_mission_cmd)){
+          if (!checkCommands(current_mission_cmd)){
             break;
           }
           if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
@@ -529,13 +544,16 @@ void MissionControl::statesLoop(){
             RCLCPP_INFO(this->get_logger(), "Mission STOP on state: %s", state_string.c_str());
             joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
             //move_client_->cancel_goal();
-            joints_->cancelMovement();
+            if (goal_sent){
+              joints_->cancelMovement();
+              goal_sent = false;
+            }
             // while(joints_->isGoalCanceled() != 1){}
             mission_in_stop = true;
             RCLCPP_INFO(this->get_logger(), "Mission Stopped successfully");
             state_= State::STOP;
           }
-          if(MissionControl::isSamplerMode(LastStatusMsg) && current_mission_cmd == MissionCmd::START){
+          if(checkCommands(current_mission_cmd) && current_mission_cmd == MissionCmd::START){
             state_ = state_to_stop;
             std::string state_string = to_string(state_to_stop);
             RCLCPP_INFO(this->get_logger(), "Continue the mission from state: %s", state_string.c_str());
@@ -552,7 +570,7 @@ void MissionControl::statesLoop(){
             joints_->cancelMovement();
             // while(joints_->isGoalCanceled() != 1){}
             RCLCPP_INFO(this->get_logger(), "Mission Aborted successfully");
-            state_= State::DONE;
+            state_= State::MANUAL_CONTROL;
 
         break;
     }

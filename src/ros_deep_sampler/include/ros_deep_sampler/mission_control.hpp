@@ -29,7 +29,7 @@ class MissionControl : public rclcpp::Node{
 
         void MissionCheck(std_msgs::msg::String::SharedPtr msg);
         
-        bool checkFlags(uint8_t current_mission_cmd); 
+        bool checkCommands(uint8_t current_mission_cmd);
 
 
         void publishAppFeedback();
@@ -42,7 +42,8 @@ class MissionControl : public rclcpp::Node{
         void HandleMeasurementFeedback(const MeasurementMsg::ConstSharedPtr &measurementMsg);
         void HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
         void HandleMissionCmd(const MissionCmd &missionCmd);
-        uint8_t CheckMissionCmd();
+        uint8_t getMissionCmd();
+        void retranslateSamplerCtrlMsg(const MissionCmd &missionCmd);
 
         void updateFeedback();
         
@@ -79,6 +80,7 @@ class MissionControl : public rclcpp::Node{
         HIDE_CONTAINER,
 
         MEASURE_SAMPLES,
+        MANUAL_CONTROL,
 
         STOP,
         ABORT,
@@ -90,6 +92,14 @@ class MissionControl : public rclcpp::Node{
             WAIT,
             CHECK_ROTATION
         };
+
+        enum class CONTROL_TYPE{
+            NO_SAMPLER,
+            MANUAL,
+            AUTONOMY
+        };
+
+        void setControlType(const RoverStatusMsg::ConstSharedPtr &msg);
 
 
         const double MIN_SPEED = 3.0;
@@ -156,6 +166,12 @@ class MissionControl : public rclcpp::Node{
        
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;
+        CONTROL_TYPE ctrlType_ = CONTROL_TYPE::NO_SAMPLER;
+
+        unsigned int CONTROL_MODE_DEEP_SAMPLER = 32;
+        unsigned int CONTROL_MODE_SURFACE_SAMPLER = 64;
+        unsigned int CONTROL_MODE_DEEP_SAMPLER_AUTONOMY = 512;
+        unsigned int CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY = 1024;
 
         //Required Measurements 
         double weight_a = 0.0;
