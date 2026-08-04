@@ -11,26 +11,23 @@ void MissionControl::statesLoop(){
 
     switch(state_){
       case State::IDLE:
-      if(!checkCommands(current_mission_cmd)){
-        break;
-      }
-        if(ctrlType_ == CONTROL_TYPE::AUTONOMY && current_mission_cmd == MissionCmd::START){
-         
-          if(!calibrate_platform){
-            state_ = State::CALIBRATE_PLATFORM;
-          }else  if(!calibrate_drill){
-            state_ = State::CALIBRATE_DRILL;
-          }
+        if(!checkCommands(current_mission_cmd)){break;}
 
-          if(calibrate_platform && calibrate_drill){
-            state_ = State::MOVE_PLATFORM_DOWN;
-            }
+         
+        if(!calibrate_platform){
+          state_ = State::CALIBRATE_PLATFORM;
+          mission_in_stop = false;
+        }else  if(!calibrate_drill){
+          mission_in_stop = false;
+          state_ = State::CALIBRATE_DRILL;
+        }
+
+        if(calibrate_platform && calibrate_drill){
+          state_ = State::MOVE_PLATFORM_DOWN;
+          }
 
             
-          }
-        if(ctrlType_ == CONTROL_TYPE::MANUAL && current_mission_cmd == MissionCmd::START){
-          state_ = State::STOP;
-        }
+          
       // waiting for mission_start callback
         break;
 
@@ -66,31 +63,31 @@ void MissionControl::statesLoop(){
 
       case State::CALIBRATE_DRILL:
      
-        if (!checkCommands(current_mission_cmd)){
-          break;
-        }
+        // if (!checkCommands(current_mission_cmd)){
+        //   break;
+        // }
 
-        if(!goal_sent){
-          RCLCPP_INFO(this->get_logger(), "Starting DRILL CALIBRATION");
-          joints_->calibrateDrill(0.02);
-          goal_sent = true;
-        }
+        // if(!goal_sent){
+        //   RCLCPP_INFO(this->get_logger(), "Starting DRILL CALIBRATION");
+        //   joints_->calibrateDrill(0.02);
+        //   goal_sent = true;
+        // }
         
         
-        if(std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::DRILL)) < 0.01){
-          // time_between_states++;
-          // if(time_between_states >100){
-          RCLCPP_INFO(this->get_logger(), "Finishing moving up");
-          goal_sent = false;
-          calibrate_drill = true;
-          joints_->cancelMovement();
-          //while(joints_->isGoalCanceled() != 1){}
-          joints_->setTrajectoryStatus(false);
-          time_between_states = 0;
-          state_ = State::IDLE; 
-          //}
+        // if(std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::DRILL)) < 0.01){
+        //   // time_between_states++;
+        //   // if(time_between_states >100){
+        //   RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+        //   goal_sent = false;
+        //   calibrate_drill = true;
+        //   joints_->cancelMovement();
+        //   //while(joints_->isGoalCanceled() != 1){}
+        //   joints_->setTrajectoryStatus(false);
+        //   time_between_states = 0;
+        //   state_ = State::IDLE; 
+        //   //}
          
-        }
+        // }
         
       break;
 
@@ -104,9 +101,23 @@ void MissionControl::statesLoop(){
           RCLCPP_INFO(this->get_logger(), "Starting moving down");
           JointMovement::JointCommand cmd;
           cmd.id = JointMovement::JointsIds::PLATFORM;
-          cmd.position = -0.4;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = -0.4;
+          cmd.max_velocity = 0.1;
+          commands.push_back(cmd);
+  
+          cmd.id = JointMovement::JointsIds::DRILL;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = joints_->get_current_position(cmd.id);
           cmd.max_velocity = 0.2;
           commands.push_back(cmd);
+
+          cmd.id = JointMovement::JointsIds::CONTAINER;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = joints_->get_current_position(cmd.id);
+          cmd.max_velocity = 0.2;
+          commands.push_back(cmd);
+
           joints_->moveJoints(commands);
           goal_sent = true;
         }
@@ -154,8 +165,21 @@ void MissionControl::statesLoop(){
         if(!goal_sent){
           RCLCPP_INFO(this->get_logger(), "Starting drilling");
           JointMovement::JointCommand cmd;
+          cmd.id = JointMovement::JointsIds::PLATFORM;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = joints_->get_current_position(cmd.id);
+          cmd.max_velocity = 0.1;
+          commands.push_back(cmd);
+  
           cmd.id = JointMovement::JointsIds::DRILL;
-          cmd.position = -0.35;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = -0.35;
+          cmd.max_velocity = 0.1;
+          commands.push_back(cmd);
+
+          cmd.id = JointMovement::JointsIds::CONTAINER;
+          cmd.start_position = joints_->get_current_position(cmd.id);
+          cmd.final_position = joints_->get_current_position(cmd.id);
           cmd.max_velocity = 0.2;
           commands.push_back(cmd);
           joints_->moveJoints(commands);
@@ -199,8 +223,21 @@ void MissionControl::statesLoop(){
           if(!goal_sent){
             RCLCPP_INFO(this->get_logger(), "Moving drill up");
             JointMovement::JointCommand cmd;
+            cmd.id = JointMovement::JointsIds::PLATFORM;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = joints_->get_current_position(cmd.id);
+            cmd.max_velocity = 0.1;
+            commands.push_back(cmd);
+    
             cmd.id = JointMovement::JointsIds::DRILL;
-            cmd.position = 0.01;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = 0.01;
+            cmd.max_velocity = 0.1;
+            commands.push_back(cmd);
+
+            cmd.id = JointMovement::JointsIds::CONTAINER;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = joints_->get_current_position(cmd.id);
             cmd.max_velocity = 0.2;
             commands.push_back(cmd);
             joints_->moveJoints(commands);
@@ -228,7 +265,20 @@ void MissionControl::statesLoop(){
               RCLCPP_INFO(this->get_logger(), "Moving Platform up");
               JointMovement::JointCommand cmd;
               cmd.id = JointMovement::JointsIds::PLATFORM;
-              cmd.position = 0.01;
+              cmd.start_position = joints_->get_current_position(cmd.id);
+              cmd.final_position = 0.01;
+              cmd.max_velocity = 0.1;
+              commands.push_back(cmd);
+      
+              cmd.id = JointMovement::JointsIds::DRILL;
+              cmd.start_position = joints_->get_current_position(cmd.id);
+              cmd.final_position = joints_->get_current_position(cmd.id);
+              cmd.max_velocity = 0.1;
+              commands.push_back(cmd);
+
+              cmd.id = JointMovement::JointsIds::CONTAINER;
+              cmd.start_position = joints_->get_current_position(cmd.id);
+              cmd.final_position = joints_->get_current_position(cmd.id);
               cmd.max_velocity = 0.2;
               commands.push_back(cmd);
               joints_->moveJoints(commands);
@@ -256,8 +306,21 @@ void MissionControl::statesLoop(){
           if(!goal_sent){
             RCLCPP_INFO(this->get_logger(), "Starting moving container");
             JointMovement::JointCommand cmd;
+            cmd.id = JointMovement::JointsIds::PLATFORM;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = joints_->get_current_position(cmd.id);
+            cmd.max_velocity = 0.1;
+            commands.push_back(cmd);
+    
+            cmd.id = JointMovement::JointsIds::DRILL;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = joints_->get_current_position(cmd.id);
+            cmd.max_velocity = 0.1;
+            commands.push_back(cmd);
+
             cmd.id = JointMovement::JointsIds::CONTAINER;
-            cmd.position = -1.57;
+            cmd.start_position = joints_->get_current_position(cmd.id);
+            cmd.final_position = -1.57;
             cmd.max_velocity = 0.6;
             commands.push_back(cmd);
             joints_->moveJoints(commands);
@@ -283,9 +346,22 @@ void MissionControl::statesLoop(){
             if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
                 JointMovement::JointCommand cmd;
-                cmd.id = JointMovement::JointsIds::DRILL;
-                cmd.position = -0.2;
+                cmd.id = JointMovement::JointsIds::PLATFORM;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
                 cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
+        
+                cmd.id = JointMovement::JointsIds::DRILL;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = -0.15;
+                cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
+
+                cmd.id = JointMovement::JointsIds::CONTAINER;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
                 // move_client_->send_goal(commands);
@@ -328,9 +404,22 @@ void MissionControl::statesLoop(){
             if(!goal_sent){
                 RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
                 JointMovement::JointCommand cmd;
+                cmd.id = JointMovement::JointsIds::PLATFORM;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
+        
                 cmd.id = JointMovement::JointsIds::DRILL;
-                cmd.position = 0.01;
-                cmd.max_velocity = 0.2;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = 0.01;
+                cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
+
+                cmd.id = JointMovement::JointsIds::CONTAINER;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
                 // move_client_->send_goal(commands);
@@ -356,11 +445,23 @@ void MissionControl::statesLoop(){
                 RCLCPP_INFO(this->get_logger(), "Move Platform closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;
-                cmd.position = -0.2;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = -0.2;
                 cmd.max_velocity = 0.1;
                 commands.push_back(cmd);
+        
+                cmd.id = JointMovement::JointsIds::DRILL;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
+
+                cmd.id = JointMovement::JointsIds::CONTAINER;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.6;
+                commands.push_back(cmd);
                 joints_->moveJoints(commands);
-                // move_client_->send_goal(commands);
                 goal_sent = true;
               }
             if(joints_->isTrajectoryFinished() ==1){
@@ -401,37 +502,24 @@ void MissionControl::statesLoop(){
                 RCLCPP_INFO(this->get_logger(), "Move Platform closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;
-                cmd.position = 0.01;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = 0.01;
                 cmd.max_velocity = 0.1;
                 commands.push_back(cmd);
-                joints_->moveJoints(commands);
-                // move_client_->send_goal(commands);
-                goal_sent = true;
-              }
-            if(joints_->isTrajectoryFinished() ==1){
-              time_between_states++;
-              if(time_between_states > 100){
-                time_between_states = 0;
-                goal_sent = false;
-                joints_->setTrajectoryStatus(false);
-                commands.clear();
-                state_ = State::HIDE_CONTAINER; 
-                }
-            }
-        break;
+        
+                cmd.id = JointMovement::JointsIds::DRILL;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = joints_->get_current_position(cmd.id);
+                cmd.max_velocity = 0.1;
+                commands.push_back(cmd);
 
-        case State::HIDE_CONTAINER:
-            if (!checkCommands(current_mission_cmd)){
-              break;
-            }
-            if(!goal_sent){
-                RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
-                JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::CONTAINER;
-                cmd.position = 0.01;
+                cmd.start_position = joints_->get_current_position(cmd.id);
+                cmd.final_position = 0.01;
                 cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_->moveJoints(commands);
+                // move_client_->send_goal(commands);
                 goal_sent = true;
               }
             if(joints_->isTrajectoryFinished() ==1){
@@ -445,6 +533,32 @@ void MissionControl::statesLoop(){
                 }
             }
         break;
+
+        // case State::HIDE_CONTAINER:
+        //     if (!checkCommands(current_mission_cmd)){
+        //       break;
+        //     }
+        //     if(!goal_sent){
+        //         RCLCPP_INFO(this->get_logger(), "Move drill closr to container");
+        //         JointMovement::JointCommand cmd;
+        //         cmd.id = JointMovement::JointsIds::CONTAINER;
+        //         cmd.position = 0.01;
+        //         cmd.max_velocity = 0.6;
+        //         commands.push_back(cmd);
+        //         joints_->moveJoints(commands);
+        //         goal_sent = true;
+        //       }
+        //     if(joints_->isTrajectoryFinished() ==1){
+        //       time_between_states++;
+        //       if(time_between_states > 100){
+        //         time_between_states = 0;
+        //         goal_sent = false;
+        //         joints_->setTrajectoryStatus(false);
+        //         commands.clear();
+        //         state_ = State::MEASURE_SAMPLES; 
+        //         }
+        //     }
+        // break;
 
         case State::MEASURE_SAMPLES:
             if (!checkCommands(current_mission_cmd)){
@@ -469,74 +583,83 @@ void MissionControl::statesLoop(){
         }
         break;
 
+        case State::MANUAL_CONTROL:
+          if(!checkCommands(current_mission_cmd)){
+            break;
+          }
+
+          retranslateSamplerCtrlMsg(missionCmdMsg);
+
+        break;
+
         case State::RECOVER_DRILL:
-          if (!checkCommands(current_mission_cmd)){
-            break;
-          }
-          if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
-              state_to_abort = state_;
-              state_ = State::ABORT;
-            }
+          // if (!checkCommands(current_mission_cmd)){
+          //   break;
+          // }
+          // if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
+          //     state_to_abort = state_;
+          //     state_ = State::ABORT;
+          //   }
 
-          switch(recover_state){
-            case RECOVER_STATE::LIFT_UP:
-            if(!goal_sent){
-              RCLCPP_INFO(this->get_logger(), "Lift drill a bit up to recover");
-              JointMovement::JointCommand cmd;
-              cmd.id = JointMovement::JointsIds::DRILL;
-              cmd.position = joints_->get_current_position(cmd.id) + 0.05;
-              cmd.max_velocity = 0.1;
-              commands.push_back(cmd);
-              joints_->moveJoints(commands);
-              joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, -5.0);
-              goal_sent = true;
-              stall_timer_running_ = false;
-            }
+          // switch(recover_state){
+          //   case RECOVER_STATE::LIFT_UP:
+          //   if(!goal_sent){
+          //     RCLCPP_INFO(this->get_logger(), "Lift drill a bit up to recover");
+          //     JointMovement::JointCommand cmd;
+          //     cmd.id = JointMovement::JointsIds::DRILL;
+          //     cmd.position = joints_->get_current_position(cmd.id) + 0.05;
+          //     cmd.max_velocity = 0.1;
+          //     commands.push_back(cmd);
+          //     joints_->moveJoints(commands);
+          //     joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, -5.0);
+          //     goal_sent = true;
+          //     stall_timer_running_ = false;
+          //   }
 
-            if(joints_->isTrajectoryFinished() ==1){
-              time_between_states++;
-              if(time_between_states > 50){
-                RCLCPP_INFO(this->get_logger(), "Finishing moving up");
-                time_between_states = 0;
-                goal_sent = false;
-                joints_->setTrajectoryStatus(false);
-                commands.clear();
-                recover_state = RECOVER_STATE::WAIT;
-                break;
-              }
-            }
-            break;
+          //   if(joints_->isTrajectoryFinished() ==1){
+          //     time_between_states++;
+          //     if(time_between_states > 50){
+          //       RCLCPP_INFO(this->get_logger(), "Finishing moving up");
+          //       time_between_states = 0;
+          //       goal_sent = false;
+          //       joints_->setTrajectoryStatus(false);
+          //       commands.clear();
+          //       recover_state = RECOVER_STATE::WAIT;
+          //       break;
+          //     }
+          //   }
+          //   break;
 
-            case RECOVER_STATE::WAIT:
-              rotation_time++;
-              if(rotation_time>10){
-                 joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 12.0);
-                 stall_timer_running_ = false;
-                 rotation_time = 0;
-                 recover_state = RECOVER_STATE::CHECK_ROTATION;
-              }
-            break;
-            case RECOVER_STATE::CHECK_ROTATION:
-              time_between_states++;
-              if(time_between_states > 100){
-                time_between_states =0;
-                if (drillStuck()){
-                  joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-                  goal_sent = false;
-                  recover_state = RECOVER_STATE::LIFT_UP;
-                  recovery_attempt++;
-                }else{
-                  joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-                  goal_sent = false;
-                  recover_state = RECOVER_STATE::LIFT_UP;
-                  recovery_attempt = 0;
-                  state_ = State::DRILLING;
-                  break;
-                }
-              }
+          //   case RECOVER_STATE::WAIT:
+          //     rotation_time++;
+          //     if(rotation_time>10){
+          //        joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 12.0);
+          //        stall_timer_running_ = false;
+          //        rotation_time = 0;
+          //        recover_state = RECOVER_STATE::CHECK_ROTATION;
+          //     }
+          //   break;
+          //   case RECOVER_STATE::CHECK_ROTATION:
+          //     time_between_states++;
+          //     if(time_between_states > 100){
+          //       time_between_states =0;
+          //       if (drillStuck()){
+          //         joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+          //         goal_sent = false;
+          //         recover_state = RECOVER_STATE::LIFT_UP;
+          //         recovery_attempt++;
+          //       }else{
+          //         joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+          //         goal_sent = false;
+          //         recover_state = RECOVER_STATE::LIFT_UP;
+          //         recovery_attempt = 0;
+          //         state_ = State::DRILLING;
+          //         break;
+          //       }
+          //     }
 
-            break;
-          }
+          //   break;
+          // }
           
 
         break;

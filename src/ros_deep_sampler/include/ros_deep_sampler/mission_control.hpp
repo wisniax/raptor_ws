@@ -45,6 +45,8 @@ class MissionControl : public rclcpp::Node{
         uint8_t getMissionCmd();
         void retranslateSamplerCtrlMsg(const MissionCmd &missionCmd);
 
+        void stopExecuting();
+
         void updateFeedback();
         
         void send_rotor_velocity(double vel);
@@ -121,6 +123,7 @@ class MissionControl : public rclcpp::Node{
         State state_to_stop = State::IDLE;
         MissionMsg::SharedPtr missionFeedbackMsg;
         MissionCmd::SharedPtr missionCmdMsg;
+        MissionCmd::SharedPtr LastMissionCmdMsg;
 
         void statesLoop();
         void AppFeedbackPublish();
@@ -163,6 +166,7 @@ class MissionControl : public rclcpp::Node{
         bool calibrate_drill = false;
         bool calibrate_platform = false;
         bool mission_in_stop = false;
+
        
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;
         SamplerControlMsg::ConstSharedPtr LastCtrlMsg;

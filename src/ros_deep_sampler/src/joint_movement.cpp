@@ -106,6 +106,235 @@ void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
       
   }
 
+JointMovement::MotionProfile JointMovement::createProfile(
+    const JointCommand& cmd,
+    double accel_time){
+
+    MotionProfile p;
+
+    p.start = cmd.start_position;
+    p.goal = cmd.final_position;
+
+    double distance =
+        cmd.final_position - cmd.start_position;
+
+    p.direction =
+        (distance >= 0.0) ? 1.0 : -1.0;
+
+    distance = std::abs(distance);
+
+    p.max_velocity = cmd.max_velocity;
+
+    p.accel_time = accel_time;
+
+    p.accel =
+        p.max_velocity / p.accel_time;
+
+    p.accel_dist =
+        0.5 *
+        p.accel *
+        p.accel_time *
+        p.accel_time;
+
+    p.cruise_dist =
+        distance - 2.0 * p.accel_dist;
+
+    if (p.cruise_dist < 0.0)
+    {
+        // Triangle profile
+
+        p.accel_time =
+            std::sqrt(distance / p.accel);
+
+        p.accel_dist =
+            distance / 2.0;
+
+        p.cruise_dist = 0.0;
+        p.cruise_time = 0.0;
+
+        p.max_velocity =
+            p.accel * p.accel_time;
+    }
+    else
+    {
+        p.cruise_time =
+            p.cruise_dist /
+            p.max_velocity;
+    }
+
+    p.total_time =
+        2.0 * p.accel_time +
+        p.cruise_time;
+
+    return p;
+}
+void JointMovement::evaluateProfile(
+    const MotionProfile& p,
+    double t,
+    double& pos,
+    double& vel)
+{
+    if (t >= p.total_time)
+    {
+        pos = p.goal;
+        vel = 0.0;
+        return;
+    }
+
+    double local_pos;
+
+    if (t < p.accel_time)
+    {
+        vel = p.accel * t;
+
+        local_pos =
+            0.5 *
+            p.accel *
+            t *
+            t;
+    }
+    else if (t < p.accel_time + p.cruise_time)
+    {
+        double tc =
+            t - p.accel_time;
+
+        vel =
+            p.max_velocity;
+
+        local_pos =
+            p.accel_dist +
+            p.max_velocity * tc;
+    }
+    else
+    {
+        double td =
+            t -
+            p.accel_time -
+            p.cruise_time;
+
+        vel =
+            p.max_velocity -
+            p.accel * td;
+
+        local_pos =
+            p.accel_dist +
+            p.cruise_dist +
+            p.max_velocity * td -
+            0.5 * p.accel * td * td;
+    }
+
+    pos =
+        p.start +
+        p.direction * local_pos;
+
+    vel =
+        p.direction * vel;
+}
+
+void JointMovement::generateMultiJointsTrajectory(trajectory_msgs::msg::JointTrajectory &traj,
+             const std::vector<JointCommand>& commands,
+             double accel_time,
+             double dt){
+    
+    traj.joint_names.clear();
+    traj.points.clear();
+
+    std::vector<MotionProfile> profiles;
+
+    //-------------------------------------------------
+    // Create profiles
+    //-------------------------------------------------
+
+    for (const auto& cmd : commands)
+    {
+        traj.joint_names.push_back(
+            getJointName(cmd.id));
+
+        profiles.push_back(
+            createProfile(
+                cmd,
+                accel_time));
+    }
+
+    //-------------------------------------------------
+    // Find longest motion
+    //-------------------------------------------------
+
+    double total_time = 0.0;
+
+    for (const auto& p : profiles)
+    {
+        total_time =
+            std::max(
+                total_time,
+                p.total_time);
+    }
+
+    //-------------------------------------------------
+    // Generate trajectory points
+    //-------------------------------------------------
+
+    for (double t = 0.0;
+         t <= total_time + 1e-6;
+         t += dt)
+    {
+        trajectory_msgs::msg::JointTrajectoryPoint point;
+
+        for (const auto& p : profiles)
+        {
+            double pos;
+            double vel;
+
+            evaluateProfile(
+                p,
+                t,
+                pos,
+                vel);
+
+            point.positions.push_back(pos);
+            point.velocities.push_back(vel);
+        }
+
+        point.time_from_start =
+            rclcpp::Duration::from_seconds(t);
+
+        traj.points.push_back(point);
+    }
+
+    //-------------------------------------------------
+    // Exact endpoint
+    //-------------------------------------------------
+
+    if (!traj.points.empty())
+    {
+        auto& last = traj.points.back();
+
+        for (size_t i = 0;
+             i < commands.size();
+             i++)
+        {
+            last.positions[i] =
+                commands[i].final_position;
+
+            last.velocities[i] = 0.0;
+        }
+    }            
+
+    
+ }
+
+ void JointMovement::moveJoints(const std::vector<JointCommand>& commands){
+    trajectory_msgs::msg::JointTrajectory traj;
+
+    generateMultiJointsTrajectory(
+        traj,
+        commands,
+        0.5,
+        0.02);
+
+    sendTrajectory(traj);
+}
+
   void JointMovement::generateTrajectory(
       trajectory_msgs::msg::JointTrajectory &traj,
       const std::string &joint_name,
@@ -205,7 +434,7 @@ void JointMovement::calibratePlatform(double vel){
     std::string joint_name;
     joint_name = "platform_joint";
     final_pos = 0.6; //move up on max 
-
+    double time_to_position =  std::fabs(final_pos)/vel;
     trajectory_msgs::msg::JointTrajectory traj;
     trajectory_msgs::msg::JointTrajectoryPoint p;
     p.positions = {final_pos, final_pos, -final_pos}; 
@@ -241,46 +470,46 @@ std::string JointMovement::getJointName(JointsIds id)
     }
 }
 
-void JointMovement::moveJoints(const std::vector<JointCommand>& commands){
-    trajectory_msgs::msg::JointTrajectory traj;
-    for (const auto &cmd : commands)
-    {
-       traj.joint_names.push_back(getJointName(cmd.id));
+// void JointMovement::moveJoint(const std::vector<JointCommand>& commands){
+//     trajectory_msgs::msg::JointTrajectory traj;
+//     for (const auto &cmd : commands)
+//     {
+//     //    traj.joint_names.push_back(getJointName(cmd.id));
         
-        generateTrajectory(
-            traj,
-            getJointName(cmd.id),
-            get_current_position(cmd.id),
-            cmd.position,
-            cmd.max_velocity,
-            cmd.calibration);
+//         generateTrajectory(
+//             traj,
+//             getJointName(cmd.id),
+//             get_current_position(cmd.id),
+//             cmd.position,
+//             cmd.max_velocity,
+//             cmd.calibration);
 
-    }
-    sendTrajectory(traj);
-}
+//     }
+//     sendTrajectory(traj);
+// }
 
-void JointMovement::calibrateDrill(double vel){
-    float final_pos;
+// void JointMovement::calibrateDrill(double vel){
+//     float final_pos;
     
-    std::string joint_name;
-    joint_name = "drill_joint";
-    final_pos = 0.6; //move up on max 
+//     std::string joint_name;
+//     joint_name = "drill_joint";
+//     final_pos = 0.6; //move up on max 
 
-    trajectory_msgs::msg::JointTrajectory traj;
-    trajectory_msgs::msg::JointTrajectoryPoint p;
-    p.positions = {final_pos}; //dist or final_pos?
-    double time_to_position =  std::fabs(final_pos)/vel;
-    RCLCPP_INFO(node_->get_logger(), "Final position: %f",final_pos);  
-    RCLCPP_INFO(node_->get_logger(), "Time to position: %f",time_to_position);
-    p.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
-    traj.joint_names.push_back(joint_name);
-    traj.points.push_back(p);
+//     trajectory_msgs::msg::JointTrajectory traj;
+//     trajectory_msgs::msg::JointTrajectoryPoint p;
+//     p.positions = {final_pos}; //dist or final_pos?
+//     double time_to_position =  std::fabs(final_pos)/vel;
+//     RCLCPP_INFO(node_->get_logger(), "Final position: %f",final_pos);  
+//     RCLCPP_INFO(node_->get_logger(), "Time to position: %f",time_to_position);
+//     p.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
+//     traj.joint_names.push_back(joint_name);
+//     traj.points.push_back(p);
 
-    sendTrajectory(traj, JointsIds::DRILL);
+//     sendTrajectory(traj, Jo);
 
-    return;
+//     return;
 
-}
+// }
 
 void JointMovement::setTrajectoryStatus(bool status){
     trajectory_finished_ = status;

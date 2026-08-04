@@ -35,13 +35,46 @@ class  JointMovement{
             FLAP_JOINT
         };
 
-         struct JointCommand
+        struct JointCommand
         {
             JointsIds id;
-            double position;
+            double start_position;
+            double final_position;
             double max_velocity;
             bool calibration = false;
         };
+
+        struct MotionProfile
+        {
+            double start;
+            double goal;
+
+            double direction;
+
+            double accel;
+            double accel_time;
+
+            double accel_dist;
+
+            double cruise_dist;
+            double cruise_time;
+
+            double max_velocity;
+
+            double total_time;
+        };
+
+        MotionProfile createProfile(const JointCommand& cmd, double accel_time);
+        void evaluateProfile(
+            const MotionProfile& p,
+            double t,
+            double& pos,
+            double& vel);
+        void generateMultiJointsTrajectory(trajectory_msgs::msg::JointTrajectory &traj,
+             const std::vector<JointCommand>& commands,
+             double accel_time,
+             double dt);
+        void moveJoints(const std::vector<JointCommand>& commands);
 
         void movePlatform(double pos, double vel);
         void calibratePlatform(double vel);
@@ -50,7 +83,7 @@ class  JointMovement{
         void moveContainer(double pos, double vel, bool calibrated);
         void calibrateContainer(double vel);
 
-        void moveJoints(const std::vector<JointCommand>& commands);
+        void moveJoint(const std::vector<JointCommand>& commands);
         std::string getJointName(JointsIds id);
 
         void send_rotor_velocity(JointsIds id, double vel);

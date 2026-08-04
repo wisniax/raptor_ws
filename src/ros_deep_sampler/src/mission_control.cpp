@@ -42,6 +42,7 @@ namespace ros_deep_sampler{
                     std::bind(&MissionControl::HandleMissionCmd, this, std::placeholders::_1));
     
     missionCmdMsg = std::make_shared<MissionCmd>();
+    LastMissionCmdMsg = missionCmdMsg;
     missionFeedbackMsg = std::make_shared<MissionMsg>();
     missionCmdMsg->mission_cmd = MissionCmd::STOP;
     missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
@@ -81,62 +82,43 @@ uint8_t MissionControl::getMissionCmd(){
   return missionCmdMsg->mission_cmd;
 }
 
-// void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd &missionCmd){
-//     JointMovement::JointCommand cmd;
-//     cmd.id = JointMovement::JointsIds::PLATFORM;
-//     cmd.position = missionCmd->platform_movement;
-//     cmd.max_velocity = 0.1;
-//     commands.push_back(cmd);
-//     joints_->moveJoints(commands);
-// }
+void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd &missionCmd){
+
+    JointMovement::JointCommand cmd;
+    cmd.id = JointMovement::JointsIds::PLATFORM;
+    cmd.position = missionCmd->platform_movement;
+    cmd.max_velocity = 0.1;
+    commands.push_back(cmd);
+    joints_->moveJoints(commands);
+    commands = {
+        {JointsIds::PLATFORM,  joints_->get_current_position(JointsIds::PLATFORM),  missionCmd->platform_movement,  0.2},
+        {JointsIds::DRILL,     joints_->get_current_position(JointsIds::DRILL),     missionCmd->drill_movement,    0.2},
+        {JointsIds::CONTAINER, joints_->get_current_position(JointsIds::CONTAINER), missionCmd->container_degrees_a, 0.2}
+    };
+}
 
 
 bool MissionControl::checkCommands(uint8_t current_mission_cmd)
 {
 
-    if(ctrlType_ != CONTROL_TYPE::AUTONOMY){
-          state_to_stop = state_;
-          state_ = State::STOP;
+    if(current_mission_cmd == MissionCmd::STOP){
+          stopExecuting();
           return false;
         }
-    if (current_mission_cmd == MissionCmd::STOP){
-        state_to_stop = state_;
-        state_ = State::STOP;
-        return false;
-    }
-
-    if (current_mission_cmd == MissionCmd::ABORT)
-    {
-        state_to_abort = state_;
+    mission_in_stop = false;
+    if(current_mission_cmd == MissionCmd::ABORT){
         state_ = State::ABORT;
         return false;
     }
-    if (current_mission_cmd == MissionCmd::RESTART)
-    {
-        missionCmdMsg->mission_cmd = MissionCmd::STOP;
-        missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
-
-        calibrate_drill = false;
-        calibrate_platform = false;
-        mission_in_stop = false;
-        stall_timer_running_ = false;
-
-        recovery_attempt = 0;
-        recover_state = RECOVER_STATE::LIFT_UP;
-
-        state_to_abort = State::IDLE;
-        state_to_stop = State::IDLE;
-
-        state_ = State::IDLE;
-
-        goal_sent = false;
-
-        rotation_time = 0;
-
+    if(ctrlType_ == CONTROL_TYPE::MANUAL && current_mission_cmd == MissionCmd::START){
+        state_ = State::MANUAL_CONTROL;
         return false;
     }
 
-    return true;
+    if(ctrlType_ == CONTROL_TYPE::AUTONOMY && current_mission_cmd == MissionCmd::START){
+        return true;
+    }
+   return false;
 
 }
 /////
@@ -210,6 +192,26 @@ bool MissionControl::drillStuck(){
 }
 
 
+void MissionControl::stopExecuting(){
+     if(!mission_in_stop){
+        std::string state_string = to_string(state_);
+        RCLCPP_INFO(this->get_logger(), "Mission STOP on state: %s", state_string.c_str());
+        joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+        //move_client_->cancel_goal();
+        if (goal_sent){
+            joints_->cancelMovement();
+            goal_sent = false;
+        }
+        // while(joints_->isGoalCanceled() != 1){}
+        mission_in_stop = true;
+        RCLCPP_INFO(this->get_logger(), "Mission Stopped successfully");
+        }
+    // if(checkCommands(current_mission_cmd) && current_mission_cmd == MissionCmd::START){
+    // std::string state_string = to_string(state_);
+    // RCLCPP_INFO(this->get_logger(), "Continue the mission from state: %s", state_string.c_str());
+    // mission_in_stop = false;
+    // }
+}
 
 
 void MissionControl::getFeedback(MissionMsg::SharedPtr &feedbackMsg){
