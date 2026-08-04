@@ -6,20 +6,24 @@ namespace ros_deep_sampler{
 JointMovement::JointMovement(rclcpp::Node *node)
 : node_(node)
 {
-    platform_client_ =
-        rclcpp_action::create_client<FollowJointTrajectory>(
-            node_,
-            "/platform_controller/follow_joint_trajectory");
+    position_client_ =
+    rclcpp_action::create_client<FollowJointTrajectory>(
+        node_,
+        "/position_controller/follow_joint_trajectory");
+    // platform_client_ =
+    //     rclcpp_action::create_client<FollowJointTrajectory>(
+    //         node_,
+    //         "/platform_controller/follow_joint_trajectory");
 
-    drill_client_ =
-        rclcpp_action::create_client<FollowJointTrajectory>(
-            node_,
-            "/drill_position_controller/follow_joint_trajectory");
+    // drill_client_ =
+    //     rclcpp_action::create_client<FollowJointTrajectory>(
+    //         node_,
+    //         "/drill_position_controller/follow_joint_trajectory");
 
-    container_client_ =
-        rclcpp_action::create_client<FollowJointTrajectory>(
-            node_,
-            "/container_controller/follow_joint_trajectory");
+    // container_client_ =
+    //     rclcpp_action::create_client<FollowJointTrajectory>(
+    //         node_,
+    //         "/container_controller/follow_joint_trajectory");
 
     rotor_velocity_pub_ =
         node_->create_publisher<std_msgs::msg::Float64MultiArray>(
@@ -204,15 +208,16 @@ void JointMovement::calibratePlatform(double vel){
 
     trajectory_msgs::msg::JointTrajectory traj;
     trajectory_msgs::msg::JointTrajectoryPoint p;
-    p.positions = {final_pos}; //dist or final_pos?
-    double time_to_position =  std::fabs(final_pos)/vel;
+    p.positions = {final_pos, final_pos, -final_pos}; 
     RCLCPP_INFO(node_->get_logger(), "Final position: %f",final_pos);  
     RCLCPP_INFO(node_->get_logger(), "Time to position: %f",time_to_position);
     p.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
-    traj.joint_names.push_back(joint_name);
+    traj.joint_names = {"platform_joint",
+    "drill_joint",
+    "container_joint"};
     traj.points.push_back(p);
 
-    sendTrajectory(traj, JointsIds::PLATFORM);
+    sendTrajectory(traj);
 
     return;
 
@@ -237,10 +242,11 @@ std::string JointMovement::getJointName(JointsIds id)
 }
 
 void JointMovement::moveJoints(const std::vector<JointCommand>& commands){
+    trajectory_msgs::msg::JointTrajectory traj;
     for (const auto &cmd : commands)
     {
-        trajectory_msgs::msg::JointTrajectory traj;
-
+       traj.joint_names.push_back(getJointName(cmd.id));
+        
         generateTrajectory(
             traj,
             getJointName(cmd.id),
@@ -249,8 +255,8 @@ void JointMovement::moveJoints(const std::vector<JointCommand>& commands){
             cmd.max_velocity,
             cmd.calibration);
 
-        sendTrajectory(traj, cmd.id);
     }
+    sendTrajectory(traj);
 }
 
 void JointMovement::calibrateDrill(double vel){
@@ -280,24 +286,17 @@ void JointMovement::setTrajectoryStatus(bool status){
     trajectory_finished_ = status;
 }
 
-void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, JointsIds current_slider){
-    
-    if(current_slider == JointsIds::PLATFORM)
-        active_client_ = platform_client_;
-    else if(current_slider == JointsIds::DRILL)
-        active_client_ = drill_client_;
-    else if(current_slider == JointsIds::CONTAINER)
-        active_client_ = container_client_;
-
-    current_slider_ = current_slider;
-
-    if(!active_client_->wait_for_action_server(
+void JointMovement::sendTrajectory(
+    trajectory_msgs::msg::JointTrajectory &traj)
+{
+    if(!position_client_->wait_for_action_server(
         std::chrono::seconds(2)))
     {
         RCLCPP_ERROR(
             node_->get_logger(),
             "JTC unavailable");
-            goal_state = MissionMsg::GOAL_FAILED;
+
+        goal_state = MissionMsg::GOAL_FAILED;
         return;
     }
 
@@ -309,8 +308,11 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
     auto options =
         rclcpp_action::Client<FollowJointTrajectory>::SendGoalOptions();
 
+
     trajectory_finished_ = false;
     goal_state = MissionMsg::GOAL_SENT;
+
+
     options.goal_response_callback =
         [this](TJCGoalHandle::SharedPtr handle)
         {
@@ -319,6 +321,7 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
                 RCLCPP_ERROR(
                     node_->get_logger(),
                     "Trajectory rejected");
+
                 goal_state = MissionMsg::GOAL_FAILED;
                 return;
             }
@@ -326,9 +329,10 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
             RCLCPP_INFO(
                 node_->get_logger(),
                 "Trajectory accepted");
+
             goal_state = MissionMsg::GOAL_ACCEPTED;
+
             active_tjc_goal_ = handle;
-           
         };
 
 
@@ -337,37 +341,42 @@ void JointMovement::sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, 
         {
             trajectory_finished_ = true;
             active_tjc_goal_.reset();
+
             switch(result.code)
             {
                 case rclcpp_action::ResultCode::SUCCEEDED:
+
                     RCLCPP_INFO(
                         node_->get_logger(),
                         "Trajectory finished");
+
                     goal_state = MissionMsg::GOAL_SUCCEEDED;
                     break;
 
+
                 case rclcpp_action::ResultCode::CANCELED:
+
                     RCLCPP_INFO(
                         node_->get_logger(),
                         "Trajectory canceled");
+
                     goal_state = MissionMsg::GOAL_CANCELED;
                     break;
 
+
                 default:
+
                     RCLCPP_ERROR(
                         node_->get_logger(),
                         "Trajectory failed");
+
                     goal_state = MissionMsg::GOAL_FAILED;
                     break;
             }
         };
 
 
-    active_client_->async_send_goal(goal, options);
-    // result_future_ =
-    //           active_client_->async_get_result(active_tjc_goal_);
-
-            
+    position_client_->async_send_goal(goal, options);
 }
 
 bool JointMovement::isTrajectoryFinished()
@@ -384,17 +393,15 @@ bool JointMovement::isTrajectoryFinished()
 
 void JointMovement::cancelMovement()
 {
-
     if(active_tjc_goal_)
     {
-        active_client_->async_cancel_goal(
+        position_client_->async_cancel_goal(
             active_tjc_goal_);
 
         RCLCPP_INFO(
             node_->get_logger(),
-            "Trajectory cancelled");
+            "Trajectory cancellation requested");
     }
-
 }
 
 void JointMovement::JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg){

@@ -15,10 +15,11 @@ void MissionControl::statesLoop(){
         break;
       }
         if(ctrlType_ == CONTROL_TYPE::AUTONOMY && current_mission_cmd == MissionCmd::START){
-          if(!calibrate_drill){
-            state_ = State::CALIBRATE_DRILL;
-          }else if(!calibrate_platform){
+         
+          if(!calibrate_platform){
             state_ = State::CALIBRATE_PLATFORM;
+          }else  if(!calibrate_drill){
+            state_ = State::CALIBRATE_DRILL;
           }
 
           if(calibrate_platform && calibrate_drill){
@@ -45,8 +46,10 @@ void MissionControl::statesLoop(){
         }
         
         if(std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::PLATFORM)) < 0.01){
-          // time_between_states++;
-          // if(time_between_states >100){
+          // if(std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::PLATFORM)) < 0.01 &&             !!!!!!!!!!!!!!!!!
+          //     std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::DRILL)) < 0.01 &&               !!!!!!!!!!!!!!!!!!
+          //     std::fabs(0.0 - joints_->get_current_position(JointMovement::JointsIds::CONTAINER)) < 0.01){ do other}  !!!!!!!!!!!!!!!!!!!
+         
           RCLCPP_INFO(this->get_logger(), "Finishing moving up");
           goal_sent = false;
           calibrate_platform = true;
@@ -54,7 +57,7 @@ void MissionControl::statesLoop(){
        
           joints_->setTrajectoryStatus(false);
           time_between_states = 0;
-          state_ = State::IDLE; 
+          state_ = State::MOVE_PLATFORM_DOWN; 
           //}
          
         }

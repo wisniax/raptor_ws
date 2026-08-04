@@ -55,7 +55,7 @@ class  JointMovement{
 
         void send_rotor_velocity(JointsIds id, double vel);
 
-        void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj, JointsIds current_slider);
+        void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj);
         void generateTrajectory(
             trajectory_msgs::msg::JointTrajectory &traj,
             const std::string &joint_name,
@@ -94,6 +94,7 @@ class  JointMovement{
     private:
         rclcpp::Node *node_;
         //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
+        rclcpp_action::Client<FollowJointTrajectory>::SharedPtr position_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr container_client_;

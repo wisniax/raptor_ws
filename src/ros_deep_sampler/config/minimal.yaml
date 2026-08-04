@@ -5,46 +5,25 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    platform_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-
-    drill_position_controller:
+    position_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
+
     vacuum_rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
+
     brush_rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
-    container_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-
-platform_controller:
+position_controller:
   ros__parameters:
+
     joints:
       - platform_joint
-
-    command_interfaces:
-      - position
-
-    state_interfaces:
-      - position
-      - velocity
-
-    # Important for FollowJointTrajectory action
-    action_monitor_rate: 20.0
-
-    constraints:
-      goal_time: 1.0
-      stopped_velocity_tolerance: 0.01
-
-
-drill_position_controller:
-  ros__parameters:
-    joints:
       - drill_joint
+      - container_joint
 
     command_interfaces:
       - position
@@ -58,7 +37,6 @@ drill_position_controller:
     constraints:
       goal_time: 1.0
       stopped_velocity_tolerance: 0.01
-
 
 rotor_velocity_controller:
   ros__parameters:
@@ -79,18 +57,3 @@ brush_rotor_velocity_controller:
 
     interface_name: velocity
 
-container_controller:
-  ros__parameters:
-      joints:
-        - container_joint
-
-      command_interfaces:
-        - position
-
-      state_interfaces:
-        - position
-        - velocity
-
-      constraints:
-        goal_time: 1.0
-        stopped_velocity_tolerance: 0.01

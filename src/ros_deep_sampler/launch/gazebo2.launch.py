@@ -65,19 +65,10 @@ def generate_launch_description():
         output="screen",
     )
 
-    platform_velocity_controller_spawner = Node(
+    position_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["platform_velocity_controller"],
-        parameters=[{"use_sim_time": True}],
-        output="screen",
-    )
-
-    drill_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["drill_position_controller"],
-        parameters=[{"use_sim_time": True}],
+        arguments=["position_controller"],
         output="screen",
     )
 
@@ -100,12 +91,12 @@ def generate_launch_description():
         output="screen",
     )
 
-    container_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["container_controller"],
-        output="screen",
-    )
+    # container_controller_spawner = Node(
+    #     package="controller_manager",
+    #     executable="spawner",
+    #     arguments=["container_controller"],
+    #     output="screen",
+    # )
 
     control_node = Node(
         package="controller_manager",
@@ -129,11 +120,12 @@ def generate_launch_description():
     control_node,
 
     joint_state_spawner,
-    platform_controller_spawner,
+    #platform_controller_spawner,
     #platform_velocity_controller_spawner,
-    drill_controller_spawner,
+    #drill_controller_spawner,
+    position_controller,
     rotor_controller_spawner,
     vacuum_rotor_controller_spawner,
     brush_rotor_controller_spawner,
-    container_controller_spawner,
+    #container_controller_spawner,
 ])
