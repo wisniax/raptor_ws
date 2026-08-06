@@ -24,7 +24,7 @@ ManipulatorControl::ManipulatorControl(const rclcpp::NodeOptions & options) : No
 
 void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::ConstSharedPtr& manipulatorCtlMsg)
 {
-    if (!isManipulatorMode())
+    if (!isManipulatorMode(mLastRoverStatus))
     {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
                              "When non-manipulator mode is selected, incoming ManipulatorControl messages are discarded.");
@@ -50,6 +50,9 @@ void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::Const
 void ManipulatorControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
     mLastRoverStatus = roverStatusMsg;
+
+    if (!isManipulatorMode(roverStatusMsg) && isManipulatorMode(mLastRoverStatus))
+        stopManipulator();
 }
 
 void ManipulatorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
@@ -57,7 +60,7 @@ void ManipulatorControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr 
     mLastBatteryInfo = msg;
 }
 
-bool ManipulatorControl::isManipulatorMode()
+bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
     // Black Mushroom
     if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
@@ -65,9 +68,9 @@ bool ManipulatorControl::isManipulatorMode()
         return false;
     }
 
-    int32_t mode = mLastRoverStatus->control_mode;
+    int32_t mode = msg->control_mode;
 
-    if (mLastRoverStatus->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
+    if (msg->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
     {
         return false;
     }
@@ -86,6 +89,11 @@ bool ManipulatorControl::isManipulatorMode()
     // ROBOTIC_ARM, ROBOTIC_ARM_AUTONOMY
     return mode & (RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM |
                    RoverStatusMsg::CONTROL_MODE_ROBOTIC_ARM_AUTONOMY);
+}
+
+void ManipulatorControl::stopManipulator()
+{
+    //TODO: Implement this
 }
 
 can_msgs::msg::Frame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)

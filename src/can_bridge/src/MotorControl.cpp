@@ -145,35 +145,33 @@ void MotorControl::setCorrectState()
             RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1 * 60 * 1000, // Throttle duration (1 minute)
                                   "CONTROL_MODE is NONE! Treating as ESTOP.");
 
-        stopMotors();
+        if (mState == State::Driving) stopMotors();
         mState = State::EStop;
         return;
     }
 
-    // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY
-    if (mode & (RoverStatusMsg::CONTROL_MODE_DRIVE |
-                RoverStatusMsg::CONTROL_MODE_DRIVE_AUTONOMY |
-                RoverStatusMsg::CONTROL_MODE_STOP |
-                RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER |
-                RoverStatusMsg::CONTROL_MODE_DEEP_SAMPLER_AUTONOMY))
+    // CONFIG
+    if (mode & RoverStatusMsg::CONTROL_MODE_CONFIG)
     {
-        if (mState == State::DriveStop)
-        {
-            mState = State::PrepDriving;
-            mSetWheelsOriginCtd = 10;
-            RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
-            return;
-        }
-        if (mState == State::PrepDriving)
-        {
-            if (mSetWheelsOriginCtd == 0) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
-            else return;
-        }
-        mState = State::Driving;
+        if (mState == State::Driving) stopMotors();
+        mState = State::EStop;
         return;
     }
 
-    mState = State::EStop;
+    // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY, ETC...
+    if (mState == State::DriveStop)
+    {
+        mState = State::PrepDriving;
+        mSetWheelsOriginCtd = 10;
+        RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
+        return;
+    }
+    if (mState == State::PrepDriving)
+    {
+        if (mSetWheelsOriginCtd == 0) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+        else return;
+    }
+    mState = State::Driving;
 }
 
 void MotorControl::handleTimerClb()
