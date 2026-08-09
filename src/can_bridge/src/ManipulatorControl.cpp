@@ -93,7 +93,38 @@ bool ManipulatorControl::isManipulatorMode(const RoverStatusMsg::ConstSharedPtr 
 
 void ManipulatorControl::stopManipulator()
 {
-    //TODO: Implement this
+    ManipulatorControlMsg stopCommand{};
+
+    stopCommand.axes[0].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.axes[1].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.axes[2].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.axes[3].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.axes[4].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.axes[5].command_id = VESC_COMMAND_SET_DUTY;
+    stopCommand.gripper.command_id = VESC_COMMAND_SET_DUTY;
+
+    stopCommand.axes[0].set_value = 0.0f;
+    stopCommand.axes[1].set_value = 0.0f;
+    stopCommand.axes[2].set_value = 0.0f;
+    stopCommand.axes[3].set_value = 0.0f;
+    stopCommand.axes[4].set_value = 0.0f;
+    stopCommand.axes[5].set_value = 0.0f;
+    stopCommand.gripper.set_value = 0.0f;
+
+    // 7 since there are 6 axes + 1 gripper
+    std::array<can_msgs::msg::Frame, 7> sendQueue;
+    auto sendQueueIter = sendQueue.begin();
+
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[1], RosCanConstants::VescIds::manipulator_axis_2);
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[2], RosCanConstants::VescIds::manipulator_axis_3);
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[3], RosCanConstants::VescIds::manipulator_axis_4);
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[4], RosCanConstants::VescIds::manipulator_axis_5);
+    *sendQueueIter++ = encodeStepper((*stopCommand).axes[5], RosCanConstants::VescIds::manipulator_axis_6);
+    *sendQueueIter++ = encodeStepper((*stopCommand).gripper, RosCanConstants::VescIds::manipulator_gripper);
+
+    for (auto iter = sendQueue.begin(); iter < sendQueue.end(); iter++)
+        mRawCanPub->publish(*iter);
 }
 
 can_msgs::msg::Frame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)
