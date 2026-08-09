@@ -38,14 +38,14 @@ void ConfigControl::handleCalibrationMotorCommand(const VescMotorMsg::ConstShare
 void ConfigControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &msg)
 {
 	mLastRoverStatus = msg;
+
+    if (!isConfigMode(msg) && isConfigMode(mLastRoverStatus))
+        stopMotors();
 }
 
 void ConfigControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
 {
     mLastBatteryInfo = msg;
-
-    if (!isManipulatorMode(msg) && isManipulatorMode(mLastRoverStatus))
-        stopMotors();
 }
 
 bool ConfigControl::isConfigMode(const RoverStatusMsg::ConstSharedPtr &msg)

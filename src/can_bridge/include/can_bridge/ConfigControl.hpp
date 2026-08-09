@@ -11,6 +11,7 @@
 #include "can_bridge/RosCanConstants.hpp"
 
 #include <can_msgs/msg/frame.hpp>
+#include "rex_interfaces/msg/wheels.hpp"
 #include "rex_interfaces/msg/vesc_motor_command.hpp"
 #include "rex_interfaces/msg/rover_status.hpp"
 #include "rex_interfaces/msg/battery_info.hpp"
@@ -21,6 +22,7 @@ extern "C"
 }
 
 using VescMotorMsg = rex_interfaces::msg::VescMotorCommand;
+using WheelsMsg = rex_interfaces::msg::Wheels;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
 using CanFrame = can_msgs::msg::Frame;
