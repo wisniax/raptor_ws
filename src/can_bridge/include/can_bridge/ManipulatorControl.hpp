@@ -22,6 +22,7 @@ extern "C"
 using ManipulatorControlMsg = rex_interfaces::msg::ManipulatorControl;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
+using CanFrame = can_msgs::msg::Frame;
 
 class ManipulatorControl : public rclcpp::Node
 {
@@ -36,9 +37,9 @@ private:
     bool isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg);
     void stopManipulator();
 
-    can_msgs::msg::Frame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
+    CanFrame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
 
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
+	rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
 	rclcpp::Subscription<ManipulatorControlMsg>::SharedPtr mManipulatorCtlSub; /**< ROS subscriber for motor velocity messages. */
     rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;   /**< ROS subscriber for SamplerControl messages. */
     rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub;

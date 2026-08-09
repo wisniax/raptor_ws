@@ -7,7 +7,7 @@ ManipulatorControl::ManipulatorControl(const rclcpp::NodeOptions & options) : No
     mLastRoverStatus = std::make_shared<const RoverStatusMsg>();
     mLastBatteryInfo = std::make_shared<const BatteryInfoMsg>();
 
-    mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
+    mRawCanPub = this->create_publisher<CanFrame>(RosCanConstants::RosTopics::can_raw_TX, qos);
 
     mManipulatorCtlSub = this->create_subscription<ManipulatorControlMsg>(
             RosCanConstants::RosTopics::can_manipulator_ctl, qos,
@@ -32,7 +32,7 @@ void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::Const
     }
 
     // 7 since there are 6 axes + 1 gripper
-    std::array<can_msgs::msg::Frame, 7> sendQueue;
+    std::array<CanFrame, 7> sendQueue;
     auto sendQueueIter = sendQueue.begin();
 
     *sendQueueIter++ = encodeStepper((*manipulatorCtlMsg).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
@@ -112,7 +112,7 @@ void ManipulatorControl::stopManipulator()
     stopCommand.gripper.set_value = 0.0f;
 
     // 7 since there are 6 axes + 1 gripper
-    std::array<can_msgs::msg::Frame, 7> sendQueue;
+    std::array<CanFrame, 7> sendQueue;
     auto sendQueueIter = sendQueue.begin();
 
     *sendQueueIter++ = encodeStepper((*stopCommand).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
@@ -127,7 +127,7 @@ void ManipulatorControl::stopManipulator()
         mRawCanPub->publish(*iter);
 }
 
-can_msgs::msg::Frame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)
+CanFrame ManipulatorControl::encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId)
 {
 	VESC_CommandFrame vesc_cf;
 	VESC_ZeroMemory(&vesc_cf, sizeof(vesc_cf));

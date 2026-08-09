@@ -22,6 +22,7 @@ extern "C"
 using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
+using CanFrame = can_msgs::msg::Frame;
 
 class SamplerControl : public rclcpp::Node
 {
@@ -40,7 +41,7 @@ private:
 	void publishSamplerData();
 	void publish(const VESC_CommandFrame *arr, int arr_size);
 
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
+	rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
 	rclcpp::Subscription<SamplerControlMsg>::SharedPtr mSamplerCtlSub; /**< ROS subscriber for SamplerControl messages. */
 	rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;   /**< ROS subscriber for SamplerControl messages. */
     rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub;

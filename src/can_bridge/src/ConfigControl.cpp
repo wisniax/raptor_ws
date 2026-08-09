@@ -7,7 +7,7 @@ ConfigControl::ConfigControl(const rclcpp::NodeOptions & options) : Node("config
 	mLastRoverStatus = std::make_shared<const RoverStatusMsg>();
     mLastBatteryInfo = std::make_shared<const BatteryInfoMsg>();
 
-	mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
+	mRawCanPub = this->create_publisher<CanFrame>(RosCanConstants::RosTopics::can_raw_TX, qos);
 
     mCalibrationMotorCommandSub = this->create_subscription<VescMotorMsg>(
             RosCanConstants::RosTopics::can_calibration_motor_command,
@@ -31,7 +31,7 @@ void ConfigControl::handleCalibrationMotorCommand(const VescMotorMsg::ConstShare
         return;
     }
 
-    can_msgs::msg::Frame fr = encodeMotorVel(*msg, msg->vesc_id);
+    CanFrame fr = encodeMotorVel(*msg, msg->vesc_id);
     mRawCanPub->publish(fr);
 }
 
@@ -161,7 +161,7 @@ void ConfigControl::sendMotorVel(const WheelsMsg::ConstSharedPtr &msg)
         mRawCanPub->publish(*iter);
 }
 
-can_msgs::msg::Frame ConfigControl::encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId)
+CanFrame ConfigControl::encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId)
 {
 	VESC_CommandFrame cmdf;
 	VESC_ZeroMemory(&cmdf, sizeof(cmdf));
@@ -187,7 +187,7 @@ can_msgs::msg::Frame ConfigControl::encodeMotorVel(const VescMotorMsg &vescMotor
 	VESC_ZeroMemory(&rf, sizeof(rf));
 	VESC_convertCmdToRaw(&rf, &cmdf);
 
-	can_msgs::msg::Frame fr = VescInterop::vescToRos(rf);
+    CanFrame fr = VescInterop::vescToRos(rf);
 	fr.header.stamp = this->now();
 
 	return fr;

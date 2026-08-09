@@ -7,7 +7,7 @@ SamplerControl::SamplerControl(const rclcpp::NodeOptions & options) : Node("samp
     mLastRoverStatus = std::make_shared<const RoverStatusMsg>();
     mLastBatteryInfo = std::make_shared<const BatteryInfoMsg>();
 
-    mRawCanPub = this->create_publisher<can_msgs::msg::Frame>(RosCanConstants::RosTopics::can_raw_TX, qos);
+    mRawCanPub = this->create_publisher<CanFrame>(RosCanConstants::RosTopics::can_raw_TX, qos);
 
     mSamplerCtlSub = this->create_subscription<SamplerControlMsg>(
             RosCanConstants::RosTopics::mqtt_sampler_control, qos,

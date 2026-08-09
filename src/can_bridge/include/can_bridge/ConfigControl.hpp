@@ -23,6 +23,7 @@ extern "C"
 using VescMotorMsg = rex_interfaces::msg::VescMotorCommand;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
+using CanFrame = can_msgs::msg::Frame;
 
 /**
  * @brief Class for interfacing ROS with CAN bus.
@@ -41,9 +42,9 @@ private:
     void stopMotors();
 
     void sendMotorVel(const WheelsMsg::ConstSharedPtr &msg);
-    can_msgs::msg::Frame encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId);
+    CanFrame encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId);
 
-    rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;				  /**< ROS2 publisher for raw CAN messages. */
+    rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;				  /**< ROS2 publisher for raw CAN messages. */
     rclcpp::Subscription<VescMotorMsg>::SharedPtr mCalibrationMotorCommandSub;
 	rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;
     rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub;
