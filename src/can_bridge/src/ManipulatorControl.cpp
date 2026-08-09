@@ -115,13 +115,13 @@ void ManipulatorControl::stopManipulator()
     std::array<CanFrame, 7> sendQueue;
     auto sendQueueIter = sendQueue.begin();
 
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[0], RosCanConstants::VescIds::manipulator_axis_1);
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[1], RosCanConstants::VescIds::manipulator_axis_2);
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[2], RosCanConstants::VescIds::manipulator_axis_3);
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[3], RosCanConstants::VescIds::manipulator_axis_4);
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[4], RosCanConstants::VescIds::manipulator_axis_5);
-    *sendQueueIter++ = encodeStepper((*stopCommand).axes[5], RosCanConstants::VescIds::manipulator_axis_6);
-    *sendQueueIter++ = encodeStepper((*stopCommand).gripper, RosCanConstants::VescIds::manipulator_gripper);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[0], RosCanConstants::VescIds::manipulator_axis_1);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[1], RosCanConstants::VescIds::manipulator_axis_2);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[2], RosCanConstants::VescIds::manipulator_axis_3);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[3], RosCanConstants::VescIds::manipulator_axis_4);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[4], RosCanConstants::VescIds::manipulator_axis_5);
+    *sendQueueIter++ = encodeStepper(stopCommand.axes[5], RosCanConstants::VescIds::manipulator_axis_6);
+    *sendQueueIter++ = encodeStepper(stopCommand.gripper, RosCanConstants::VescIds::manipulator_gripper);
 
     for (auto iter = sendQueue.begin(); iter < sendQueue.end(); iter++)
         mRawCanPub->publish(*iter);
