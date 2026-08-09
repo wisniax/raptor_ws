@@ -37,8 +37,10 @@ private:
     void handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &msg);
     void handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg);
 
-    bool isConfigMode();
+    bool isConfigMode(const RoverStatusMsg::ConstSharedPtr &msg);
+    void stopMotors();
 
+    void sendMotorVel(const WheelsMsg::ConstSharedPtr &msg);
     can_msgs::msg::Frame encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId);
 
     rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;				  /**< ROS2 publisher for raw CAN messages. */

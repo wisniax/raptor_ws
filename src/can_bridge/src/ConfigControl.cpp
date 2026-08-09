@@ -24,7 +24,7 @@ ConfigControl::ConfigControl(const rclcpp::NodeOptions & options) : Node("config
 
 void ConfigControl::handleCalibrationMotorCommand(const VescMotorMsg::ConstSharedPtr &msg)
 {
-    if (!isConfigMode())
+    if (!isConfigMode(mLastRoverStatus))
     {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5 * 60 * 1000, // Throttle duration (5 minutes)
                              "Calibration command sent not during CONFIG!");
@@ -43,9 +43,12 @@ void ConfigControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &msg)
 void ConfigControl::handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg)
 {
     mLastBatteryInfo = msg;
+
+    if (!isManipulatorMode(msg) && isManipulatorMode(mLastRoverStatus))
+        stopMotors();
 }
 
-bool ConfigControl::isConfigMode()
+bool ConfigControl::isConfigMode(const RoverStatusMsg::ConstSharedPtr &msg)
 {
     // Black Mushroom
     if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
@@ -53,9 +56,9 @@ bool ConfigControl::isConfigMode()
         return false;
     }
 
-    int32_t mode = mLastRoverStatus->control_mode;
+    int32_t mode = msg->control_mode;
 
-    if (mLastRoverStatus->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
+    if (msg->communication_state != RoverStatusMsg::COMMUNICATION_STATE_OPENED)
     {
         return false;
     }
@@ -73,6 +76,89 @@ bool ConfigControl::isConfigMode()
 
     // CONFIG
     return mode & (RoverStatusMsg::CONTROL_MODE_CONFIG);
+}
+
+void ConfigControl::stopMotors()
+{
+    WheelsMsg rover_wheels_velocity_temp;
+
+    rover_wheels_velocity_temp.header.stamp = this->now();
+
+    rover_wheels_velocity_temp.front_left.turn.command_id = VESC_COMMAND_SET_POS;
+    rover_wheels_velocity_temp.front_left.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.front_left.turn.set_origin_data = 0;
+
+    rover_wheels_velocity_temp.front_right.turn.command_id = VESC_COMMAND_SET_POS;
+    rover_wheels_velocity_temp.front_right.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.front_right.turn.set_origin_data = 0;
+
+    rover_wheels_velocity_temp.rear_right.turn.command_id = VESC_COMMAND_SET_POS;
+    rover_wheels_velocity_temp.rear_right.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.rear_right.turn.set_origin_data = 0;
+
+    rover_wheels_velocity_temp.rear_left.turn.command_id = VESC_COMMAND_SET_POS;
+    rover_wheels_velocity_temp.rear_left.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.rear_left.turn.set_origin_data = 0;
+
+    rover_wheels_velocity_temp.front_left.drive.command_id = VESC_COMMAND_SET_CURRENT;
+    rover_wheels_velocity_temp.front_right.drive.command_id = VESC_COMMAND_SET_CURRENT;
+    rover_wheels_velocity_temp.rear_right.drive.command_id = VESC_COMMAND_SET_CURRENT;
+    rover_wheels_velocity_temp.rear_left.drive.command_id = VESC_COMMAND_SET_CURRENT;
+    rover_wheels_velocity_temp.front_left.drive.set_value = 0.0;
+    rover_wheels_velocity_temp.front_right.drive.set_value = 0.0;
+    rover_wheels_velocity_temp.rear_right.drive.set_value = 0.0;
+    rover_wheels_velocity_temp.rear_left.drive.set_value = 0.0;
+
+    sendMotorVel(std::make_shared<const WheelsMsg>(rover_wheels_velocity_temp));
+}
+
+void ConfigControl::sendMotorVel(const WheelsMsg::ConstSharedPtr &msg)
+{
+    // 8 since there are 4 wheels, each being vesc + stepper combo
+    std::array<CanFrame, 8> sendQueue;
+
+    auto sendQueueIter = sendQueue.begin();
+
+    // stepper
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->front_left.turn,
+            RosCanConstants::VescIds::front_left_stepper);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->front_right.turn,
+            RosCanConstants::VescIds::front_right_stepper);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->rear_left.turn,
+            RosCanConstants::VescIds::rear_left_stepper);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->rear_right.turn,
+            RosCanConstants::VescIds::rear_right_stepper);
+
+    // vesc
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->front_left.drive,
+            RosCanConstants::VescIds::front_left_vesc);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->front_right.drive,
+            RosCanConstants::VescIds::front_right_vesc);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->rear_left.drive,
+            RosCanConstants::VescIds::rear_left_vesc);
+
+    *sendQueueIter++ = encodeMotorVel(
+            msg->rear_right.drive,
+            RosCanConstants::VescIds::rear_right_vesc);
+
+    // send it ALL
+
+    for (auto iter = sendQueue.begin(); iter < sendQueue.end(); iter++)
+        mRawCanPub->publish(*iter);
 }
 
 can_msgs::msg::Frame ConfigControl::encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId)
