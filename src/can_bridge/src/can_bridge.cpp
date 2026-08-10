@@ -31,9 +31,10 @@ enum class CanNodeMode
 
 void doDrivingStuff(MotorControl &mtrCtl);
 
-static std::chrono::system_clock::time_point lastSendWheels;
-static std::chrono::nanoseconds diff;
+//static std::chrono::system_clock::time_point lastSendWheels;
+//static std::chrono::nanoseconds diff;
 
+// THIS FILE IS NOT USED ANYMORE AND WILL BE DELETED SOON
 // TODO:
 // - Implement this as lifecycle node
 // - Utilize a new QoS profile for the publisher and subscriber

@@ -1,12 +1,14 @@
 #include <can_bridge/BatteryInfoForwarder.hpp>
 
-BatteryInfoForwarder::BatteryInfoForwarder(rclcpp::Node::SharedPtr &nh) : mNh(nh)
+BatteryInfoForwarder::BatteryInfoForwarder(const rclcpp::NodeOptions & options) : Node("battery_info_forwarder", options)
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
-	mBatteryInfoGrabber = mNh->create_subscription<can_msgs::msg::Frame>(
+
+    mBatteryInfoGrabber = this->create_subscription<can_msgs::msg::Frame>(
 		RosCanConstants::RosTopics::can_raw_RX, qos,
 		std::bind(&BatteryInfoForwarder::batteryInfoGrabber, this, std::placeholders::_1));
-	mBatteryInfoPublisher = mNh->create_publisher<rex_interfaces::msg::BatteryInfo>(
+
+	mBatteryInfoPublisher = this->create_publisher<rex_interfaces::msg::BatteryInfo>(
 		RosCanConstants::RosTopics::can_battery_info, qos);
 }
 
@@ -52,10 +54,12 @@ void BatteryInfoForwarder::batteryInfoPublisher()
 	status.battery_status = mBatteryInfo.batteryStatus;
 	status.hotswap_status = mBatteryInfo.hotswapStatus;
 
-	status.header.stamp = rclcpp::Clock().now();
+	status.header.stamp = this->now();
 
 	mBatteryInfoPublisher->publish(status);
 
 	if (mBatteryInfoFresh)
 		mBatteryInfoFresh = false;
 }
+
+RCLCPP_COMPONENTS_REGISTER_NODE(BatteryInfoForwarder)

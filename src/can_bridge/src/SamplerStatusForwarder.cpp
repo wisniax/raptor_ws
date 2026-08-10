@@ -1,12 +1,14 @@
 #include <can_bridge/SamplerStatusForwarder.hpp>
 
-SamplerStatusForwarder::SamplerStatusForwarder(rclcpp::Node::SharedPtr &nh) : mNh(nh)
+SamplerStatusForwarder::SamplerStatusForwarder(const rclcpp::NodeOptions & options) : Node("sampler_status_forwarder", options)
 {
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
-	mSamplerStatusGrabber = mNh->create_subscription<can_msgs::msg::Frame>(
+
+	mSamplerStatusGrabber = this->create_subscription<can_msgs::msg::Frame>(
 		RosCanConstants::RosTopics::can_raw_RX, qos,
 		std::bind(&SamplerStatusForwarder::samplerStatusGrabber, this, std::placeholders::_1));
-	mSamplerStatusPublisher = mNh->create_publisher<rex_interfaces::msg::SamplerFeedback>(
+
+    mSamplerStatusPublisher = this->create_publisher<rex_interfaces::msg::SamplerFeedback>(
 		RosCanConstants::RosTopics::can_sampler_status, qos);
 }
 
@@ -48,10 +50,12 @@ void SamplerStatusForwarder::statusPublisher()
 	status.ph = mStatus8.ph;
 	status.distance = mStatus8.distance;
 
-	status.header.stamp = rclcpp::Clock().now();
+	status.header.stamp = this->now();
 
 	mSamplerStatusPublisher->publish(status);
 
 	if (mStatus8Fresh)
 		mStatus8Fresh = false;
 }
+
+RCLCPP_COMPONENTS_REGISTER_NODE(SamplerStatusForwarder)
