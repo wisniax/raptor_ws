@@ -9,6 +9,9 @@ launch:
     file: "$(find-pkg-share mqtt_bridge)/launch/mqtt_bridge.yaml"
 
  - include:
+    file: "$(find-pkg-share calibration_manager)/launch/calibration_manager.yaml"
+
+ - include:
     file: "$(find-pkg-share ros2_socketcan)/launch/socket_can_bridge.launch.xml"
     arg:
       -
