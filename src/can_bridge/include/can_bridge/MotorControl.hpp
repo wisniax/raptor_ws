@@ -49,7 +49,7 @@ public:
      * @brief Constructor for the MotorControl component.
      * @param options Configuration options for the composable node.
      */
-    MotorControl(const rclcpp::NodeOptions &options);
+	MotorControl(const rclcpp::NodeOptions & options);
 
     /**
      * @brief Processes and sends velocity/angle commands to all 8 motors.
@@ -59,7 +59,7 @@ public:
      *
      * @param msg Shared pointer to the Wheels message containing target states for all wheels.
      */
-    void sendMotorVel(const WheelsMsg::ConstSharedPtr &msg);
+	void sendMotorVel(const WheelsMsg::ConstSharedPtr &msg);
     /**
      * @brief Returns the last command successfully sent to the motors.
      * @return Const shared pointer to the last sent Wheels message.
@@ -70,13 +70,13 @@ private:
     /**
      * @brief Internal FSM states for drive logic.
      */
-    enum State
-    {
-        DriveStop,   /**< Drive inhibited due to black mushroom. */
-        PrepDriving, /**< 5-second calibration phase (sending origin pulses). */
-        EStop,       /**< Critical emergency stop - all commands discarded. */
-        Driving      /**< Normal operational state - commands are passed to CAN. */
-    };
+	enum State
+	{
+		DriveStop,   /**< Drive inhibited due to black mushroom. */
+		PrepDriving, /**< 5-second calibration phase (sending origin pulses). */
+		EStop,       /**< Critical emergency stop - all commands discarded. */
+		Driving      /**< Normal operational state - commands are passed to CAN. */
+	};
 
     /**
      * @brief Callback for incoming wheel control messages.
@@ -101,22 +101,22 @@ private:
      * @brief Sends a command to all VESC drive motors to set current to 0.0A.
      * Used for safe stopping without active position holding.
      */
-    void stopMotors();
+	void stopMotors();
     /**
      * @brief Publishes SET_ORIGIN commands to steering motors.
      * Used during the PrepDriving phase.
      */
-    void setWheelsOrigin();
+	void setWheelsOrigin();
     /**
      * @brief Main logic for state transitions.
      * Evaluates RoverStatus, BatteryInfo, and CommunicationState to update mState.
      */
-    void setCorrectState();
+	void setCorrectState();
     /**
      * @brief Timer callback for the 5-second homing procedure.
      * Manages mSetWheelsOriginCtd and triggers setWheelsOrigin().
      */
-    void handleTimerClb();
+	void handleTimerClb();
 
     /**
      * @brief Encodes a high-level motor command into a VESC-compatible CAN frame.
@@ -127,19 +127,19 @@ private:
     CanFrame encodeMotorVel(const VescMotorMsg &vescMotorCommand, const VESC_Id_t vescId);
 
     // --- ROS 2 Interfaces ---
-    rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;               /**< Publisher for raw CAN messages. */
-    rclcpp::Subscription<WheelsMsg>::SharedPtr mSetMotorVelSub;      /**< Subscriber for motor velocity messages. */
-    rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub; /**< Subscriber for system status. */
+    rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;	             /**< Publisher for raw CAN messages. */
+	rclcpp::Subscription<WheelsMsg>::SharedPtr mSetMotorVelSub;      /**< Subscriber for motor velocity messages. */
+	rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub; /**< Subscriber for system status. */
     rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub; /**< Subscriber for BMS data. */
 
     // --- Internal State ---
-    WheelsMsg::ConstSharedPtr mLastSentFrame;        /**< Buffer for the last processed wheel command. */
-    RoverStatusMsg::ConstSharedPtr mLastRoverStatus; /**< Buffer for the last received system status. */
-    BatteryInfoMsg::ConstSharedPtr mLastBatteryInfo; /**< Buffer for the last received battery info. */
+    WheelsMsg::ConstSharedPtr mLastSentFrame;                        /**< Buffer for the last processed wheel command. */
+    RoverStatusMsg::ConstSharedPtr mLastRoverStatus;                 /**< Buffer for the last received system status. */
+    BatteryInfoMsg::ConstSharedPtr mLastBatteryInfo;                 /**< Buffer for the last received battery info. */
 
-    State mState;                        /**< Current internal FSM state. */
-    rclcpp::TimerBase::SharedPtr mTimer; /**< Periodic timer for the homing procedure. */
-    uint8_t mSetWheelsOriginCtd;         /**< Counter for remaining homing pulses. */
+	State mState;                                                    /**< Current internal FSM state. */
+	rclcpp::TimerBase::SharedPtr mTimer;                             /**< Periodic timer for the homing procedure. */
+	uint8_t mSetWheelsOriginCtd;                                     /**< Counter for remaining homing pulses. */
 };
 
 #endif // MOTOR_CONTROL_H

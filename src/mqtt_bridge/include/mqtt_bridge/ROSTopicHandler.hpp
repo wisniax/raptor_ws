@@ -30,39 +30,39 @@ Licensed under the MIT License.
 // forward declarations
 namespace mqtt
 {
-  class async_client;
+class async_client;
 }
 
 class ROSTopicHandler
 {
 public:
-  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node *node, IJSONValidator *validator);
+  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node* node, IJSONValidator* validator);
 
-  void publishMessage_RoverControl(const rex_interfaces::msg::RoverControl &message);
-  void publishMessage_RoboticArmControl(const rex_interfaces::msg::RoboticArmControl &message);
-  void publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl &message);
-  void publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus &message);
-  void publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis &message);
+  void publishMessage_RoverControl(const rex_interfaces::msg::RoverControl& message);
+  void publishMessage_RoboticArmControl(const rex_interfaces::msg::RoboticArmControl& message);
+  void publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl& message);
+  void publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus& message);
+  void publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message);
 
 private:
-  void publishMqttMessage(const std::string &topicName, const char *message);
-  static void addTimestampToJSON(rapidjson::Document &doc, const builtin_interfaces::msg::Time &time);
+  void publishMqttMessage(const std::string& topicName, const char* message);
+  static void addTimestampToJSON(rapidjson::Document& doc, const builtin_interfaces::msg::Time& time);
   template <typename T>
-  static void addMemberToJSON(rapidjson::Document &doc, const std::string &name, const T &value);
+  static void addMemberToJSON(rapidjson::Document& doc, const std::string& name, const T& value);
   template <typename T, typename Allocator>
-  static void addMemberToJSON(rapidjson::Value &doc, const std::string &name, const T &value, Allocator &alc);
-  template <typename T>
-  static void addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T> &m);
-  static std::string getStringFromJSON(const rapidjson::Document &doc);
+  static void addMemberToJSON(rapidjson::Value& doc, const std::string& name, const T& value, Allocator& alc);
+  template<typename T>
+  static void addMembersFromMapToJSON(rapidjson::Document& doc, const std::map<std::string, T>& m);
+  static std::string getStringFromJSON(const rapidjson::Document& doc);
 
-  void callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg);
+  void callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr& receivedMsg);
   void fire_VescStatus();
-  void publishMqttMessage_VescStatus(const rex_interfaces::msg::VescStatus::SharedPtr &msg);
+  void publishMqttMessage_VescStatus(const rex_interfaces::msg::VescStatus::SharedPtr& msg);
 
-  void callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &receivedMsg);
-  void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr &receivedMsg);
+  void callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr& receivedMsg);
+  void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& receivedMsg);
 
-  void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr &receivedMsg);
+  void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& receivedMsg);
 
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
@@ -82,8 +82,8 @@ private:
   rclcpp::Publisher<rex_interfaces::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
   rclcpp::Publisher<rex_interfaces::msg::CalibrateAxis>::SharedPtr mPub_CalibrateAxis;
 
-  rclcpp::Node *n;
-  IJSONValidator *jsonValidator;
+  rclcpp::Node* n;
+  IJSONValidator* jsonValidator;
 };
 
-#endif // MQTT_BRIDGE__ROSTOPICHANDLER_HPP_
+#endif  // MQTT_BRIDGE__ROSTOPICHANDLER_HPP_
