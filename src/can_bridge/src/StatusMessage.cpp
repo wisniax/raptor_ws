@@ -5,7 +5,6 @@ StatusMessage::StatusMessage(const rclcpp::NodeOptions & options) : Node("status
 	rex_interfaces::msg::RoverStatus zeroMsg;
 	zeroMsg.communication_state = 0;
 	zeroMsg.control_mode = 0;
-	zeroMsg.pad_connected = false;
 	mLastStatus = zeroMsg;
 
     this->declare_parameter<bool>("send_on_update", true);
@@ -50,7 +49,6 @@ can_msgs::msg::Frame StatusMessage::encodeStatusMessage(const rex_interfaces::ms
 
 	msg_status_10.vescID = RosCanConstants::VescIds::ros_can_host;
 	msg_status_10.communicationState = (VESC_Status_10_CommunicationState)msg.communication_state;
-	msg_status_10.flags = msg.pad_connected ? VESC_STATUS_10_FLAGS_MASK_PADCONNECTED : 0;
 	msg_status_10.controlMode = (VESC_Status_10_ControlMode)msg.control_mode;
 
 	VESC_RawFrame rf;

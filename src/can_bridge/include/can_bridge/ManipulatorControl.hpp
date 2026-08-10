@@ -11,11 +11,18 @@
 
 #include "can_msgs/msg/frame.hpp"
 #include "rex_interfaces/msg/manipulator_control.hpp"
+#include "rex_interfaces/msg/rover_status.hpp"
+#include "rex_interfaces/msg/battery_info.hpp"
 
 extern "C"
 {
 #include <libVescCan/VESC.h>
 }
+
+using ManipulatorControlMsg = rex_interfaces::msg::ManipulatorControl;
+using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
+using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
+using CanFrame = can_msgs::msg::Frame;
 
 class ManipulatorControl : public rclcpp::Node
 {
@@ -23,12 +30,22 @@ public:
 	ManipulatorControl(const rclcpp::NodeOptions & options);
 
 private:
-	void handleManipulatorCtl(const rex_interfaces::msg::ManipulatorControl::ConstSharedPtr &manipulatorCtlMsg);
+    void handleManipulatorCtl(const ManipulatorControlMsg::ConstSharedPtr &manipulatorCtlMsg);
+    void handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
+    void handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg);
 
-	can_msgs::msg::Frame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
+    bool isManipulatorMode(const RoverStatusMsg::ConstSharedPtr &msg);
+    void stopManipulator();
 
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
-	rclcpp::Subscription<rex_interfaces::msg::ManipulatorControl>::SharedPtr mManipulatorCtlSub; /**< ROS subscriber for motor velocity messages. */
+    CanFrame encodeStepper(const rex_interfaces::msg::VescMotorCommand &stepper, const VESC_Id_t vescId);
+
+	rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;							 /**< ROS publisher for raw CAN messages. */
+	rclcpp::Subscription<ManipulatorControlMsg>::SharedPtr mManipulatorCtlSub; /**< ROS subscriber for motor velocity messages. */
+    rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;   /**< ROS subscriber for SamplerControl messages. */
+    rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub;
+
+    RoverStatusMsg::ConstSharedPtr mLastRoverStatus;
+    BatteryInfoMsg::ConstSharedPtr mLastBatteryInfo;
 };
 
 #endif // ManipulatorControl_h_

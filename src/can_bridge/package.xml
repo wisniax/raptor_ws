@@ -6,6 +6,7 @@
   <description>A ROS-CAN Message translation for Raptors PŁ Mobile Robots</description>
   <maintainer email="wisnia20012@gmail.com">Jakub Wiśniewski</maintainer>
   <maintainer email="marcinwal9@gmail.com">Marcin Walczyk</maintainer>
+  <maintainer email="dominikpustelnik8@gmail.com">Dominik Pustelnik</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
