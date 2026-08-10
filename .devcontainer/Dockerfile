@@ -10,7 +10,6 @@ ARG SSH_PORT=22
 # Default configuration
 ENV ROS_ENABLE_AUTOSTART=0
 ENV ROS_BUILD_ON_STARTUP=on-failure
-ENV ROS_ENABLE_CAN_BRIDGE=0
 
 # Create user
 RUN useradd -m -s /bin/bash -g 1000 ${USERNAME}
