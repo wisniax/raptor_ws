@@ -49,7 +49,7 @@ can_msgs::msg::Frame StatusMessage::encodeStatusMessage(const rex_interfaces::ms
 
 	msg_status_10.vescID = RosCanConstants::VescIds::ros_can_host;
 	msg_status_10.communicationState = (VESC_Status_10_CommunicationState)msg.communication_state;
-	msg_status_10.controlMode = (VESC_Status_10_ControlMode)msg.control_mode;
+	msg_status_10.controlMode = (VESC_Status_10_controlMode_t)msg.control_mode;
 
 	VESC_RawFrame rf;
 	VESC_ZeroMemory(&rf, sizeof(rf));
