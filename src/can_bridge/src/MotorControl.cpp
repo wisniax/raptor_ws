@@ -118,7 +118,27 @@ void MotorControl::setCorrectState()
     if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
     {
         mState = State::DriveStop;
+        mNeedsCalibration = true;
         return;
+    }
+
+    if (mState == State::DriveStop)
+    {
+        RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
+        mState = State::PrepDriving;
+        mNeedsCalibration = true;
+        mSetWheelsOriginCtd = 10;
+        return;
+    }
+
+    if (mNeedsCalibration && mSetWheelsOriginCtd > 0)
+    {
+        return;
+    }
+    else
+    {
+        if (mNeedsCalibration) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+        mNeedsCalibration = false;
     }
 
     int32_t mode = mLastRoverStatus->control_mode;
@@ -152,24 +172,12 @@ void MotorControl::setCorrectState()
     }
 
     // STOP, DRIVE, DRIVE_AUTONOMY, DEEP_SAMPLER, DEEP_SAMPLER_AUTONOMY, ETC...
-    if (mState == State::DriveStop)
-    {
-        mState = State::PrepDriving;
-        mSetWheelsOriginCtd = 10;
-        RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
-        return;
-    }
-    if (mState == State::PrepDriving)
-    {
-        if (mSetWheelsOriginCtd == 0) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
-        else return;
-    }
     mState = State::Driving;
 }
 
 void MotorControl::handleTimerClb()
 {
-	if (mState != State::PrepDriving)
+	if (!mNeedsCalibration)
 		return;
 	if (mSetWheelsOriginCtd-- != 0)
 		setWheelsOrigin();

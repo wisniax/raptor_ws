@@ -138,6 +138,7 @@ private:
     BatteryInfoMsg::ConstSharedPtr mLastBatteryInfo;                 /**< Buffer for the last received battery info. */
 
 	State mState;                                                    /**< Current internal FSM state. */
+    bool mNeedsCalibration = true;                                   /**< Workaround for set origin after black mushroom */
 	rclcpp::TimerBase::SharedPtr mTimer;                             /**< Periodic timer for the homing procedure. */
 	uint8_t mSetWheelsOriginCtd;                                     /**< Counter for remaining homing pulses. */
 };
