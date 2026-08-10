@@ -1,4 +1,12 @@
 # Setting things up
+
+## Host prerequisites
+- Docker
+- Docker Compose
+- Git
+- OpenSSL
+- Bash
+
 ## Cloning
 `git clone git@github.com:wisniax/raptor_ws.git`
 
@@ -12,23 +20,23 @@
 > **Note!** Do this step before building the container or rebuild after!
 
 ## Generate TLS keys, certificates and credentials for Mosquitto
-A helper script is included, which allows to easily generate a CA, server certificate, server keys, and an MQTT credentials file for Mosquitto; it also automatically sets the correct file permissions and ownership, and copies the files into the right locations. `openssl` package, Docker, and sudo access are required to run this script. The syntax is as follows:
+A helper script is included, which allows to easily generate a CA, server certificate, server keys, and an MQTT credentials file for Mosquitto; it also automatically sets the correct file permissions and ownership, and copies the files into the right locations. `openssl` package, Docker, sudo access, and belonging to the `docker` group are required to run this script. The syntax is as follows:
 `./mqtt_certs_gen.sh <CA Common Name> <Server SAN> <MQTT Username> <MQTT Password>`
-where `CA Common Name` should be a name which identifies the Certificate Authority, and `Server SAN` should be the **IP address** (NOT DNS!) by which clients should be able to reach the MQTT broker (`localhost` is already included for in-docker access). Example:
+where `CA Common Name` should be a name which identifies the Certificate Authority, and `Server SAN` should be the **IP address** (NOT DNS!) by which clients should be able to reach the MQTT broker (`localhost` is already included for local access). Example:
 `./mqtt_certs_gen.sh RaptorsCA 192.168.1.20 raptors changeme`
 (for local development, `127.0.0.1` can be used)
 
-**Remember to set the correct MQTT username+password in mqtt_bridge (`mqtt_bridge_node.cpp`), and create a `.env` file with `MQTT_USERNAME` and `MQTT_PASSWORD` variables in the root of this repository (to override the defaults for Mosquitto healthcheck). The pre-defined values in both those places are `raptors`/`changeme`. Also, for proper security you should enable server cert auth by setting `mqtt_enable_server_cert_auth` to `true` in `mqtt_bridge.yaml` launch file.** Of course, after changes to the cpp and yaml file, the mqtt_bridge package has to be re-built (see *Build the repo* section below).
+**Remember to set the correct MQTT username+password in mqtt_bridge (`MqttBridge.hpp`), and create a `.env` file with `MQTT_USERNAME` and `MQTT_PASSWORD` variables in the root of this repository (to override the defaults for Mosquitto healthcheck). The pre-defined values in both those places are `raptors`/`changeme`. Also, for proper security you should enable server cert auth by setting `mqtt_enable_server_cert_auth` to `true` in `mqtt_bridge.yaml` launch file.** Of course, after changes to the hpp and yaml file, the mqtt_bridge package has to be re-built (see *Build the repo* section below).
 
-**Beware that a production setup definitely requires a more thorough SSL configuration than this script can provide!**
+**Beware that a production setup definitely requires a more thorough TLS/SSL configuration than this script can provide!**
 
-## Start the container
+## Start the ROS and Mosquitto containers
 `docker compose up -d`
 
 If docker compose complains about missing files to mount, see the section above - the TLS and credentials stuff **need** to be present in order for the containers to start.
 
-### To stop the container
-`docker compose down`
+### To stop the containers
+`docker compose stop`
 
 ### Environment variables
 - `ROS_ENABLE_AUTOSTART` *(somewhat works)*
@@ -52,14 +60,25 @@ If docker compose complains about missing files to mount, see the section above 
 `ssh rex@[ip-here] -p 2122`
 e.g. `ssh rex@localhost -p 2122`
 
+> default password: `changeme`
+
 ## Build the repo
-> Obviously only works from inside the container ;)
+> The commands below should be executed inside the ROS container.
 
 `cd raptor_ws`
 
 `colcon build --symlink-install`
 > If colcon fails with permission denied run:
 `chmod g+rw -R /home/rex/raptor_ws`
+
+### Source the workspace
+
+`source install/setup.bash`
+
+### Run integration tests
+> NOTE: Set the correct MQTT connection parameters in `mqtt_bridge_tests.cpp`. Obviously, Mosquitto must be running during the tests.
+
+`colcon test`
 
 ## Using the rex service
 ### Stop the rex main ros program:

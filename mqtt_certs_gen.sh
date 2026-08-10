@@ -42,6 +42,7 @@ sudo chmod 0744 .devcontainer/ca.crt
 
 # Mosquitto password file
 sudo rm .devcontainer/mosquitto_passwd
+# Use Mosquitto docker to generate passwd file
 docker run --rm eclipse-mosquitto sh -c "mosquitto_passwd -b -c /tmp/mosquitto_passwd ${MQTT_USERNAME} ${MQTT_PASSWORD} && cat /tmp/mosquitto_passwd" > .devcontainer/mosquitto_passwd
 sudo chown 1883:1883 .devcontainer/mosquitto_passwd
 sudo chmod 0700 .devcontainer/mosquitto_passwd
