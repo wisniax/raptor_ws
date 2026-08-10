@@ -44,3 +44,9 @@ launch:
     exec: "battery_info_forwarder"
     name: "battery_info_forwarder"
     namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "config_control"
+    name: "config_control"
+    namespace: "raptor"
