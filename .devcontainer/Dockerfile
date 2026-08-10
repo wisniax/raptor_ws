@@ -1,5 +1,7 @@
 FROM wisniax/ros-rover-base:latest
 
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libmosquitto-dev
+
 # Dockerfile for ROS-JAZZY
 ARG USERNAME='rex'
 ARG PASSWORD='changeme'
