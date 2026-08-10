@@ -1,0 +1,26 @@
+launch:
+  - node_container:
+      pkg: rclcpp_components
+      exec: component_container
+      name: calibration_manager_container
+      namespace: "raptor"
+      composable_node:
+        - pkg: calibration_manager
+          plugin: CalibrateAxis
+          name: calibrate_axis
+          namespace: "raptor"
+          param:
+            - name: "max_speed"
+              value: 10000.0
+            - name: "max_offset_shift"
+              value: 30.0
+            - name: "max_velocity_shift"
+              value: 30.0
+            - name: "outdated_duration_s"
+              value: 0.3
+            - name: "stop_tolerance"
+              value: 0.3
+            - name: "speed_timeout_ms"
+              value: 500
+            - name: "log_setpos_diff"
+              value: 0

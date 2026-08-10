@@ -9,7 +9,7 @@ Licensed under the MIT License.
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/error/en.h"
 
-ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node* node, IJSONValidator* validator)
+ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS, rclcpp::Node *node, IJSONValidator *validator)
 {
     mCli = mqttClient;
     mQOS = mqttQOS;
@@ -18,18 +18,13 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
     auto timer_cb_group = n->get_node_base_interface()->get_default_callback_group();
 
-    mSub_VescStatus = n->create_subscription<rex_interfaces::msg::VescStatus>
-     ("/CAN/RX/vesc_status", 100, std::bind(&ROSTopicHandler::callback_VescStatus, this, std::placeholders::_1));
-    mTimer_VescStatus = n->create_timer
-     (std::chrono::milliseconds(mInterval_VescStatus), std::bind(&ROSTopicHandler::fire_VescStatus, this), timer_cb_group);
+    mSub_VescStatus = n->create_subscription<rex_interfaces::msg::VescStatus>("/CAN/RX/vesc_status", 100, std::bind(&ROSTopicHandler::callback_VescStatus, this, std::placeholders::_1));
+    mTimer_VescStatus = n->create_timer(std::chrono::milliseconds(mInterval_VescStatus), std::bind(&ROSTopicHandler::fire_VescStatus, this), timer_cb_group);
 
-    mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>
-     ("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
-    mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>
-     ("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
+    mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+    mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
-     mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>
-     ("/rosout", 100, std::bind(&ROSTopicHandler::callback_RosoutLogs, this, std::placeholders::_1));
+    mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>("/rosout", 100, std::bind(&ROSTopicHandler::callback_RosoutLogs, this, std::placeholders::_1));
 
     mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
     mPub_SamplerControl = n->create_publisher<rex_interfaces::msg::SamplerControl>("/MQTT/SamplerControl", 1000);
@@ -38,10 +33,10 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
     mPub_CalibrateAxis = n->create_publisher<rex_interfaces::msg::CalibrateAxis>("/MQTT/CalibrateAxis", 1000);
 }
 
-void ROSTopicHandler::publishMqttMessage(const std::string& topicName, const char* message)
+void ROSTopicHandler::publishMqttMessage(const std::string &topicName, const char *message)
 {
     RCLCPP_DEBUG_THROTTLE(n->get_logger(),
-     *n->get_clock(), 500, "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
+                          *n->get_clock(), 500, "Publishing MQTT message on topic [%s]: [%s]", topicName.c_str(), message);
     mqtt::message_ptr pubmsg = mqtt::make_message(topicName, message);
     pubmsg->set_qos(mQOS);
     mCli->publish(pubmsg);
@@ -49,7 +44,7 @@ void ROSTopicHandler::publishMqttMessage(const std::string& topicName, const cha
 
 // ###### json operations ######
 
-void ROSTopicHandler::addTimestampToJSON(rapidjson::Document& doc, const builtin_interfaces::msg::Time& time)
+void ROSTopicHandler::addTimestampToJSON(rapidjson::Document &doc, const builtin_interfaces::msg::Time &time)
 {
     rapidjson::Value k("Timestamp", doc.GetAllocator());
     rapidjson::Value v;
@@ -59,7 +54,7 @@ void ROSTopicHandler::addTimestampToJSON(rapidjson::Document& doc, const builtin
 }
 
 template <typename T>
-void ROSTopicHandler::addMemberToJSON(rapidjson::Document& doc, const std::string& name, const T& value)
+void ROSTopicHandler::addMemberToJSON(rapidjson::Document &doc, const std::string &name, const T &value)
 {
     rapidjson::Value k(name, doc.GetAllocator());
     rapidjson::Value v(value);
@@ -67,7 +62,7 @@ void ROSTopicHandler::addMemberToJSON(rapidjson::Document& doc, const std::strin
 }
 
 template <typename T, typename Allocator>
-void ROSTopicHandler::addMemberToJSON(rapidjson::Value& doc, const std::string& name, const T& value, Allocator& alc)
+void ROSTopicHandler::addMemberToJSON(rapidjson::Value &doc, const std::string &name, const T &value, Allocator &alc)
 {
     rapidjson::Value k(name, alc);
     rapidjson::Value v(value);
@@ -75,15 +70,16 @@ void ROSTopicHandler::addMemberToJSON(rapidjson::Value& doc, const std::string& 
 }
 
 template <typename T>
-void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document& doc, const std::map<std::string, T>& m)
+void ROSTopicHandler::addMembersFromMapToJSON(rapidjson::Document &doc, const std::map<std::string, T> &m)
 {
-    for (const auto& n : m)
+    for (const auto &n : m)
     {
         addMemberToJSON(doc, n.first, n.second);
     }
 }
 
-std::string ROSTopicHandler::getStringFromJSON(const rapidjson::Document& doc) {
+std::string ROSTopicHandler::getStringFromJSON(const rapidjson::Document &doc)
+{
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
@@ -104,10 +100,9 @@ void ROSTopicHandler::fire_VescStatus()
     mMsgMap_VescStatus.clear();
 }
 
-void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr& receivedMsg)
+void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &receivedMsg)
 {
-    std::map<int, rex_interfaces::msg::VescStatus::SharedPtr>::iterator it
-     = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
+    std::map<int, rex_interfaces::msg::VescStatus::SharedPtr>::iterator it = mMsgMap_VescStatus.find(receivedMsg->vesc_id);
 
     if (it != mMsgMap_VescStatus.end())
     {
@@ -141,7 +136,7 @@ void ROSTopicHandler::callback_VescStatus(const rex_interfaces::msg::VescStatus:
     mMsgMap_VescStatus.insert({msg->vesc_id, msg});
 }
 
-void ROSTopicHandler::publishMqttMessage_VescStatus(const rex_interfaces::msg::VescStatus::SharedPtr& msg)
+void ROSTopicHandler::publishMqttMessage_VescStatus(const rex_interfaces::msg::VescStatus::SharedPtr &msg)
 {
     rapidjson::Document d;
     d.SetObject();
@@ -149,12 +144,7 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(const rex_interfaces::msg::V
     std::map<std::string, int> jsonIntFieldsMap{{"VescId", msg->vesc_id}, {"ERPM", msg->erpm}};
 
     std::map<std::string, double> jsonDoubleFieldsMap{
-        {"Current", msg->current}, {"DutyCycle", msg->duty_cycle}, {"AhUsed", msg->ah_used},
-        {"AhCharged", msg->ah_charged}, {"WhUsed", msg->wh_used}, {"WhCharged", msg->wh_charged},
-        {"TempFet", msg->temp_fet}, {"TempMotor", msg->temp_motor}, {"CurrentIn", msg->current_in},
-        {"PidPos", msg->pid_pos}, {"Tachometer", msg->tachometer}, {"VoltsIn", msg->volts_in},
-        {"ADC1", msg->adc1}, {"ADC2", msg->adc2}, {"ADC3", msg->adc3},
-        {"PPM", msg->ppm}, {"PrecisePos", msg->precise_pos}};
+        {"Current", msg->current}, {"DutyCycle", msg->duty_cycle}, {"AhUsed", msg->ah_used}, {"AhCharged", msg->ah_charged}, {"WhUsed", msg->wh_used}, {"WhCharged", msg->wh_charged}, {"TempFet", msg->temp_fet}, {"TempMotor", msg->temp_motor}, {"CurrentIn", msg->current_in}, {"PidPos", msg->pid_pos}, {"Tachometer", msg->tachometer}, {"VoltsIn", msg->volts_in}, {"ADC1", msg->adc1}, {"ADC2", msg->adc2}, {"ADC3", msg->adc3}, {"PPM", msg->ppm}, {"PrecisePos", msg->precise_pos}};
 
     addMembersFromMapToJSON(d, jsonIntFieldsMap);
 
@@ -166,7 +156,7 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(const rex_interfaces::msg::V
 }
 
 // ###### BatteryInfo ######
-void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr& msg)
+void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
 {
     rapidjson::Document d;
     d.SetObject();
@@ -183,13 +173,14 @@ void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInf
 
     addTimestampToJSON(d, msg->header.stamp);
 
-    if (!jsonValidator->validateJSON(d, "BatteryInfo")) return;
+    if (!jsonValidator->validateJSON(d, "BatteryInfo"))
+        return;
 
     publishMqttMessage("RappTORS/BatteryInfo", getStringFromJSON(d).c_str());
 }
 
 // ###### SamplerFeedback ######
-void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& msg)
+void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr &msg)
 {
     rapidjson::Document d;
     d.SetObject();
@@ -201,13 +192,14 @@ void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::Sample
 
     addTimestampToJSON(d, msg->header.stamp);
 
-    if (!jsonValidator->validateJSON(d, "SamplerFeedback")) return;
+    if (!jsonValidator->validateJSON(d, "SamplerFeedback"))
+        return;
 
     publishMqttMessage("RappTORS/SamplerFeedback", getStringFromJSON(d).c_str());
 }
 
 // ##### RosoutLogs #######
-void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& msg)
+void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr &msg)
 {
     std::string level;
     rapidjson::Document d;
@@ -222,25 +214,26 @@ void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstS
 
     addTimestampToJSON(d, msg->stamp);
 
-    switch (msg->level) {
-        case 10:
-            level = "Debug";
-            break;
-        case 20:
-            level = "Info";
-            break;
-        case 30:
-            level = "Warn";
-            break;
-        case 40:
-            level = "Error";
-            break;
-        case 50:
-            level = "Fatal";
-            break;
-        default:
-            level = "Unknown";
-            break;
+    switch (msg->level)
+    {
+    case 10:
+        level = "Debug";
+        break;
+    case 20:
+        level = "Info";
+        break;
+    case 30:
+        level = "Warn";
+        break;
+    case 40:
+        level = "Error";
+        break;
+    case 50:
+        level = "Fatal";
+        break;
+    default:
+        level = "Unknown";
+        break;
     }
     std::string topic = "RappTORS/Logs/" + level;
 
@@ -249,35 +242,35 @@ void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstS
 
 // ###### RoverControl ######
 
-void ROSTopicHandler::publishMessage_RoverControl(const rex_interfaces::msg::RoverControl& message)
+void ROSTopicHandler::publishMessage_RoverControl(const rex_interfaces::msg::RoverControl &message)
 {
     mPub_RoverControl->publish(message);
 }
 
 // ##### SamplerControl ######
 
-void ROSTopicHandler::publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl& message)
+void ROSTopicHandler::publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl &message)
 {
     mPub_SamplerControl->publish(message);
 }
 
 // ##### RoverStatus ######
 
-void ROSTopicHandler::publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus& message)
+void ROSTopicHandler::publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus &message)
 {
     mPub_RoverStatus->publish(message);
 }
 
 // ##### RoboticArmControl ######
 
-void ROSTopicHandler::publishMessage_RoboticArmControl(const rex_interfaces::msg::RoboticArmControl& message)
+void ROSTopicHandler::publishMessage_RoboticArmControl(const rex_interfaces::msg::RoboticArmControl &message)
 {
     mPub_RoboticArmControl->publish(message);
 }
 
 // ##### CalibrateAxis ######
 
-void ROSTopicHandler::publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message)
+void ROSTopicHandler::publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis &message)
 {
     mPub_CalibrateAxis->publish(message);
 }
