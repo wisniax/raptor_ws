@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <rclcpp_components/register_node_macro.hpp>
 #include <unordered_map>
+#include <vector>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -78,9 +79,8 @@ private:
 	std::unordered_map<MotorStatusKey, MotorStatusValue, MyHash<MotorStatusKey>> mMotorStatus;
 	std::unordered_map<uint8_t, rclcpp::Time> mMotorLastUpdates;
 
-    std::vector<uint8_t> activeVescIDs;
-    size_t currentVescIndex = 0;
-    std::set<uint8_t> discoveredVescs;
+    std::vector<uint8_t> mMotorSendOrder;
+    size_t mSendIndex{0};
 
 	rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr mStatusGrabber;
 	rclcpp::Publisher<rex_interfaces::msg::VescStatus>::SharedPtr mStatusPublisher;
