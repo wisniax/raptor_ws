@@ -22,7 +22,7 @@ implementations).
 *   **VescStatusHandler**: Aggregates raw status frames from the CAN bus and publishes collective motor telemetry (RPM, current, temperature, position).
 *   **BatteryInfoForwarder**: Forwards power supply and safety data from the onboard BMS (Battery Management System).
 *   **SamplerStatusForwarder**: Forwards scientific measurement results (pH, weight, distance).
-*   **StatusMessage**: Transmits ROS connection status and operation mode information to the electronics on the CAN bus.
+*   **StatusMessage**: Transmits ROS connection status and operation mode information to the electronics on the CAN bus. 
 
 ---
 
