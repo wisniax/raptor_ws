@@ -37,9 +37,10 @@ void ConfigControl::handleCalibrationMotorCommand(const VescMotorMsg::ConstShare
 
 void ConfigControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &msg)
 {
-	mLastRoverStatus = msg;
+    const bool wasConfigMode = isConfigMode(mLastRoverStatus);
+    mLastRoverStatus = msg;
 
-    if (!isConfigMode(msg) && isConfigMode(mLastRoverStatus))
+    if (!isConfigMode(msg) && wasConfigMode)
         stopMotors();
 }
 

@@ -118,7 +118,7 @@ void MotorControl::setCorrectState()
     if (mLastBatteryInfo->hotswap_status & BatteryInfoMsg::DRIVE_STOP)
     {
         mState = State::DriveStop;
-        mNeedsCalibration = true;
+        mNeedsCalibration = false;
         return;
     }
 
@@ -127,7 +127,7 @@ void MotorControl::setCorrectState()
         RCLCPP_INFO(this->get_logger(), "Prepping for driving... Setting cupamars origin.");
         mState = State::PrepDriving;
         mNeedsCalibration = true;
-        mSetWheelsOriginCtd = 10;
+        mSetWheelsOriginCtd = 20;
         return;
     }
 
