@@ -17,10 +17,16 @@ CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibra
 	const rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(256));
 
 	mCalibrationMotors = {
-		RosCanConstants::VescIds::front_left_stepper,
-		RosCanConstants::VescIds::front_right_stepper,
-		RosCanConstants::VescIds::rear_left_stepper,
-		RosCanConstants::VescIds::rear_right_stepper,
+		{RosCanConstants::VescIds::front_left_stepper, 100.0f},
+		{RosCanConstants::VescIds::front_right_stepper, 100.0f},
+		{RosCanConstants::VescIds::rear_left_stepper, 100.0f},
+		{RosCanConstants::VescIds::rear_right_stepper, 100.0f},
+		{RosCanConstants::VescIds::manipulator_axis_1, 1.0f},
+		{RosCanConstants::VescIds::manipulator_axis_2, 1.0f},
+		{RosCanConstants::VescIds::manipulator_axis_3, 1.0f},
+		{RosCanConstants::VescIds::manipulator_axis_4, 1.0f},
+		{RosCanConstants::VescIds::manipulator_axis_5, 1.0f},
+		{RosCanConstants::VescIds::manipulator_axis_6, 1.0f},
 	};
 
 	mTargetPos = 0.0f;
@@ -519,13 +525,24 @@ rex_interfaces::msg::VescMotorCommand CalibrateAxis::frameSetOrigin(VESC_Id_t ve
 
 rex_interfaces::msg::VescMotorCommand CalibrateAxis::frameSetPosition(VESC_Id_t vescID, float position)
 {
+	const CalibrationMotor *motor = findCalibrationMotor(vescID);
+	float scale;
+	if (!motor || motor->setPosScaleDiv <= 0.0f)
+	{
+		RCLCPP_FATAL(this->get_logger(), "No valid SetPos scaling configured for VESC ID: %#x", vescID);
+		scale = 1;
+	}
+	else
+	{
+		scale = motor->setPosScaleDiv;
+	}
+
 	rex_interfaces::msg::VescMotorCommand msg;
 
 	msg.vesc_id = vescID;
 	msg.command_id = VESC_COMMAND_SET_POS;
 
-	// Scale related to https://github.com/AlvaroBajceps/libVescCan/issues/10
-	msg.set_value = position / 100.0f;
+	msg.set_value = position / scale;
 
 	msg.header.stamp = this->get_clock()->now();
 
@@ -559,10 +576,21 @@ void CalibrateAxis::sendFrame()
 
 // ######################### UTILITY #########################
 
-bool CalibrateAxis::isCalibrationAllowedForMotor(VESC_Id_t vescID)
+const CalibrationMotor *CalibrateAxis::findCalibrationMotor(VESC_Id_t vescID) const
 {
-	// Check if the supplied ID is in the list of motors allowed for calibration.
-	return std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID) != mCalibrationMotors.end();
+	auto motor = std::find_if(
+		mCalibrationMotors.cbegin(), mCalibrationMotors.cend(),
+		[vescID](const CalibrationMotor &candidate)
+		{
+			return candidate.id == vescID;
+		});
+
+	return motor == mCalibrationMotors.cend() ? nullptr : &*motor;
+}
+
+bool CalibrateAxis::isCalibrationAllowedForMotor(VESC_Id_t vescID) const
+{
+	return findCalibrationMotor(vescID) != nullptr;
 }
 
 bool CalibrateAxis::checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
@@ -620,7 +648,12 @@ int signum(T val)
 void CalibrateAxis::lockMotor(VESC_Id_t vescID)
 {
 	// Remove the motor from mCalibrationMotors, effectively locking it.
-	auto it = std::find(mCalibrationMotors.begin(), mCalibrationMotors.end(), vescID);
+	auto it = std::find_if(
+		mCalibrationMotors.begin(), mCalibrationMotors.end(),
+		[vescID](const CalibrationMotor &motor)
+		{
+			return motor.id == vescID;
+		});
 	if (it != mCalibrationMotors.end())
 	{
 		mCalibrationMotors.erase(it);

@@ -28,6 +28,13 @@ struct MotorStatusStamped
     rclcpp::Time receivedAt;
 };
 
+struct CalibrationMotor
+{
+    VESC_Id_t id;
+    // Outgoing VescMotorCommand::set_value = logical position / this value.
+    float setPosScaleDiv;
+};
+
 enum class Mode
 {
     SetVelocity,
@@ -47,7 +54,7 @@ private:
     rex_interfaces::msg::VescMotorCommand mFrameToSend;
     rclcpp::TimerBase::SharedPtr mFrameSender;
 
-    std::vector<VESC_Id_t> mCalibrationMotors;
+    std::vector<CalibrationMotor> mCalibrationMotors;
     std::map<VESC_Id_t, MotorStatusStamped> mMotorStatuses;
     rclcpp::TimerBase::SharedPtr mVelocityTimeoutTimer;
 
@@ -100,7 +107,8 @@ private:
     void sendFrame();
 
     // ######################### UTILITY #########################
-    bool isCalibrationAllowedForMotor(VESC_Id_t vescID);
+    const CalibrationMotor *findCalibrationMotor(VESC_Id_t vescID) const;
+    bool isCalibrationAllowedForMotor(VESC_Id_t vescID) const;
     bool checkSetPosEndCondition(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg);
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
