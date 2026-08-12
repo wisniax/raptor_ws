@@ -55,6 +55,7 @@ private:
     std::map<std::string, int> mIntParams;
 
     VESC_Id_t mCurrentMotorID;
+    float mTargetPos;
 
     rex_interfaces::msg::RoverStatus::ConstSharedPtr mLastRoverStatus;
     rex_interfaces::msg::BatteryInfo::ConstSharedPtr mLastBatteryInfo;
@@ -104,7 +105,6 @@ private:
     bool isTimestampOutdated(rclcpp::Time stamp);
     bool isRecordedStatusValid(VESC_Id_t vescID);
     void lockMotor(VESC_Id_t vescID);
-    float getTargetPosFromSetPosFrame(const rex_interfaces::msg::VescMotorCommand msg);
     bool isBlackMushroomPressed(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg);
     bool isCalibrationAllowedByRoverStatus(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg) const;
 };

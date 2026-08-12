@@ -23,6 +23,8 @@ CalibrateAxis::CalibrateAxis(const rclcpp::NodeOptions &options) : Node("calibra
 		RosCanConstants::VescIds::rear_right_stepper,
 	};
 
+	mTargetPos = 0.0f;
+
 	initParams();
 
 	mCalibrationMotorCommandPub = this->create_publisher<rex_interfaces::msg::VescMotorCommand>(
@@ -122,8 +124,7 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 	// SetPos wrong behavior emergency check
 	if (mMode == Mode::SetPos)
 	{
-		float targetPos = getTargetPosFromSetPosFrame(mFrameToSend);
-		float newDistance = std::abs(msg->precise_pos - targetPos);
+		float newDistance = std::abs(msg->precise_pos - mTargetPos);
 		float error = 5;
 		if (newDistance > mSetPosDistanceToTarget + error)
 		{
@@ -143,7 +144,7 @@ void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::Cons
 	// Hold drift emergency check
 	if (mMode == Mode::Hold)
 	{
-		float holdTarget = getTargetPosFromSetPosFrame(mFrameToSend);
+		float holdTarget = mTargetPos;
 		if (std::abs(holdTarget - msg->precise_pos) > 5.0) // Arbitrary threshold
 		{
 			RCLCPP_FATAL(this->get_logger(),
@@ -275,7 +276,7 @@ void CalibrateAxis::handleCalibrateAxis(const rex_interfaces::msg::CalibrateAxis
 		case Mode::SetPos:
 		case Mode::Hold:
 			// Continue to offset based on previous position.
-			startingPosition = getTargetPosFromSetPosFrame(mFrameToSend);
+			startingPosition = mTargetPos;
 			break;
 		default:
 			if (!isRecordedStatusValid(msg->vesc_id))
@@ -412,6 +413,7 @@ void CalibrateAxis::modeSetPos(VESC_Id_t vescID, float pos)
 	mFrameToSend = frameSetPosition(vescID, pos);
 	mMode = Mode::SetPos;
 	mCurrentMotorID = vescID;
+	mTargetPos = pos;
 	RCLCPP_INFO(this->get_logger(), "MODE SetPos [%d]: %f", vescID, pos);
 }
 
@@ -433,6 +435,7 @@ void CalibrateAxis::modeHold(VESC_Id_t vescID)
 	else if (isRecordedStatusValid(vescID))
 	{
 		mFrameToSend = frameSetPosition(vescID, mMotorStatuses[vescID].position);
+		mTargetPos = mMotorStatuses[vescID].position;
 		mMode = Mode::Hold;
 	}
 	else
@@ -572,7 +575,7 @@ bool CalibrateAxis::checkSetPosEndCondition(const rex_interfaces::msg::VescStatu
 		return false;
 	}
 
-	float targetValue = getTargetPosFromSetPosFrame(mFrameToSend);
+	float targetValue = mTargetPos;
 
 	if (mIntParams[CALIBRATION_LOG_SETPOS_DIFF])
 		RCLCPP_INFO(
@@ -622,16 +625,6 @@ void CalibrateAxis::lockMotor(VESC_Id_t vescID)
 	{
 		mCalibrationMotors.erase(it);
 	}
-}
-
-float CalibrateAxis::getTargetPosFromSetPosFrame(rex_interfaces::msg::VescMotorCommand msg)
-{
-	if (msg.command_id != rex_interfaces::msg::VescMotorCommand::CMD_SET_POS)
-	{
-		RCLCPP_FATAL(this->get_logger(), "Tried to read the target position from a non-Set_Pos frame.");
-	}
-	// Scale related to https://github.com/AlvaroBajceps/libVescCan/issues/10
-	return msg.set_value * 100.0;
 }
 
 bool CalibrateAxis::isBlackMushroomPressed(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr &msg)
