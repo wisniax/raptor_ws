@@ -43,7 +43,7 @@ class MissionControl : public rclcpp::Node{
         void HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
         void HandleMissionCmd(const MissionCmd &missionCmd);
         uint8_t getMissionCmd();
-        void retranslateSamplerCtrlMsg(const MissionCmd &missionCmd);
+        void retranslateSamplerCtrlMsg(const MissionCmd::SharedPtr &missionCmd);
 
         void stopExecuting();
 
@@ -166,6 +166,7 @@ class MissionControl : public rclcpp::Node{
         bool calibrate_drill = false;
         bool calibrate_platform = false;
         bool mission_in_stop = false;
+        bool new_mission_cmd = false;
 
        
         RoverStatusMsg::ConstSharedPtr LastStatusMsg;

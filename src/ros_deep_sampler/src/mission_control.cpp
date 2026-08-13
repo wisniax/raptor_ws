@@ -18,10 +18,10 @@ namespace ros_deep_sampler{
     10,
     std::bind(&MissionControl::HandleRoverStatus, this, std::placeholders::_1)); 
     
-    mSamplerCtrl_ = this->create_subscription<rex_interfaces::msg::SamplerControl>(
-      "/MQTT/SamplerControl",
-      10,
-      std::bind(&MissionControl::HandleSamplerCtl, this, std::placeholders::_1));
+    // mSamplerCtrl_ = this->create_subscription<rex_interfaces::msg::SamplerControl>(
+    //   "/MQTT/SamplerControl",
+    //   10,
+    //   std::bind(&MissionControl::HandleSamplerCtl, this, std::placeholders::_1));
 
     // SubStatus = this->create_subscription<rex_interfaces::msg::SamplerControl>(
     //     "/MQTT/SamplerControl",
@@ -42,7 +42,6 @@ namespace ros_deep_sampler{
                     std::bind(&MissionControl::HandleMissionCmd, this, std::placeholders::_1));
     
     missionCmdMsg = std::make_shared<MissionCmd>();
-    LastMissionCmdMsg = missionCmdMsg;
     missionFeedbackMsg = std::make_shared<MissionMsg>();
     missionCmdMsg->mission_cmd = MissionCmd::STOP;
     missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
@@ -76,25 +75,44 @@ void MissionControl::send_rotor_velocity(double vel){
 
 void MissionControl::HandleMissionCmd(const MissionCmd &missionCmd){
   missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
+  missionCmdMsg->platform_movement = missionCmd.platform_movement;
+  missionCmdMsg->drill_movement = missionCmd.drill_movement;
+  missionCmdMsg->drill_action = missionCmd.drill_action;
+  missionCmdMsg->container_degrees = missionCmd.container_degrees;
+  missionCmdMsg->vacuum_suction = missionCmd.vacuum_suction;
+  missionCmdMsg->brush_rotation = missionCmd.brush_rotation;
+  missionCmdMsg->open_vacuum = missionCmd.open_vacuum;
+  new_mission_cmd = true;
 }
+
+
 
 uint8_t MissionControl::getMissionCmd(){
   return missionCmdMsg->mission_cmd;
 }
 
-void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd &missionCmd){
+void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd::SharedPtr &missionCmd){
+    RCLCPP_INFO(this->get_logger(), "Control type is: %d", ctrlType_);
+    RCLCPP_INFO(this->get_logger(), "New mission cmd is: %d", new_mission_cmd);
+    if (ctrlType_ == CONTROL_TYPE::MANUAL){
+        if(new_mission_cmd){
+            stopExecuting();
+            new_mission_cmd = false;
+            commands.clear();
+            commands = {
+                {JointMovement::JointsIds::PLATFORM,  joints_->get_current_position(JointMovement::JointsIds::PLATFORM),  missionCmd->platform_movement,  0.2},
+                {JointMovement::JointsIds::DRILL,     joints_->get_current_position(JointMovement::JointsIds::DRILL),     missionCmd->drill_movement,    0.2},
+                {JointMovement::JointsIds::CONTAINER, joints_->get_current_position(JointMovement::JointsIds::CONTAINER), missionCmd->container_degrees, 0.2}
+            };
+            RCLCPP_INFO(this->get_logger(), "Sending manual commands");
+            joints_->moveJoints(commands);
+            joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, missionCmd->drill_action);
+            joints_->send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, missionCmd->vacuum_suction);
+            joints_->send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR,  missionCmd->brush_rotation);
+        }
 
-    JointMovement::JointCommand cmd;
-    cmd.id = JointMovement::JointsIds::PLATFORM;
-    cmd.position = missionCmd->platform_movement;
-    cmd.max_velocity = 0.1;
-    commands.push_back(cmd);
-    joints_->moveJoints(commands);
-    commands = {
-        {JointsIds::PLATFORM,  joints_->get_current_position(JointsIds::PLATFORM),  missionCmd->platform_movement,  0.2},
-        {JointsIds::DRILL,     joints_->get_current_position(JointsIds::DRILL),     missionCmd->drill_movement,    0.2},
-        {JointsIds::CONTAINER, joints_->get_current_position(JointsIds::CONTAINER), missionCmd->container_degrees_a, 0.2}
-    };
+    }
+    
 }
 
 
@@ -145,12 +163,12 @@ void MissionControl::setControlType(const RoverStatusMsg::ConstSharedPtr &msg){
 // 		   msg->control_mode == (CONTROL_MODE_DEEP_SAMPLER_AUTONOMY | CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY);
 // }
 
-void MissionControl::HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg)
-{
-	if (ctrlType_ == CONTROL_TYPE::MANUAL)
-		LastCtrlMsg = samplerCtlMsg;
+// void MissionControl::HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg)
+// {
+// 	if (ctrlType_ == CONTROL_TYPE::MANUAL)
+// 		LastCtrlMsg = samplerCtlMsg;
 
-}
+// }
 
 void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
@@ -197,6 +215,8 @@ void MissionControl::stopExecuting(){
         std::string state_string = to_string(state_);
         RCLCPP_INFO(this->get_logger(), "Mission STOP on state: %s", state_string.c_str());
         joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+        joints_->send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 0.0);
+        joints_->send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
         //move_client_->cancel_goal();
         if (goal_sent){
             joints_->cancelMovement();
@@ -381,6 +401,9 @@ std::string MissionControl::to_string(State s)
 
         case State::MEASURE_SAMPLES:
             return "MEASURING SAMPLES";
+
+        case State::MANUAL_CONTROL:
+            return "MANUAL CONTROL";
 
 
         case State::STOP:
