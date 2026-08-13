@@ -13,7 +13,8 @@ Usage:
 
 Controls: (shown in the UI too)
   TAB           - cycle modes (offset -> speed -> idle)
-  1..4          - select motor (1=FRONT_LEFT, 2=FRONT_RIGHT, 3=REAR_RIGHT, 4=REAR_LEFT)
+  1..4          - select wheel motor (FRONT_LEFT, FRONT_RIGHT, REAR_RIGHT, REAR_LEFT)
+  5..0          - select manipulator axis (5=AXIS_1, ..., 0=AXIS_6)
   Up/Down       - adjust step size (offset mode)
   Left/Right    - send offset (offset mode) or adjust speed (speed mode)
   Space         - toggle periodic sending (speed mode)
@@ -49,11 +50,23 @@ ID_FRONT_LEFT_STEPPER = 96    # 0x60
 ID_FRONT_RIGHT_STEPPER = 97   # 0x61
 ID_REAR_RIGHT_STEPPER = 98    # 0x62
 ID_REAR_LEFT_STEPPER = 99     # 0x63
+ID_MANIPULATOR_AXIS_1 = 112   # 0x70
+ID_MANIPULATOR_AXIS_2 = 113   # 0x71
+ID_MANIPULATOR_AXIS_3 = 114   # 0x72
+ID_MANIPULATOR_AXIS_4 = 115   # 0x73
+ID_MANIPULATOR_AXIS_5 = 116   # 0x74
+ID_MANIPULATOR_AXIS_6 = 117   # 0x75
 MOTOR_MAP = {
     1: ID_FRONT_LEFT_STEPPER,
     2: ID_FRONT_RIGHT_STEPPER,
     3: ID_REAR_RIGHT_STEPPER,
     4: ID_REAR_LEFT_STEPPER,
+    5: ID_MANIPULATOR_AXIS_1,
+    6: ID_MANIPULATOR_AXIS_2,
+    7: ID_MANIPULATOR_AXIS_3,
+    8: ID_MANIPULATOR_AXIS_4,
+    9: ID_MANIPULATOR_AXIS_5,
+    0: ID_MANIPULATOR_AXIS_6,
 }
 
 # Action enums
@@ -322,9 +335,9 @@ class CalibCLI:
                               'ON' if self.periodic_on else 'OFF'}  interval: {self.interval}s")
 
                 stdscr.addstr(
-                    5, 2, "Controls: TAB modes | 1-4 motors | Arrows adjust/send | Space periodic")
+                    5, 2, "Controls: TAB modes | 1-4 wheels | 5-0 manipulator axes")
                 stdscr.addstr(
-                    6, 2, "R return to origin | O set origin / confirm | S stop | C cancel | q quit")
+                    6, 2, "Arrows adjust/send | Space periodic | R origin | O confirm | S stop | C cancel | q quit")
 
                 # history
                 stdscr.addstr(8, 2, "Last messages:")
@@ -359,7 +372,7 @@ class CalibCLI:
                 if key in (ord('q'), ord('Q')):
                     break
 
-                if key in (ord('1'), ord('2'), ord('3'), ord('4')):
+                if key in tuple(ord(str(button)) for button in MOTOR_MAP):
                     btn = int(chr(key))
                     self.set_motor_button(btn)
                     continue
