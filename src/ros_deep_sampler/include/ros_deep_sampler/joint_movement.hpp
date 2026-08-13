@@ -82,6 +82,7 @@ class  JointMovement{
         void calibrateDrill(double vel);
         void moveContainer(double pos, double vel, bool calibrated);
         void calibrateContainer(double vel);
+        void calibrateJoints(double vel);
 
         void moveJoint(const std::vector<JointCommand>& commands);
         std::string getJointName(JointsIds id);

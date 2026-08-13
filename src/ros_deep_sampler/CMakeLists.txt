@@ -80,10 +80,14 @@ install(DIRECTORY config
 
 add_executable(ros_deep_sampler_node 
   src/main.cpp
-  src/mission_control.cpp
-  src/mission_states.cpp
   src/joint_movement.cpp
+  src/autonomy_controller.cpp
+  src/autonomy_states.cpp
   src/RosCanConstants.cpp
+  src/mission_control.cpp
+  
+  
+ 
 )
 
 ament_target_dependencies(ros_deep_sampler_node

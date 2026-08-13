@@ -452,6 +452,31 @@ void JointMovement::calibratePlatform(double vel){
 
 }
 
+
+void JointMovement::calibrateJoints(double vel){
+    float final_pos;
+    
+    std::string joint_name;
+    joint_name = "platform_joint";
+    final_pos = 0.6; //move up on max 
+    double time_to_position =  std::fabs(final_pos)/vel;
+    trajectory_msgs::msg::JointTrajectory traj;
+    trajectory_msgs::msg::JointTrajectoryPoint p;
+    p.positions = {final_pos, final_pos, 0.0}; 
+    RCLCPP_INFO(node_->get_logger(), "Final position: %f",final_pos);  
+    RCLCPP_INFO(node_->get_logger(), "Time to position: %f",time_to_position);
+    p.time_from_start = rclcpp::Duration::from_seconds(time_to_position);
+    traj.joint_names = {"platform_joint",
+    "drill_joint",
+    "container_joint"};
+    traj.points.push_back(p);
+
+    sendTrajectory(traj);
+
+    return;
+
+}
+
 std::string JointMovement::getJointName(JointsIds id)
 {
     switch(id)
