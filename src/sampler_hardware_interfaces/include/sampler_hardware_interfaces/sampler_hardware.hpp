@@ -12,7 +12,6 @@
 #include <iostream>
 #include "std_msgs/msg/float64.hpp"
 #include "sampler_hardware_interfaces/RosCanConstants.hpp"
-#include <libVescCan/VESC_Consts.h>
 
 
 namespace sampler_hardware_interfaces
@@ -84,19 +83,15 @@ private:
   double container_vel_ = 0.0;
 
 
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr platform_cmd_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr drill_cmd_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rotor_cmd_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr vacuum_rotor_cmd_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr brush_rotor_cmd_pub_;
-
-  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr container_cmd_pub_;
-  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
+  rclcpp::Publisher<SamplerCanCmd>::SharedPtr sampler_can_cmd_pub_;
+  rclcpp::Subscription<SamplerCanFeedback>::SharedPtr sampler_can_feedback_sub_;
+  rclcpp::Subscription<rex_interfaces::msg::RoverStatus>::SharedPtr mRoverStatus_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::unordered_map<std::string, double> sim_positions_;
-  std::unordered_map<std::string, double> sim_vel_;
+
+  std::unordered_map<uint8_t, double> real_positions_;
+  std::unordered_map<uint8_t, double> real_vel_;
 
   SamplerCanCmd cmd_;
   SamplerCanFeedback::SharedPtr feedback_; 
@@ -104,10 +99,6 @@ private:
 
   bool sampler_mode = false;
   bool set_pos = false;
-
-  const uint8_t pos_command = VESC_COMMAND_SET_POS;
-  const uint8_t duty_command = VESC_COMMAND_SET_DUTY;
-  const uint8_t rpm_command = VESC_COMMAND_SET_RPM;
 
   // gz::transport::Node node;
   // gz::msgs::Double msg;
