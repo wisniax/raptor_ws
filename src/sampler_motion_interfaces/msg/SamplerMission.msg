@@ -1,15 +1,13 @@
 std_msgs/Header header
-float32 weight_a
-float32 weight_b
-float32 weight_c
-float32 ph
 float32 platform_pos
 float32 drill_pos
-float32 container_a_pos
+float32 container_pos
 float32 drill_rot_vel
+float32 vacuum_suction_vel
+float32 brush_rot_vel
 
-
-uint8 mission_state
+uint8 control_type
+uint8 autonomy_state
 uint8 goal_state
 
 # States
@@ -51,6 +49,12 @@ uint8 GOAL_EXECUTING=3
 uint8 GOAL_SUCCEEDED=4
 uint8 GOAL_CANCELED=5
 uint8 GOAL_FAILED=6
+
+#Control Types
+
+uint8 NO_SAMPLER = 0
+uint8 AUTONOMY = 1
+uint8 MANUAL = 2
 
 
 

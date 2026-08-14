@@ -161,6 +161,7 @@ private:
     double getPlatformPosition();
 
     uint8_t to_Feedback();
+    uint8_t ctrl_to_Feedback();
 
 
 private:
@@ -181,11 +182,18 @@ private:
     // =========================================================
 
     MissionCmd::SharedPtr missionCmdMsg;
+    bool platform_cmd_pending_ = false;
+    bool drill_cmd_pending_ = false;
+    bool container_cmd_pending_ = false;
+
+    bool drill_rotor_cmd_pending_ = false;
+    bool vacuum_cmd_pending_ = false;
+    bool brush_cmd_pending_ = false;
 
     MissionCmd::SharedPtr LastMissionCmdMsg;
 
     bool mission_in_stop = false;
-
+    bool autonomy_stopped = false;
     bool new_mission_cmd = false;
 
     AutonomyController::AutonomyStates state_to_stop_ = AutonomyController::AutonomyStates::IDLE;
@@ -233,7 +241,7 @@ private:
     // ROS publishers
     // =========================================================
 
-    rclcpp::Publisher<SamplerFeedbackMsg>::SharedPtr
+    rclcpp::Publisher<MissionMsg>::SharedPtr
         PubFeedback_;
 
     // =========================================================

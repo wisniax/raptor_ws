@@ -85,20 +85,23 @@ public:
 
 
     void setState(AutonomyStates state);
+    void resetStateVariables();
 
-    void stop();
+    void stop(JointMovement& joints_);
 
     void abort();
 
     void restart();
 
-    void requestCalibration();
+    void requestCalibration(JointMovement& joints_,
+                        const rclcpp::Logger& logger);
 
     // void getFeedback(MissionMsg& missionFeedback,
     //                 JointMovement& joints_);
 
 
     AutonomyStates getState() const;
+    bool getCalibrationState();
 
     std::string toString(AutonomyStates state) const;
 

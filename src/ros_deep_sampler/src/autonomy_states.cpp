@@ -24,12 +24,13 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
             
           
       // waiting for mission_start callback
-        break;
+      break;
 
       case AutonomyStates::CALIBRATE_JOINTS:
        
         if(!goal_sent){
           RCLCPP_INFO(logger, "Starting JOINTS CALIBRATION");
+          joints_.stopMotors();
           joints_.calibrateJoints(0.02);
           goal_sent = true;
         }
@@ -86,6 +87,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
       case AutonomyStates::MOVE_PLATFORM_DOWN:
 
         if(!goal_sent){
+          joints_.stopMotors();
           //joints_.setGoalStatus(false);
           RCLCPP_INFO(logger, "Starting moving down");
           JointMovement::JointCommand cmd;
@@ -128,6 +130,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
       case AutonomyStates::GET_SURFACE_SAMPLE:
         if(rotation_time == 0){
+            joints_.stopMotors();
             joints_.send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 10.0);
             joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 10.0);
         }
@@ -146,6 +149,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
       case AutonomyStates::DRILLING:
 
         if(!goal_sent){
+          joints_.stopMotors();
           RCLCPP_INFO(logger, "Starting drilling");
           JointMovement::JointCommand cmd;
           cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -201,6 +205,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
       case AutonomyStates::MOVE_DRILL_UP:
           if(!goal_sent){
+            joints_.stopMotors();
             RCLCPP_INFO(logger, "Moving drill up");
             JointMovement::JointCommand cmd;
             cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -239,6 +244,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
         
       case AutonomyStates::MOVE_PLATFORM_UP:
             if(!goal_sent){
+              joints_.stopMotors();
               RCLCPP_INFO(logger, "Moving Platform up");
               JointMovement::JointCommand cmd;
               cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -277,6 +283,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
       case AutonomyStates::MOVE_CONTAINER:
           if(!goal_sent){
+            joints_.stopMotors();
             RCLCPP_INFO(logger, "Starting moving container");
             JointMovement::JointCommand cmd;
             cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -314,6 +321,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
         case AutonomyStates::MOVE_DRILL_CLOSER:
             if(!goal_sent){
+                joints_.stopMotors();
                 RCLCPP_INFO(logger, "Move drill closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -351,6 +359,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
         case AutonomyStates::PUT_DEEP_SAMPLE:
             if(rotation_time == 0){
+              joints_.stopMotors();
               joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 5.0);
             }
             rotation_time ++;
@@ -366,6 +375,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
           
         case AutonomyStates::HIDE_DRILL:
             if(!goal_sent){
+                joints_.stopMotors();
                 RCLCPP_INFO(logger, "Move drill closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -403,6 +413,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
         case AutonomyStates::MOVE_PLATFORM_CLOSER:
             if(!goal_sent){
+                joints_.stopMotors();
                 RCLCPP_INFO(logger, "Move Platform closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;
@@ -439,6 +450,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
         case AutonomyStates::PUT_SURFACE_SAMPLE:
             if(rotation_time == 0){
+              joints_.stopMotors();
               joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 5.0);
             }
             rotation_time ++;
@@ -454,6 +466,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
 
         case AutonomyStates::MOVE_PLATFORM_BACK:
             if(!goal_sent){
+                joints_.stopMotors();
                 RCLCPP_INFO(logger, "Move Platform closr to container");
                 JointMovement::JointCommand cmd;
                 cmd.id = JointMovement::JointsIds::PLATFORM;

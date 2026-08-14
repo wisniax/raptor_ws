@@ -106,6 +106,17 @@ void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
       
   }
 
+void JointMovement::stopMotors(){
+    std_msgs::msg::Float64MultiArray msg;
+    msg.data = {0.0};
+    rotor_velocity_pub_->publish(msg);
+      
+    vacuum_rotor_velocity_pub_->publish(msg);
+      
+    brush_rotor_velocity_pub_->publish(msg);
+    
+}
+
 JointMovement::MotionProfile JointMovement::createProfile(
     const JointCommand& cmd,
     double accel_time){

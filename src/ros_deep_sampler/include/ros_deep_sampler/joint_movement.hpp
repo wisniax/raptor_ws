@@ -88,6 +88,7 @@ class  JointMovement{
         std::string getJointName(JointsIds id);
 
         void send_rotor_velocity(JointsIds id, double vel);
+        void stopMotors();
 
         void sendTrajectory(trajectory_msgs::msg::JointTrajectory &traj);
         void generateTrajectory(

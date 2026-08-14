@@ -18,8 +18,8 @@ namespace ros_deep_sampler{
     10,
     std::bind(&MissionControl::HandleRoverStatus, this, std::placeholders::_1)); 
     
-
-    PubFeedback_ = this->create_publisher<rex_interfaces::msg::SamplerFeedback>("/MQTT/SamplerFeedback", 100);
+    ////Change in the future
+    PubFeedback_ = this->create_publisher<MissionMsg>("/MQTT/SamplerFeedback", 100);
     appFeedbackTimer_ = this->create_wall_timer(
      std::chrono::milliseconds(500), std::bind(&MissionControl::publishAppFeedback, this));
 
@@ -33,7 +33,8 @@ namespace ros_deep_sampler{
     missionCmdMsg = std::make_shared<MissionCmd>();
     missionFeedbackMsg = std::make_shared<MissionMsg>();
     missionCmdMsg->mission_cmd = MissionCmd::STOP;
-    missionFeedbackMsg->mission_state = MissionMsg::STATE_IDLE;
+    missionFeedbackMsg->control_type = MissionMsg::NO_SAMPLER;
+    missionFeedbackMsg->autonomy_state = MissionMsg::STATE_IDLE;
     
     // rex_interfaces::msg::RoverStatus init_msg;
     // init_msg.communication_state = RoverStatusMsg::COMMUNICATION_STATE_CLOSED;
@@ -52,6 +53,7 @@ namespace ros_deep_sampler{
   void MissionControl::MissionUpdate()
 {
 
+    getFeedback(missionFeedbackMsg, *joints_);
     // Highest priority: invalid control mode
     if (ctrlType_ == ControlType::NO_SAMPLER)
     {
@@ -76,16 +78,24 @@ namespace ros_deep_sampler{
         case MissionCmd::RESTART:
             //restartMission();
             restartAutonomy();
+            missionCmdMsg->mission_cmd = MissionCmd::START;
             return;
 
         case MissionCmd::CALIBRATE:
             //startCalibration();
             calibrateSampler();
+            if(autonomy_.getCalibrationState()){
+               missionCmdMsg->mission_cmd = MissionCmd::STOP;
+            }
             return;
 
         case MissionCmd::START:
             // handled below
             mission_in_stop = false;
+            // if (autonomy_stopped){
+            //     autonomy_stopped = false;
+            //     // autonomy_.setState(state_to_stop_);
+            // }
             break;
     }
 
@@ -93,11 +103,14 @@ namespace ros_deep_sampler{
     if (ctrlType_ == ControlType::MANUAL)
     {
         executeManual();
+        autonomy_.resetStateVariables();
+        autonomy_.setState(AutonomyController::AutonomyStates::IDLE);
         return;
     }
 
     if (ctrlType_ == ControlType::AUTONOMY)
     {
+        new_mission_cmd = false;
         executeAutonomy();
         return;
     }
@@ -118,16 +131,47 @@ void MissionControl::setControlType(const RoverStatusMsg::ConstSharedPtr &msg){
     return;
 }
 
-void MissionControl::HandleMissionCmd(const MissionCmd &missionCmd){
-  missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
-  missionCmdMsg->platform_movement = missionCmd.platform_movement;
-  missionCmdMsg->drill_movement = missionCmd.drill_movement;
-  missionCmdMsg->drill_action = missionCmd.drill_action;
-  missionCmdMsg->container_degrees = missionCmd.container_degrees;
-  missionCmdMsg->vacuum_suction = missionCmd.vacuum_suction;
-  missionCmdMsg->brush_rotation = missionCmd.brush_rotation;
-  missionCmdMsg->open_vacuum = missionCmd.open_vacuum;
-  //new_mission_cmd = true;
+void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
+{
+    missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
+
+    if (missionCmd.platform_movement != 0.0)
+    {
+        missionCmdMsg->platform_movement = missionCmd.platform_movement;
+        platform_cmd_pending_ = true;
+    }
+
+    if (missionCmd.drill_movement != 0.0)
+    {
+        missionCmdMsg->drill_movement = missionCmd.drill_movement;
+        drill_cmd_pending_ = true;
+    }
+
+    if (missionCmd.container_degrees != 0.0)
+    {
+        missionCmdMsg->container_degrees = missionCmd.container_degrees;
+        container_cmd_pending_ = true;
+    }
+
+    if (missionCmd.drill_action != 0.0)
+    {
+        missionCmdMsg->drill_action = missionCmd.drill_action;
+        drill_rotor_cmd_pending_ = true;
+    }
+
+    if (missionCmd.vacuum_suction != 0.0)
+    {
+        missionCmdMsg->vacuum_suction = missionCmd.vacuum_suction;
+        vacuum_cmd_pending_ = true;
+    }
+
+    if (missionCmd.brush_rotation != 0.0)
+    {
+        missionCmdMsg->brush_rotation = missionCmd.brush_rotation;
+        brush_cmd_pending_ = true;
+    }
+
+    new_mission_cmd = true;
 }
 
 
@@ -144,6 +188,7 @@ void MissionControl::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &rov
 }
 
 void MissionControl::executeAutonomy(){
+
    autonomy_.executeAutonomy(
         sampler_state_,
         *missionCmdMsg,
@@ -162,7 +207,12 @@ void MissionControl::stopExecuting(){
         joints_->send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 0.0);
         joints_->send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
         //move_client_->cancel_goal();
-        state_to_stop_ = autonomy_.getState();
+        if(ctrlType_ == ControlType::AUTONOMY){
+            autonomy_stopped = true;
+            autonomy_.resetStateVariables();
+            // state_to_stop_ = autonomy_.getState();
+        }
+        
         // if (goal_sent){
         joints_->cancelMovement();
         //     goal_sent = false;
@@ -179,18 +229,25 @@ void MissionControl::stopExecuting(){
 }
 
 void MissionControl::restartAutonomy(){
+    autonomy_.resetStateVariables();
+    autonomy_.setState(AutonomyController::AutonomyStates::IDLE);
     return;
 }
 
 void MissionControl::calibrateSampler(){
-    return;
+    autonomy_.requestCalibration(*joints_, this->get_logger());
+    
 }
 
 void MissionControl::executeManual(){
+    autonomy_.stop(*joints_);
+    retranslateSamplerCtrlMsg(missionCmdMsg);
     return;
 }
 
 void MissionControl::abortExecuting(){
+    stopExecuting();
+    autonomy_.setState(AutonomyController::AutonomyStates::DONE);
     return;
 }
 
@@ -219,72 +276,91 @@ double MissionControl::getPlatformPosition(){
 
 
 
-void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd::SharedPtr &missionCmd){
-    RCLCPP_INFO(this->get_logger(), "Control type is: %d", ctrlType_);
-    // RCLCPP_INFO(this->get_logger(), "New mission cmd is: %d", new_mission_cmd);
-    // if (ctrlType_ == ControlType::MANUAL){
-    //     if(new_mission_cmd){
-    //         stopExecuting();
-    //         new_mission_cmd = false;
-    //         commands.clear();
-    //         commands = {
-    //             {JointMovement::JointsIds::PLATFORM,  joints_->get_current_position(JointMovement::JointsIds::PLATFORM),  missionCmd->platform_movement,  0.2},
-    //             {JointMovement::JointsIds::DRILL,     joints_->get_current_position(JointMovement::JointsIds::DRILL),     missionCmd->drill_movement,    0.2},
-    //             {JointMovement::JointsIds::CONTAINER, joints_->get_current_position(JointMovement::JointsIds::CONTAINER), missionCmd->container_degrees, 0.2}
-    //         };
-    //         RCLCPP_INFO(this->get_logger(), "Sending manual commands");
-    //         joints_->moveJoints(commands);
-    //         joints_->send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, missionCmd->drill_action);
-    //         joints_->send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, missionCmd->vacuum_suction);
-    //         joints_->send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR,  missionCmd->brush_rotation);
-    //     }
+void MissionControl::retranslateSamplerCtrlMsg(
+    const MissionCmd::SharedPtr& missionCmd)
+{
+    if (ctrlType_ != ControlType::MANUAL)
+        return;
 
-    // }
-    
+    if (!new_mission_cmd)
+        return;
+
+    new_mission_cmd = false;
+
+    std::vector<JointMovement::JointCommand> commands;
+
+    if (platform_cmd_pending_)
+    {
+        commands.push_back({
+            JointMovement::JointsIds::PLATFORM,
+            joints_->get_current_position(
+                JointMovement::JointsIds::PLATFORM),
+            missionCmd->platform_movement,
+            0.2
+        });
+
+        platform_cmd_pending_ = false;
+    }
+
+    if (drill_cmd_pending_)
+    {
+        commands.push_back({
+            JointMovement::JointsIds::DRILL,
+            joints_->get_current_position(
+                JointMovement::JointsIds::DRILL),
+            missionCmd->drill_movement,
+            0.2
+        });
+
+        drill_cmd_pending_ = false;
+    }
+
+    if (container_cmd_pending_)
+    {
+        commands.push_back({
+            JointMovement::JointsIds::CONTAINER,
+            joints_->get_current_position(
+                JointMovement::JointsIds::CONTAINER),
+            missionCmd->container_degrees,
+            0.2
+        });
+
+        container_cmd_pending_ = false;
+    }
+
+    if (!commands.empty())
+    {
+        joints_->moveJoints(commands);
+    }
+
+    // Rotors
+    if (drill_rotor_cmd_pending_)
+    {
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::DRILL_ROTOR,
+            missionCmd->drill_action);
+
+        drill_rotor_cmd_pending_ = false;
+    }
+
+    if (vacuum_cmd_pending_)
+    {
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::VACUUM_ROTOR,
+            missionCmd->vacuum_suction);
+
+        vacuum_cmd_pending_ = false;
+    }
+
+    if (brush_cmd_pending_)
+    {
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::BRUSH_ROTOR,
+            missionCmd->brush_rotation);
+
+        brush_cmd_pending_ = false;
+    }
 }
-
-
-// bool MissionControl::checkCommands(uint8_t current_mission_cmd)
-// {
-
-//     if(current_mission_cmd == MissionCmd::STOP){
-//           stopExecuting();
-//           return false;
-//         }
-//     mission_in_stop = false;
-//     if(current_mission_cmd == MissionCmd::ABORT){
-//         state_ = State::ABORT;
-//         return false;
-//     }
-//     if(ctrlType_ == ControlType::MANUAL && current_mission_cmd == MissionCmd::START){
-//         state_ = State::MANUAL_CONTROL;
-//         return false;
-//     }
-
-//     if(ctrlType_ == ControlType::AUTONOMY && current_mission_cmd == MissionCmd::START){
-//         return true;
-//     }
-//    return false;
-
-// }
-// /////
-
-
-
-// bool MissionControl::isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg)
-// {
-
-// 	return msg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
-// 		   msg->control_mode == (CONTROL_MODE_DEEP_SAMPLER_AUTONOMY | CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY);
-// }
-
-// void MissionControl::HandleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg)
-// {
-// 	if (ctrlType_ == ControlType::MANUAL)
-// 		LastCtrlMsg = samplerCtlMsg;
-
-// }
-
 
 
 // bool MissionControl::drillStuck(){
@@ -308,41 +384,56 @@ void MissionControl::retranslateSamplerCtrlMsg(const MissionCmd::SharedPtr &miss
 //     return false;
 //}
 void MissionControl::getFeedback(MissionMsg::SharedPtr &missionFeedback, JointMovement& joints_){
+  missionFeedback->control_type = ctrl_to_Feedback();
+  missionFeedback->autonomy_state = to_Feedback();
   missionFeedback->platform_pos = joints_.get_current_position(JointMovement::JointsIds::PLATFORM);
   missionFeedback->drill_pos = joints_.get_current_position(JointMovement::JointsIds::DRILL);
   missionFeedback->drill_rot_vel = joints_.get_current_velocity(JointMovement::JointsIds::DRILL_ROTOR);
-  missionFeedback->container_a_pos = joints_.get_current_velocity(JointMovement::JointsIds::CONTAINER);
+  missionFeedback->brush_rot_vel = joints_.get_current_velocity(JointMovement::JointsIds::BRUSH_ROTOR);
+  missionFeedback->vacuum_suction_vel = joints_.get_current_velocity(JointMovement::JointsIds::VACUUM_ROTOR);
+  missionFeedback->container_pos = joints_.get_current_velocity(JointMovement::JointsIds::CONTAINER);
   joints_.JointStateFeedback(missionFeedback);
 }
-
 
 
 void MissionControl::publishAppFeedback(){
   // RCLCPP_INFO(this->get_logger(), "Current mission command is =  %d", missionCmdMsg->mission_cmd);
   // RCLCPP_INFO(this->get_logger(), "Current Rover status is =  %d", LastStatusMsg);
   std::string str_ = to_string();
-  RCLCPP_INFO(this->get_logger(), "Current state is =  %s", str_.c_str());
-  RCLCPP_INFO(this->get_logger(), "Platform pos =  %f", missionFeedbackMsg->platform_pos);
-  RCLCPP_INFO(this->get_logger(), "Drill pos =  %f", missionFeedbackMsg->drill_pos);
-  RCLCPP_INFO(this->get_logger(), "Drill vel =  %f", missionFeedbackMsg->drill_rot_vel);
-  RCLCPP_INFO(this->get_logger(), "Current goal state =  %d", missionFeedbackMsg->goal_state);
- 
- 
-  
-  // rex_interfaces::msg::SamplerFeedback msg;
-  // msg.platform_pos = platform_position;
-  // msg.drill_pos = drill_position;
-  // msg.drill_rot_vel = drill_velocity;
+   RCLCPP_INFO(
+        this->get_logger(),
+        "\n"
+        "========== Mission Feedback ==========\n"
+        "Control type:          %d\n"
+        "Autonomy state:        %d\n"
+        "Platform position:     %.3f\n"
+        "Drill position:        %.3f\n"
+        "Drill rotor velocity:  %.3f\n"
+        "Brush rotor velocity:  %.3f\n"
+        "Vacuum rotor velocity: %.3f\n"
+        "Container position:    %.3f\n"
+        "Goal state:            %d\n"
+        "======================================",
+        missionFeedbackMsg->control_type,
+        missionFeedbackMsg->autonomy_state,
+        missionFeedbackMsg->platform_pos,
+        missionFeedbackMsg->drill_pos,
+        missionFeedbackMsg->drill_rot_vel,
+        missionFeedbackMsg->brush_rot_vel,
+        missionFeedbackMsg->vacuum_suction_vel,
+        missionFeedbackMsg->container_pos,
+        missionFeedbackMsg->goal_state
+    );
 
-  // PubFeedback_->publish(msg);
+  PubFeedback_->publish(*missionFeedbackMsg);
 
 }
 
 uint8_t MissionControl::to_Feedback(){
     switch (autonomy_.getState())
     {
-        // case AutonomyController::AutonomyStates::IDLE:
-        //     return MissionMsg::STATE_IDLE;
+        case AutonomyController::AutonomyStates::IDLE:
+            return MissionMsg::STATE_IDLE;
 
         // case AutonomyController::AutonomyStates::CALIBRATE_PLATFORM:
         //     return MissionMsg::STATE_CALIBRATE_PLATFORM;
@@ -414,11 +505,28 @@ uint8_t MissionControl::to_Feedback(){
     }
 }
 
+uint8_t MissionControl::ctrl_to_Feedback(){
+    switch(ctrlType_){
+        case ControlType::NO_SAMPLER:
+            return MissionMsg::NO_SAMPLER;
+        break;
+
+        case ControlType::AUTONOMY:
+            return MissionMsg::AUTONOMY;
+        break;
+
+        case ControlType::MANUAL:
+            return MissionMsg::MANUAL;
+        break;
+
+    }
+}
+
 std::string MissionControl::to_string()
 {
     switch(autonomy_.getState()) {
-        // case AutonomyController::AutonomyStates::IDLE:
-        //     return "IDLE";
+        case AutonomyController::AutonomyStates::IDLE:
+            return "IDLE";
 
         // case AutonomyController::AutonomyStates::CALIBRATE_PLATFORM:
         //     return "CALIBRATING PLATFORM (SETTING ORIGIN)";
