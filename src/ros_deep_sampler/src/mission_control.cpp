@@ -86,6 +86,7 @@ namespace ros_deep_sampler{
             calibrateSampler();
             if(autonomy_.getCalibrationState()){
                missionCmdMsg->mission_cmd = MissionCmd::STOP;
+               autonomy_.resetStateVariables();
             }
             return;
 
