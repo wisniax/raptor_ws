@@ -56,10 +56,9 @@ void AutonomyController::resetStateVariables(){
 }
 
 void AutonomyController::stop(JointMovement& joints_){
+  
     if(goal_sent){
-        joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-        joints_.send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 0.0);
-        joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
+        joints_.stopMotors();
         //move_client_->cancel_goal();
         joints_.cancelMovement();
         resetStateVariables();

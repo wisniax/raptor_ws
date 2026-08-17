@@ -52,7 +52,7 @@ uint8 CALIBRATE = 4
 
 ---
 
-## 4. Overall Priority
+## 3. Overall Priority
 
 The mission controller evaluates commands in the following order:
 
@@ -80,7 +80,7 @@ The mission controller evaluates commands in the following order:
 
 ---
 
-## 9. RESTART
+## 4. RESTART
 
 When the mission command is `RESTART`:
 
@@ -116,7 +116,7 @@ Execute according to current control mode
 
 ---
 
-## 10. CALIBRATE
+## 5. CALIBRATE
 
 When the mission command is `CALIBRATE`:
 
@@ -146,7 +146,7 @@ STOP
 
 ---
 
-## 12. Manual Operation
+## 6. Manual Operation
 
 When:
 
@@ -187,7 +187,7 @@ Only actuators for which a new command was received should be commanded.
 
 ---
 
-## 17. Autonomy Operation
+## 7. Autonomy Operation
 
 When:
 
@@ -216,7 +216,7 @@ The `MissionControl` node provides the external data and interfaces, while `Auto
 
 ---
 
-## 18. Autonomy State Machine
+## 8. Autonomy State Machine
 
 `AutonomyController` contains the states responsible for executing the autonomous sampler mission:
 
@@ -251,7 +251,7 @@ DONE
 
 ---
 
-## 19. Control Mode Transition
+## 9. Control Mode Transition
 
 ### AUTONOMY → MANUAL
 
@@ -286,7 +286,7 @@ The autonomy controller should be in a well-defined state before starting execut
 
 ---
 
-## 21. Recommended Control Rules
+## 10. Recommended Control Rules
 
 | Control mode | Mission command | Result |
 |---|---|---|

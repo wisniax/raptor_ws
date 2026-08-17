@@ -136,43 +136,48 @@ void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
 {
     missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
 
-    if (missionCmd.platform_movement != 0.0)
-    {
-        missionCmdMsg->platform_movement = missionCmd.platform_movement;
-        platform_cmd_pending_ = true;
+    if(ctrlType_ == ControlType::MANUAL){
+        if (missionCmd.platform_movement != NO_CMD)
+        {
+            missionCmdMsg->platform_movement = missionCmd.platform_movement;
+            platform_cmd_pending_ = true;
+        }
+
+        if (missionCmd.drill_movement != NO_CMD)
+        {
+            missionCmdMsg->drill_movement = missionCmd.drill_movement;
+            drill_cmd_pending_ = true;
+        }
+
+        if (missionCmd.container_degrees != NO_CMD)
+        {
+            missionCmdMsg->container_degrees = missionCmd.container_degrees;
+            container_cmd_pending_ = true;
+        }
+
+        if (missionCmd.drill_action != NO_CMD)
+        {
+            missionCmdMsg->drill_action = missionCmd.drill_action;
+            drill_rotor_cmd_pending_ = true;
+        }
+
+        if (missionCmd.vacuum_suction != NO_CMD)
+        {
+            missionCmdMsg->vacuum_suction = missionCmd.vacuum_suction;
+            vacuum_cmd_pending_ = true;
+        }
+
+        if (missionCmd.brush_rotation != NO_CMD)
+        {
+            missionCmdMsg->brush_rotation = missionCmd.brush_rotation;
+            brush_cmd_pending_ = true;
+        }
+
+
+        retranslateSamplerCtrlMsg(missionCmdMsg);
     }
 
-    if (missionCmd.drill_movement != 0.0)
-    {
-        missionCmdMsg->drill_movement = missionCmd.drill_movement;
-        drill_cmd_pending_ = true;
-    }
-
-    if (missionCmd.container_degrees != 0.0)
-    {
-        missionCmdMsg->container_degrees = missionCmd.container_degrees;
-        container_cmd_pending_ = true;
-    }
-
-    if (missionCmd.drill_action != 0.0)
-    {
-        missionCmdMsg->drill_action = missionCmd.drill_action;
-        drill_rotor_cmd_pending_ = true;
-    }
-
-    if (missionCmd.vacuum_suction != 0.0)
-    {
-        missionCmdMsg->vacuum_suction = missionCmd.vacuum_suction;
-        vacuum_cmd_pending_ = true;
-    }
-
-    if (missionCmd.brush_rotation != 0.0)
-    {
-        missionCmdMsg->brush_rotation = missionCmd.brush_rotation;
-        brush_cmd_pending_ = true;
-    }
-
-    new_mission_cmd = true;
+    //new_mission_cmd = true;
 }
 
 
@@ -242,7 +247,7 @@ void MissionControl::calibrateSampler(){
 
 void MissionControl::executeManual(){
     autonomy_.stop(*joints_);
-    retranslateSamplerCtrlMsg(missionCmdMsg);
+    //retranslateSamplerCtrlMsg(missionCmdMsg);
     return;
 }
 
@@ -283,84 +288,104 @@ void MissionControl::retranslateSamplerCtrlMsg(
     if (ctrlType_ != ControlType::MANUAL)
         return;
 
-    if (!new_mission_cmd)
-        return;
+    // if (!new_mission_cmd)
+    //     return;
 
-    new_mission_cmd = false;
+    //new_mission_cmd = false;
 
     std::vector<JointMovement::JointCommand> commands;
 
-    if (platform_cmd_pending_)
-    {
+    if(platform_cmd_pending_){
+    commands.push_back({
+        JointMovement::JointsIds::PLATFORM,
+        joints_->get_current_position(
+            JointMovement::JointsIds::PLATFORM),
+        missionCmd->platform_movement,
+        0.2});
+        platform_cmd_pending_ = false;
+    }else{
         commands.push_back({
             JointMovement::JointsIds::PLATFORM,
             joints_->get_current_position(
                 JointMovement::JointsIds::PLATFORM),
-            missionCmd->platform_movement,
-            0.2
-        });
-
-        platform_cmd_pending_ = false;
+            joints_->get_current_position(
+                JointMovement::JointsIds::PLATFORM),
+            0.2});
     }
+   
 
-    if (drill_cmd_pending_)
-    {
+    if(drill_cmd_pending_){
         commands.push_back({
             JointMovement::JointsIds::DRILL,
             joints_->get_current_position(
                 JointMovement::JointsIds::DRILL),
             missionCmd->drill_movement,
-            0.2
-        });
-
+            0.2});
         drill_cmd_pending_ = false;
-    }
+        }else{
+            commands.push_back({
+                JointMovement::JointsIds::DRILL,
+                joints_->get_current_position(
+                    JointMovement::JointsIds::DRILL),
+                joints_->get_current_position(
+                    JointMovement::JointsIds::DRILL),
+                0.2});
+        }
 
-    if (container_cmd_pending_)
-    {
+   if(container_cmd_pending_){
+        commands.push_back({
+        JointMovement::JointsIds::CONTAINER,
+        joints_->get_current_position(
+            JointMovement::JointsIds::CONTAINER),
+        missionCmd->container_degrees,
+        0.2});
+    container_cmd_pending_ = false;
+    }else{
         commands.push_back({
             JointMovement::JointsIds::CONTAINER,
             joints_->get_current_position(
                 JointMovement::JointsIds::CONTAINER),
-            missionCmd->container_degrees,
-            0.2
-        });
-
-        container_cmd_pending_ = false;
+            joints_->get_current_position(
+                JointMovement::JointsIds::CONTAINER),
+            0.2});
     }
 
-    if (!commands.empty())
-    {
-        joints_->moveJoints(commands);
-    }
+    joints_->moveJoints(commands);
 
     // Rotors
-    if (drill_rotor_cmd_pending_)
-    {
+    if(drill_rotor_cmd_pending_){
         joints_->send_rotor_velocity(
             JointMovement::JointsIds::DRILL_ROTOR,
             missionCmd->drill_action);
-
         drill_rotor_cmd_pending_ = false;
+    }else{
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::DRILL_ROTOR,
+            joints_->get_current_velocity(JointMovement::JointsIds::DRILL_ROTOR));
     }
 
-    if (vacuum_cmd_pending_)
-    {
+    if(vacuum_cmd_pending_){
         joints_->send_rotor_velocity(
             JointMovement::JointsIds::VACUUM_ROTOR,
             missionCmd->vacuum_suction);
-
         vacuum_cmd_pending_ = false;
+    }else{
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::VACUUM_ROTOR,
+            joints_->get_current_velocity(JointMovement::JointsIds::VACUUM_ROTOR));
     }
 
-    if (brush_cmd_pending_)
-    {
+    if(brush_cmd_pending_){
         joints_->send_rotor_velocity(
             JointMovement::JointsIds::BRUSH_ROTOR,
             missionCmd->brush_rotation);
-
         brush_cmd_pending_ = false;
+    }else{
+        joints_->send_rotor_velocity(
+            JointMovement::JointsIds::BRUSH_ROTOR,
+            joints_->get_current_velocity(JointMovement::JointsIds::BRUSH_ROTOR));
     }
+    
 }
 
 

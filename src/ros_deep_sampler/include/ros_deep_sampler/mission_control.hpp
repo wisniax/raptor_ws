@@ -9,6 +9,7 @@
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/float64.hpp"
+#include <cmath>
 
 
 #include "rex_interfaces/msg/sampler_control.hpp"
@@ -195,6 +196,10 @@ private:
     bool mission_in_stop = false;
     bool autonomy_stopped = false;
     bool new_mission_cmd = false;
+
+    const float NO_CMD = -999.0f;
+
+   
 
     AutonomyController::AutonomyStates state_to_stop_ = AutonomyController::AutonomyStates::IDLE;
 

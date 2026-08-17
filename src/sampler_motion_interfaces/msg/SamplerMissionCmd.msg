@@ -1,11 +1,11 @@
 uint8 mission_cmd
-float32 platform_movement
-float32 drill_movement
-float32 drill_action
-float32 container_degrees
-float32 vacuum_suction 
-float32 brush_rotation
-bool open_vacuum
+float32 platform_movement -999.0
+float32 drill_movement -999.0
+float32 drill_action -999.0
+float32 container_degrees -999.0
+float32 vacuum_suction -999.0
+float32 brush_rotation -999.0
+bool open_vacuum false
 
 
 # Mission commands

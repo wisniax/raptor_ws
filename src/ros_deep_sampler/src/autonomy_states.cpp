@@ -133,9 +133,10 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
             joints_.stopMotors();
             joints_.send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 10.0);
             joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 10.0);
+            goal_sent = true;
         }
         rotation_time ++;
-        if(rotation_time > 500 && !goal_sent){
+        if(rotation_time > 500 && goal_sent){
             joints_.send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 0.0);
             joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
             state_ = AutonomyStates::DRILLING;
@@ -361,9 +362,10 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
             if(rotation_time == 0){
               joints_.stopMotors();
               joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 5.0);
+              goal_sent = true;
             }
             rotation_time ++;
-            if(rotation_time > 300 && !goal_sent){
+            if(rotation_time > 300 && goal_sent){
               joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
               JointMovement::JointCommand cmd;
               state_ = AutonomyStates::HIDE_DRILL;
@@ -452,9 +454,10 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
             if(rotation_time == 0){
               joints_.stopMotors();
               joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 5.0);
+              goal_sent = true;
             }
             rotation_time ++;
-            if(rotation_time > 300 && !goal_sent){
+            if(rotation_time > 300 && goal_sent){
               joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
               JointMovement::JointCommand cmd;
               state_ = AutonomyStates::MOVE_PLATFORM_BACK;
