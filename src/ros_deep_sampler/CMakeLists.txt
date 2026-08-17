@@ -76,6 +76,11 @@ install(
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
+install(
+  PROGRAMS
+    scripts/sampler_cli.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 
 add_executable(ros_deep_sampler_node 

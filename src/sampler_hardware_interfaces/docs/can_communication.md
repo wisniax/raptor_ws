@@ -34,9 +34,9 @@ When `sampler_mode` is enabled, the hardware interface fills the command message
 
 ```cpp
 if (sampler_mode) {
-    cmd_.command_id[0] = command;
-    cmd_.command_id[1] = command;
-    cmd_.command_id[2] = command;
+    cmd_.command_id[0] = VESC_COMMAND_SET_POS;
+    cmd_.command_id[1] = VESC_COMMAND_SET_POS;
+    cmd_.command_id[2] = VESC_COMMAND_SET_POS;
     cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
@@ -56,9 +56,9 @@ if (sampler_mode) {
 
 | Index | Actuator | Command source | Command ID |
 |---:|---|---|---|
-| 0 | Platform | `platform_cmd_` | `command` |
-| 1 | Drill | `drill_cmd_` | `command` |
-| 2 | Container | `container_cmd_` | `command` |
+| 0 | Platform | `platform_cmd_` | `VESC_COMMAND_SET_POS` |
+| 1 | Drill | `drill_cmd_` | `VESC_COMMAND_SET_POS` |
+| 2 | Container | `container_cmd_` | `VESC_COMMAND_SET_POS` |
 | 3 | Rotor | `rotor_cmd_` | `VESC_COMMAND_SET_RPM` |
 | 4 | Vacuum rotor | `vacuum_rotor_cmd_` | `VESC_COMMAND_SET_RPM` |
 | 5 | Brush rotor | `brush_rotor_cmd_` | `VESC_COMMAND_SET_RPM` |
