@@ -22,11 +22,11 @@ find_package(std_srvs REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(libVescCan REQUIRED)
 find_package(rex_interfaces REQUIRED)
+find_package(ros_constants REQUIRED)
 
 #rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
 add_library(can_bridge_common SHARED
-        src/RosCanConstants.cpp
         src/VescInterop.cpp
         )
 target_compile_features(can_bridge_common PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
@@ -34,7 +34,10 @@ target_include_directories(can_bridge_common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         )
-target_link_libraries(can_bridge_common libVescCan::libVescCan)
+target_link_libraries(can_bridge_common
+        libVescCan::libVescCan
+        ros_constants::ros_constants
+        )
 ament_target_dependencies(can_bridge_common
         rclcpp
         can_msgs
@@ -72,6 +75,7 @@ ament_target_dependencies(vesc_status_handler_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(status_message_component
         rclcpp
@@ -80,6 +84,7 @@ ament_target_dependencies(status_message_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(motor_control_component
         rclcpp
@@ -88,6 +93,7 @@ ament_target_dependencies(motor_control_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(manipulator_control_component
         rclcpp
@@ -96,6 +102,7 @@ ament_target_dependencies(manipulator_control_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(sampler_status_forwarder_component
         rclcpp
@@ -104,6 +111,7 @@ ament_target_dependencies(sampler_status_forwarder_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(sampler_control_component
         rclcpp
@@ -112,6 +120,7 @@ ament_target_dependencies(sampler_control_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(battery_info_forwarder_component
         rclcpp
@@ -120,6 +129,7 @@ ament_target_dependencies(battery_info_forwarder_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 ament_target_dependencies(config_control_component
         rclcpp
@@ -128,6 +138,7 @@ ament_target_dependencies(config_control_component
         std_srvs
         can_msgs
         rex_interfaces
+        ros_constants
         )
 
 rclcpp_components_register_node(
@@ -250,6 +261,7 @@ ament_export_dependencies(
         can_msgs
         std_msgs
         rex_interfaces
+        ros_constants
         libVescCan
 )
 
