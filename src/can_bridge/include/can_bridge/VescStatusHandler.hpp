@@ -8,7 +8,7 @@
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <can_bridge/RosCanConstants.hpp>
+#include <ros_constants/RosCanConstants.hpp>
 #include <can_bridge/VescInterop.hpp>
 
 #include <can_msgs/msg/frame.hpp>

@@ -8,7 +8,7 @@
 #include <array>
 
 #include "can_bridge/VescInterop.hpp"
-#include "can_bridge/RosCanConstants.hpp"
+#include "ros_constants/RosCanConstants.hpp"
 
 #include <can_msgs/msg/frame.hpp>
 #include "rex_interfaces/msg/wheels.hpp"
