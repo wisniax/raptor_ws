@@ -36,19 +36,22 @@ Mission commands have priority over normal execution.
 
 ```cpp
 uint8 START = 0
-uint8 STOP = 1
+uint8 STOP  = 1
 uint8 ABORT = 2
 uint8 RESTART = 3
-uint8 CALIBRATE = 4
+uint8 RESTART_DEEP = 4
+uint8 RESTART_SURFACE = 5
+uint8 CALIBRATE = 6
 ```
 
 | Command | Meaning |
 |---|---|
 | `START` | Start/continue operation according to the current control mode |
 | `STOP` | Stop current motion/mission |
-| `ABORT` | Stop and terminate the current autonomy mission |
+| `ABORT` | Stop current motion/mission (For improvement) |
 | `RESTART` | Reset the autonomy FSM and start again from `IDLE` |
 | `CALIBRATE` | Execute sampler calibration |
+| `RESTART_DEEP and RESTART SURFACE`| Not implemented yet |
 
 ---
 
@@ -148,6 +151,8 @@ STOP
 
 ## 6. Manual Operation
 
+The sampler is commanded with the absolute positions based on its frame of reference for platform, drill, container \
+and speed in RPM for drill_rotor, vaccum_rotor, brush_motor.\
 When:
 
 ```cpp
@@ -165,6 +170,7 @@ Manual execution:
 1. Stops autonomy control.
 2. Processes new operator commands.
 3. Sends the specified commands to `JointMovement`.
+Default values of all joints are -999.0. It is needed to hold the position.
 
 ```text
 START
@@ -183,7 +189,7 @@ executeManual()
      JointMovement
 ```
 
-Only actuators for which a new command was received should be commanded.
+Only actuators for which a new command was received (values different from -999.0) should be commanded.
 
 ---
 

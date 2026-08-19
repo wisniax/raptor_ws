@@ -30,10 +30,18 @@ float64 platform_press
 
 ## Hardware Interface → CAN Bridge
 
-When `sampler_mode` is enabled, the hardware interface fills the command message as follows:
-
+Hardware interface constantly sends on `/CAN/TX/sampler_cmd` commands of format:
 ```cpp
-if (sampler_mode) {
+ if (rclcpp::ok())
+  {
+    cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
+    cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
+    cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
+    cmd_.actuator_id[3] = RosCanConstants::VescIds::sampler_drill;
+    cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
+    cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a;
+    cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b;
+
     cmd_.command_id[0] = VESC_COMMAND_SET_POS;
     cmd_.command_id[1] = VESC_COMMAND_SET_POS;
     cmd_.command_id[2] = VESC_COMMAND_SET_POS;
@@ -42,6 +50,7 @@ if (sampler_mode) {
     cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[6] = VESC_COMMAND_SET_RPM;
 
+
     cmd_.set_value[0] = platform_cmd_;
     cmd_.set_value[1] = drill_cmd_;
     cmd_.set_value[2] = container_cmd_;
@@ -49,8 +58,14 @@ if (sampler_mode) {
     cmd_.set_value[4] = vacuum_rotor_cmd_;
     cmd_.set_value[5] = brush_rotor_cmd_;
     cmd_.set_value[6] = 0.0;
-}
+    
+    sampler_can_cmd_pub_->publish(cmd_);
+  }
 ```
+Its can_bridge responsibility to filter them based on RoverStatus
+
+## Important
+The position of all actuators in the array should be consistent (as shown above).
 
 ### Actuator mapping
 

@@ -356,6 +356,11 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     command = VESC_COMMAND_SET_DUTY;
     sampler_mode = false;
   }
+   
+  
+
+  if (rclcpp::ok())
+  {
     cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
     cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
     cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
@@ -363,10 +368,6 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
     cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a;
     cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b;
-  
-
-  if (rclcpp::ok())
-  {
 
     cmd_.command_id[0] = VESC_COMMAND_SET_POS;
     cmd_.command_id[1] = VESC_COMMAND_SET_POS;

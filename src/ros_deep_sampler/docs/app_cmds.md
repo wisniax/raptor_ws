@@ -2,8 +2,8 @@
 
 The application communicates with the sampler using two main messages:
 
-- `MissionCmd` — commands sent from the application to the robot.
-- `MissionMsg` — feedback sent from the robot to the application.
+- `MissionCmd` — commands sent from the application to the sampler.
+- `MissionMsg` — feedback sent from the sampler to the application.
 
 ---
 
@@ -16,13 +16,13 @@ Message used to control the sampler and provide movement commands.
 | Field | Type | Description |
 |---|---|---|
 | `mission_cmd` | `uint8` | Main mission command |
-| `platform_movement` | `float32` | Platform movement command |
-| `drill_movement` | `float32` | Drill movement command |
-| `drill_action` | `float32` | Drill rotor velocity command |
-| `container_degrees` | `float32` | Container movement command |
-| `vacuum_suction` | `float32` | Vacuum rotor velocity command |
-| `brush_rotation` | `float32` | Brush rotor velocity command |
-| `open_vacuum` | `bool` | Open/close vacuum |
+| `platform_movement` | `float32` | Platform movement command. Position in m|
+| `drill_movement` | `float32` | Drill movement command. Position in m |
+| `drill_action` | `float32` | Drill rotor velocity command. Rotation in RPM|
+| `container_degrees` | `float32` | Container movement command. Position in rad |
+| `vacuum_suction` | `float32` | Vacuum rotor velocity command. Rotation in RPM |
+| `brush_rotation` | `float32` | Brush rotor velocity command. Rotation in RPM |
+| `open_vacuum` | `bool` | Open/close vacuum. Not implemented yet. |
 
 ### Mission Commands
 
@@ -30,11 +30,11 @@ Message used to control the sampler and provide movement commands.
 |---:|---|---|
 | `0` | `START` | Start or continue the mission |
 | `1` | `STOP` | Stop the current operation |
-| `2` | `ABORT` | Abort the current mission |
-| `3` | `RESTART` | Restart the mission |
-| `4` | `RESTART_DEEP` | Restart the deep-sample procedure |
-| `5` | `RESTART_SURFACE` | Restart the surface-sample procedure |
-| `6` | `CALIBRATE` | Start sampler calibration |
+| `2` | `ABORT` | Abort the current mission. Works just as STOP |
+| `3` | `RESTART` | Restart the autonomy mission. |
+| `4` | `RESTART_DEEP` | Restart the deep-sample procedure. Not implemented |
+| `5` | `RESTART_SURFACE` | Restart the surface-sample procedure. Not implemented |
+| `6` | `CALIBRATE` | Start sampler calibration. Calibrates all joints and waits in STOP |
 
 ---
 
@@ -47,15 +47,15 @@ Feedback message sent from the robot to the application.
 | Field | Type | Description |
 |---|---|---|
 | `header` | `std_msgs/Header` | Message timestamp and frame information |
-| `platform_pos` | `float32` | Current platform position |
-| `drill_pos` | `float32` | Current drill position |
-| `container_pos` | `float32` | Current container position |
-| `drill_rot_vel` | `float32` | Current drill rotor velocity |
-| `vacuum_suction_vel` | `float32` | Current vacuum velocity |
-| `brush_rot_vel` | `float32` | Current brush rotor velocity |
+| `platform_pos` | `float32` | Current platform position in m |
+| `drill_pos` | `float32` | Current drill position in m|
+| `container_pos` | `float32` | Current container position in m |
+| `drill_rot_vel` | `float32` | Current drill rotor velocity in RPM |
+| `vacuum_suction_vel` | `float32` | Current vacuum velocity in RPM |
+| `brush_rot_vel` | `float32` | Current brush rotor velocity in RPM |
 | `control_type` | `uint8` | Current sampler control mode |
 | `autonomy_state` | `uint8` | Current autonomy state |
-| `goal_state` | `uint8` | State of the currently executed movement goal |
+| `goal_state` | `uint8` | State of the currently executed movement goal (JointTrajectoryController) |
 
 ---
 

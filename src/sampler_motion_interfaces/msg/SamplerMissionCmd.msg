@@ -1,4 +1,4 @@
-uint8 mission_cmd
+uint8 mission_cmd 1
 float32 platform_movement -999.0
 float32 drill_movement -999.0
 float32 drill_action -999.0
