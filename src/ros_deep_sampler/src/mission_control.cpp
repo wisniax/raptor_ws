@@ -136,6 +136,10 @@ void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
 {
     missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
 
+    if (missionCmdMsg->mission_cmd == MissionCmd::CALIBRATE){
+        return;
+    } 
+
     if(ctrlType_ == ControlType::MANUAL){
         if (missionCmd.platform_movement != NO_CMD)
         {
