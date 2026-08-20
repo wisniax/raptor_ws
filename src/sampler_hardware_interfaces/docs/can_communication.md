@@ -22,8 +22,10 @@ The arrays are indexed by actuator. The `actuator_id`, `command_id`, and `set_va
 uint8[] actuator_id
 float64[] positions
 float64[] velocities
-float64 rotor_effort
-float64 platform_press
+bool[]  end_switches // To DO
+//bool[] calibrate_switch - To DO
+float64  rotor_effort
+float64  distance_sensor 
 ```
 
 `positions` and `velocities` correspond to the actuators listed in `actuator_id`. `rotor_effort` and `platform_press` provide additional sampler feedback.
