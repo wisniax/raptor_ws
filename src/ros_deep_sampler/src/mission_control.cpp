@@ -178,6 +178,8 @@ void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
             brush_cmd_pending_ = true;
         }
 
+        missionCmdMsg->mission_cmd = MissionCmd::START;
+
 
         retranslateSamplerCtrlMsg(missionCmdMsg);
     }

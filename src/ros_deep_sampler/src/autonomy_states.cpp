@@ -4,7 +4,7 @@
 namespace ros_deep_sampler{
 
 
-void AutonomyController::executeAutonomy(const SamplerState& sampler, const MissionCmd& missionCmd,
+void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd& missionCmd,
                                           MissionMsg& missionFeedback,
                                           JointMovement& joints_,
                                           const rclcpp::Logger& logger){
@@ -39,7 +39,10 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
           // if(std::fabs(0.0 - joints_.get_current_position(JointMovement::JointsIds::PLATFORM)) < 0.01 &&             !!!!!!!!!!!!!!!!!
           //     std::fabs(0.0 - joints_.get_current_position(JointMovement::JointsIds::DRILL)) < 0.01 &&               !!!!!!!!!!!!!!!!!!
           //     std::fabs(0.0 - joints_.get_current_position(JointMovement::JointsIds::CONTAINER)) < 0.01){ do other}  !!!!!!!!!!!!!!!!!!!
-         
+          //      OR BASED ON SWITCHES FEEDBACK IF AVAILIABLE
+          //if(joints_.get_end_switch_state(JointMovement::JointsIds::PLATFORM && 
+          //   joints_.get_end_switch_state(JointMovement::JointsIds::DRILL &&
+          //   joints_.get_end_switch_state(JointMovement::JointsIds::CONTAINER){}        
           RCLCPP_INFO(logger, "Finishing moving up");
           goal_sent = false;
           calibrate_platform = true;
@@ -47,6 +50,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
        
           joints_.setTrajectoryStatus(false);
           time_between_states = 0;
+          sampler.distance_to_ground = joints_.get_distance_to_ground();
           state_ = AutonomyStates::MOVE_PLATFORM_DOWN; 
           //}
          
@@ -93,7 +97,7 @@ void AutonomyController::executeAutonomy(const SamplerState& sampler, const Miss
           JointMovement::JointCommand cmd;
           cmd.id = JointMovement::JointsIds::PLATFORM;
           cmd.start_position = joints_.get_current_position(cmd.id);
-          cmd.final_position = -0.4;
+          cmd.final_position = -1* sampler.distance_to_ground;
           cmd.max_velocity = 0.1;
           commands.push_back(cmd);
   

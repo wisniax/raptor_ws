@@ -15,6 +15,9 @@ const std::string RosCanConstants::RosTopics::can_battery_info = "/CAN/RX/batter
 const std::string RosCanConstants::RosTopics::mqtt_rover_status = "/MQTT/RoverStatus";
 const std::string RosCanConstants::RosTopics::mqtt_sampler_control = "/MQTT/SamplerControl";
 
+const std::string RosCanConstants::RosTopics::can_sampler_feedback = "/CAN/RX/sampler_feedback";
+const std::string RosCanConstants::RosTopics::can_sampler_cmd = "/CAN/TX/sampler_cmd";
+
 const uint8_t RosCanConstants::VescIds::ros_can_host = 0x20; /**< ID for the computer that interconnects ROS and CAN BUS. */
 
 const uint8_t RosCanConstants::VescIds::front_left_vesc = 0x50;  /**< ID for the front left VESC. */

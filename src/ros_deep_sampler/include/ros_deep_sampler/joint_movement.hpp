@@ -13,13 +13,13 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/float64.hpp"
 #include "sampler_motion_interfaces/msg/sampler_mission.hpp"
-
+#include "sampler_motion_interfaces/msg/sampler_can_feedback.hpp"
 
 
 
 namespace ros_deep_sampler{
 using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
-
+using SamplerCanFeedback = sampler_motion_interfaces::msg::SamplerCanFeedback;
 class  JointMovement{
     public:
         
@@ -32,7 +32,7 @@ class  JointMovement{
             DRILL_ROTOR,
             VACUUM_ROTOR,
             BRUSH_ROTOR,
-            FLAP_JOINT
+            CLAMP_JOINT
         };
 
         struct JointCommand
@@ -106,6 +106,9 @@ class  JointMovement{
         void JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg);
         double get_current_position(JointsIds id);
         double get_current_velocity(JointsIds id);
+        bool get_end_switch_state(JointsIds id);
+
+        double get_distance_to_ground();
 
         // bool isMoving() const;
         bool isTrajectoryFinished();
@@ -119,6 +122,8 @@ class  JointMovement{
         void stop_movement();
       
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
+        void feedbackCallback(const SamplerCanFeedback::SharedPtr msg);
+
 
         using FollowJointTrajectory =
             control_msgs::action::FollowJointTrajectory;
@@ -127,6 +132,8 @@ class  JointMovement{
             rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
 
     private:
+
+        bool sim_hardware = true;
         rclcpp::Node *node_;
         //rclcpp_action::Client<FollowJointTrajectory>::SharedPtr tjc_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr position_client_;
@@ -138,6 +145,7 @@ class  JointMovement{
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr brush_rotor_velocity_pub_;
 
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
+        rclcpp::Subscription<SamplerCanFeedback>::SharedPtr sampler_can_feedback_sub_;
         
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr active_client_;
         TJCGoalHandle::SharedPtr active_tjc_goal_;
@@ -145,6 +153,14 @@ class  JointMovement{
 
         std::unordered_map<std::string, double> current_position_;
         std::unordered_map<std::string, double> current_velocity_;
+        
+        std::unordered_map<uint8_t, JointsIds> can_id_to_joint_id;
+        std::unordered_map<JointsIds, double> real_current_position_;
+        std::unordered_map<JointsIds, double> real_current_velocity_;
+        std::unordered_map<JointsIds, double> end_switch_state;
+        double rotor_effort = 0.0;
+        double distance_to_ground = 0.4;
+    
         JointsIds current_slider_  = JointsIds::PLATFORM; 
         uint8_t goal_state = MissionMsg::GOAL_IDLE;
         uint8_t prev_goal_state = MissionMsg::GOAL_IDLE;

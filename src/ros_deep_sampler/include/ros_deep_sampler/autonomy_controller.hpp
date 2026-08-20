@@ -29,6 +29,7 @@ struct SamplerState
     double container_pos = 0.0;
     double brush_vel = 0.0;
     double vacuum_vel = 0.0;
+    double distance_to_ground = -999.0;
 
     RoverStatusMsg::ConstSharedPtr rover_status;
     SamplerControlMsg::ConstSharedPtr sampler_control;
@@ -77,7 +78,7 @@ public:
     AutonomyController() = default;
 
 
-    void executeAutonomy(const SamplerState& sampler,
+    void executeAutonomy(SamplerState& sampler,
                         const MissionCmd& missionCmd,
                         MissionMsg& missionFeedback,
                         JointMovement& joints_,

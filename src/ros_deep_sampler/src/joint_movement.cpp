@@ -43,6 +43,21 @@ JointMovement::JointMovement(rclcpp::Node *node)
                 &JointMovement::jointStateCallback,
                 this,
                 std::placeholders::_1));
+
+    sampler_can_feedback_sub_ = node_->create_subscription<SamplerCanFeedback>(
+            RosCanConstants::RosTopics::can_sampler_feedback, 10,
+            std::bind(&JointMovement::feedbackCallback, this, std::placeholders::_1));
+
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_platform] = JointsIds::PLATFORM;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_drill_mov] = JointsIds::DRILL;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_container_a] = JointsIds::CONTAINER;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_drill] = JointsIds::DRILL_ROTOR;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_vacuum_suction] = JointsIds::VACUUM_ROTOR;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_vacuum_a] = JointsIds::BRUSH_ROTOR;
+    can_id_to_joint_id[RosCanConstants::VescIds::sampler_vacuum_b] = JointsIds::CLAMP_JOINT;
+    
+    // To DO: Rename sampler actuators
+
 }
 
 void JointMovement::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
@@ -56,39 +71,70 @@ void JointMovement::jointStateCallback(const sensor_msgs::msg::JointState::Share
     
   }
 
+void JointMovement::feedbackCallback(const SamplerCanFeedback::SharedPtr msg){
+    for (size_t i = 0; i < msg->actuator_id.size(); ++i) {
+        const JointsIds & name = can_id_to_joint_id[msg->actuator_id[i]];
+        real_current_position_[name] = msg->positions[i];
+        real_current_velocity_[name] = msg->velocities[i];
+        end_switch_state[name] = msg->end_switches[i];
+    }
+
+    rotor_effort = msg->rotor_effort;
+    distance_to_ground = msg->distance_sensor;
+}
+
+
+
 double JointMovement::get_current_position(JointsIds id){
-  if(id == JointsIds::PLATFORM){
-    return current_position_["platform_joint"];
+  if(sim_hardware){
+     if(id == JointsIds::PLATFORM){
+        return current_position_["platform_joint"];
+    }
+    if(id == JointsIds::DRILL){
+        return current_position_["drill_joint"];
+    }
+    if(id == JointsIds::CONTAINER){
+        return current_position_["container_joint"];
+    }
+  }else{
+    return real_current_position_[id];
   }
-  if(id == JointsIds::DRILL){
-    return current_position_["drill_joint"];
-  }
-  if(id == JointsIds::CONTAINER){
-    return current_position_["container_joint"];
-  }
+ 
 
 }
 double JointMovement::get_current_velocity(JointsIds id){
-  if(id == JointsIds::PLATFORM){
-    return current_velocity_["platform_joint"];
-  }
-  if(id == JointsIds::DRILL){
-    return current_velocity_["drill_joint"];
-  }
-  if(id == JointsIds::DRILL_ROTOR){
-    return current_velocity_["rotor_joint"];
-  }
-  if(id == JointsIds::CONTAINER){
-    return current_velocity_["container_joint"];
-  }
-  if(id == JointsIds::VACUUM_ROTOR){
-    return current_velocity_["vacuum_rotor_joint"];
-  }
-  if(id == JointsIds::BRUSH_ROTOR){
-    return current_velocity_["brush_rotor_joint"];
+  if (sim_hardware){
+     if(id == JointsIds::PLATFORM){
+        return current_velocity_["platform_joint"];
+    }
+    if(id == JointsIds::DRILL){
+        return current_velocity_["drill_joint"];
+    }
+    if(id == JointsIds::DRILL_ROTOR){
+        return current_velocity_["rotor_joint"];
+    }
+    if(id == JointsIds::CONTAINER){
+        return current_velocity_["container_joint"];
+    }
+    if(id == JointsIds::VACUUM_ROTOR){
+        return current_velocity_["vacuum_rotor_joint"];
+    }
+    if(id == JointsIds::BRUSH_ROTOR){
+        return current_velocity_["brush_rotor_joint"];
+    }
+  }else{
+    return real_current_velocity_[id];
   }
   
+}
 
+bool JointMovement::get_end_switch_state(JointsIds id){
+    return end_switch_state[id];
+
+}
+
+double JointMovement::get_distance_to_ground(){
+    return distance_to_ground;
 }
 
 void JointMovement::send_rotor_velocity(JointsIds rotor_id, double vel){
