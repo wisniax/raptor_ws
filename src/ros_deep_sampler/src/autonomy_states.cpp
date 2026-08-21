@@ -12,7 +12,9 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
     uint8_t current_mission_cmd = missionCmd.mission_cmd;
     // missionFeedbac.mission_state = to_Feedback(state_);
     //getFeedback(missionFeedback, joints_);
-
+    sampler.rotor_velocity = joints_.get_current_velocity(JointMovement::JointsIds::DRILL_ROTOR);
+    rclcpp::Time now = rclcpp::Clock().now();
+    checkStall(sampler, now, logger);
     switch(state_){
       case AutonomyStates::IDLE:
 
@@ -176,20 +178,22 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
           commands.push_back(cmd);
           joints_.moveJoints(commands);
           joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 15.0);
+          sampler.rotor_in_action = true;
           goal_sent = true;
         }
+        
 
-        // if (drillStuck()){
-        //   RCLCPP_INFO(logger, "Drill got stuck");
-        //   joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-        //   joints_.cancelMovement();
-        //   joints_.setTrajectoryStatus(false);
-        //   time_between_states = 0;
-        //   goal_sent = false;
-        //   commands.clear();
-        //   state_ = AutonomyStates::RECOVER_DRILL;
-        //   break;
-        // }
+        if (sampler.drill_stuck_){
+          RCLCPP_INFO(logger, "Drill got stuck");
+          joints_.stopMotors();
+          joints_.cancelMovement();
+          joints_.setTrajectoryStatus(false);
+          time_between_states = 0;
+          goal_sent = false;
+          commands.clear();
+          state_ = AutonomyStates::RECOVER_DRILL;
+          break;
+        }
         
         if(joints_.isTrajectoryFinished() ==1){
           time_between_states++;
@@ -206,7 +210,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
           
          
         }
-        break;
+      break;
 
       case AutonomyStates::MOVE_DRILL_UP:
           if(!goal_sent){
@@ -436,7 +440,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
 
                 cmd.id = JointMovement::JointsIds::CONTAINER;
                 cmd.start_position = joints_.get_current_position(cmd.id);
-                cmd.final_position = joints_.get_current_position(cmd.id);
+                cmd.final_position = -1.45;
                 cmd.max_velocity = 0.6;
                 commands.push_back(cmd);
                 joints_.moveJoints(commands);
@@ -457,12 +461,14 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
         case AutonomyStates::PUT_SURFACE_SAMPLE:
             if(rotation_time == 0){
               joints_.stopMotors();
-              joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 5.0);
+              //joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 5.0);
+              joints_.open_clamp();
               goal_sent = true;
             }
             rotation_time ++;
             if(rotation_time > 300 && goal_sent){
-              joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
+              //joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
+              joints_.close_clamp();
               JointMovement::JointCommand cmd;
               state_ = AutonomyStates::MOVE_PLATFORM_BACK;
               rotation_time =0;
@@ -555,77 +561,74 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
         // }
         break;
 
-      //   case AutonomyStates::RECOVER_DRILL:
-      //     // if (!checkCommands(current_mission_cmd)){
-      //     //   break;
-      //     // }
-      //     // if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
-      //     //     state_to_abort_ = state_;
-      //     //     state_ = AutonomyStates::ABORT;
-      //     //   }
+        case AutonomyStates::RECOVER_DRILL:
+          // if (recovery_attempt > MAX_RECOVERY_ATTEMPT){
+          //     state_to_abort_ = state_;
+          //     state_ = AutonomyStates::ABORT;
+          //   }
 
-      //     // switch(recover_state){
-      //     //   case RECOVER_AutonomyStates::LIFT_UP:
-      //     //   if(!goal_sent){
-      //     //     RCLCPP_INFO(logger, "Lift drill a bit up to recover");
-      //     //     JointMovement::JointCommand cmd;
-      //     //     cmd.id = JointMovement::JointsIds::DRILL;
-      //     //     cmd.position = joints_.get_current_position(cmd.id) + 0.05;
-      //     //     cmd.max_velocity = 0.1;
-      //     //     commands.push_back(cmd);
-      //     //     joints_.moveJoints(commands);
-      //     //     joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, -5.0);
-      //     //     goal_sent = true;
-      //     //     stall_timer_running_ = false;
-      //     //   }
+          // switch(recover_state){
+          //   case RECOVER_AutonomyStates::LIFT_UP:
+          //   if(!goal_sent){
+          //     RCLCPP_INFO(logger, "Lift drill a bit up to recover");
+          //     JointMovement::JointCommand cmd;
+          //     cmd.id = JointMovement::JointsIds::DRILL;
+          //     cmd.position = joints_.get_current_position(cmd.id) + 0.05;
+          //     cmd.max_velocity = 0.1;
+          //     commands.push_back(cmd);
+          //     joints_.moveJoints(commands);
+          //     joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, -5.0);
+          //     goal_sent = true;
+          //     stall_timer_running_ = false;
+          //   }
 
-      //     //   if(joints_.isTrajectoryFinished() ==1){
-      //     //     time_between_states++;
-      //     //     if(time_between_states > 50){
-      //     //       RCLCPP_INFO(logger, "Finishing moving up");
-      //     //       time_between_states = 0;
-      //     //       goal_sent = false;
-      //     //       joints_.setTrajectoryStatus(false);
-      //     //       commands.clear();
-      //     //       recover_state = RECOVER_AutonomyStates::WAIT;
-      //     //       break;
-      //     //     }
-      //     //   }
-      //     //   break;
+          //   if(joints_.isTrajectoryFinished() ==1){
+          //     time_between_states++;
+          //     if(time_between_states > 50){
+          //       RCLCPP_INFO(logger, "Finishing moving up");
+          //       time_between_states = 0;
+          //       goal_sent = false;
+          //       joints_.setTrajectoryStatus(false);
+          //       commands.clear();
+          //       recover_state = RECOVER_AutonomyStates::WAIT;
+          //       break;
+          //     }
+          //   }
+          //   break;
 
-      //     //   case RECOVER_AutonomyStates::WAIT:
-      //     //     rotation_time++;
-      //     //     if(rotation_time>10){
-      //     //        joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 12.0);
-      //     //        stall_timer_running_ = false;
-      //     //        rotation_time = 0;
-      //     //        recover_state = RECOVER_AutonomyStates::CHECK_ROTATION;
-      //     //     }
-      //     //   break;
-      //     //   case RECOVER_AutonomyStates::CHECK_ROTATION:
-      //     //     time_between_states++;
-      //     //     if(time_between_states > 100){
-      //     //       time_between_states =0;
-      //     //       if (drillStuck()){
-      //     //         joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-      //     //         goal_sent = false;
-      //     //         recover_state = RECOVER_AutonomyStates::LIFT_UP;
-      //     //         recovery_attempt++;
-      //     //       }else{
-      //     //         joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
-      //     //         goal_sent = false;
-      //     //         recover_state = RECOVER_AutonomyStates::LIFT_UP;
-      //     //         recovery_attempt = 0;
-      //     //         state_ = AutonomyStates::DRILLING;
-      //     //         break;
-      //     //       }
-      //     //     }
+          //   case RECOVER_AutonomyStates::WAIT:
+          //     rotation_time++;
+          //     if(rotation_time>10){
+          //        joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 12.0);
+          //        stall_timer_running_ = false;
+          //        rotation_time = 0;
+          //        recover_state = RECOVER_AutonomyStates::CHECK_ROTATION;
+          //     }
+          //   break;
+          //   case RECOVER_AutonomyStates::CHECK_ROTATION:
+          //     time_between_states++;
+          //     if(time_between_states > 100){
+          //       time_between_states =0;
+          //       if (drillStuck()){
+          //         joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+          //         goal_sent = false;
+          //         recover_state = RECOVER_AutonomyStates::LIFT_UP;
+          //         recovery_attempt++;
+          //       }else{
+          //         joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
+          //         goal_sent = false;
+          //         recover_state = RECOVER_AutonomyStates::LIFT_UP;
+          //         recovery_attempt = 0;
+          //         state_ = AutonomyStates::DRILLING;
+          //         break;
+          //       }
+          //     }
 
-      //     //   break;
-      //     // }
+          //   break;
+          // }
           
 
-      //   break;
+        break;
 
       //   case AutonomyStates::STOP:
       //     if(!mission_in_stop){

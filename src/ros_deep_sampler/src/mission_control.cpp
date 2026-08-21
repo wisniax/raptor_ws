@@ -450,8 +450,8 @@ void MissionControl::publishAppFeedback(){
         this->get_logger(),
         "\n"
         "========== Mission Feedback ==========\n"
-        "Control type:          %d\n"
-        "Autonomy state:        %d\n"
+        "Control type:          %s\n"
+        "Autonomy state:        %s\n"
         "Platform position:     %.3f\n"
         "Drill position:        %.3f\n"
         "Drill rotor velocity:  %.3f\n"
@@ -460,8 +460,8 @@ void MissionControl::publishAppFeedback(){
         "Container position:    %.3f\n"
         "Goal state:            %d\n"
         "======================================",
-        missionFeedbackMsg->control_type,
-        missionFeedbackMsg->autonomy_state,
+        ctrl_to_Feedback(),
+        to_Feedback(),
         missionFeedbackMsg->platform_pos,
         missionFeedbackMsg->drill_pos,
         missionFeedbackMsg->drill_rot_vel,

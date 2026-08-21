@@ -24,7 +24,12 @@ struct SamplerState
 {
     double platform_position = -100.0;
     double drill_position = -100.0;
-    double drill_velocity = 0.0;
+    double rotor_velocity = 0.0;
+    bool rotor_in_action = false;
+
+    rclcpp::Time stall_start_time_;
+    bool drill_stall_active_ = false;
+    bool drill_stuck_ = false;
 
     double container_pos = 0.0;
     double brush_vel = 0.0;
@@ -115,9 +120,9 @@ private:
 
     void executeRecovery(const SamplerState& sampler);
 
-    void checkStall(
-        const SamplerState& sampler,
-        const rclcpp::Time& now);
+    void checkStall(SamplerState& sampler,
+                    const rclcpp::Time& now,
+                    const rclcpp::Logger& logger);
 
     void handleStall();
 
@@ -134,9 +139,8 @@ private:
         AutonomyStates::IDLE;
 
 
-    bool stall_timer_running_ = false;
+    //bool stall_timer_running_ = false;
 
-    rclcpp::Time stall_start_time_;
 
     int recovery_attempt = 0;
 
@@ -147,6 +151,7 @@ private:
     static constexpr double MIN_SPEED = 3.0;
     static constexpr double MAX_CURRENT = 3.0;
     static constexpr double MIN_TIME = 0.5;
+    static constexpr double STALL_TIME = 1.0;               // seconds
 
     static constexpr int MAX_RECOVERY_ATTEMPT = 5;
 
