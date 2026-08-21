@@ -92,6 +92,7 @@
     </inertial>
   </link>
 
+
 <!-- ===================== DRILL Rotation ================== -->
   <link name="rotor_link">
     <visual>
@@ -138,7 +139,7 @@
 
     <collision>
       <geometry>
-        <box size="0.4 0.3 0.5"/>
+        <box size="0.1 0.1 0.15"/>
       </geometry>
     </collision>
 
@@ -256,6 +257,33 @@
 
   </link>
 
+  <link name= "clamp_link">
+    <visual>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="green">
+        <color rgba="0.2 0.8 0.2 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="0.07 0.07 0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision> 
+
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0022" ixy="0.0" ixz="0.0"
+               iyy="0.0022" iyz="0.0"
+               izz="0.0004"/>
+    </inertial>
+  </link>
+
 
 
   <!--==================JOINTS====================-->
@@ -347,8 +375,27 @@
     <limit
         lower="-1.6"
         upper="1.6"
-        effort="20"
-        velocity="2.0"/>
+        effort="100"
+        velocity="10.0"/>
+
+  </joint>
+
+  <joint name="clamp_joint" type="revolute">
+
+    <parent link="vaccum_body_link"/>
+    <child link="clamp_link"/>
+
+    <!-- Position of rotation axis -->
+    <origin xyz="0.0 0.1 0.1" rpy="0 0 0"/>
+
+    <!-- Rotation axis -->
+    <axis xyz="1 0 0"/>
+
+    <limit
+        lower="-1.6"
+        upper="1.6"
+        effort="100"
+        velocity="20.0"/>
 
   </joint>
 
@@ -419,9 +466,21 @@
 
     <joint_name>container_joint</joint_name>
 
-    <p_gain>1500</p_gain>
+    <p_gain>50</p_gain>
     <i_gain>0</i_gain>
-    <d_gain>100</d_gain>
+    <d_gain>20</d_gain>
+
+  </plugin>
+
+  <plugin
+    filename="gz-sim-joint-position-controller-system"
+    name="gz::sim::systems::JointPositionController">
+
+    <joint_name>clamp_joint</joint_name>
+
+    <p_gain>20</p_gain>
+    <i_gain>0</i_gain>
+    <d_gain>50</d_gain>
 
   </plugin>
 
@@ -475,6 +534,15 @@
     <joint name="container_joint">
 
     <command_interface name="position"/>
+
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+
+    </joint>
+
+    <joint name="clamp_joint">
+
+      <command_interface name="position"/>
 
       <state_interface name="position"/>
       <state_interface name="velocity"/>

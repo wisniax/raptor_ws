@@ -63,6 +63,8 @@ private:
   double rotor_cmd_ = 0.0;
   double vacuum_rotor_cmd_ = 0.0;
   double brush_rotor_cmd_ =0.0;
+  double clamp_cmd_ = 0.0;
+
 
   // double last_platform_cmd_ =0.0;
   // double last_drill_cmd_ = 0.0;
@@ -81,6 +83,8 @@ private:
   double brush_rotor_vel_ = 0.0;
   double container_pos_ = 0.0;
   double container_vel_ = 0.0;
+  double clamp_pos_ = 0.0;
+  double clamp_vel_ = 0.0;
 
 
   rclcpp::Publisher<SamplerCanCmd>::SharedPtr sampler_can_cmd_pub_;
@@ -93,6 +97,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr vacuum_rotor_cmd_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr brush_rotor_cmd_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr container_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr clamp_cmd_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
   rclcpp::TimerBase::SharedPtr timer_;

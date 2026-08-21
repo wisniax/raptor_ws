@@ -186,6 +186,7 @@ private:
     bool platform_cmd_pending_ = false;
     bool drill_cmd_pending_ = false;
     bool container_cmd_pending_ = false;
+    bool clamp_cmd_pending_ = false;
 
     bool drill_rotor_cmd_pending_ = false;
     bool vacuum_cmd_pending_ = false;

@@ -8,6 +8,9 @@ controller_manager:
     position_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    clamp_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
     rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -17,9 +20,9 @@ controller_manager:
     brush_rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
+
 position_controller:
   ros__parameters:
-
     joints:
       - platform_joint
       - drill_joint
@@ -38,22 +41,31 @@ position_controller:
       goal_time: 1.0
       stopped_velocity_tolerance: 0.01
 
+clamp_position_controller:
+  ros__parameters:
+    joints:
+      - clamp_joint
+    interface_name: position
+
 rotor_velocity_controller:
   ros__parameters:
     joints:
       - rotor_joint
 
     interface_name: velocity
+
+
 vacuum_rotor_velocity_controller:
   ros__parameters:
     joints:
       - vacuum_rotor_joint
 
     interface_name: velocity
+
+
 brush_rotor_velocity_controller:
   ros__parameters:
     joints:
       - brush_rotor_joint
 
     interface_name: velocity
-

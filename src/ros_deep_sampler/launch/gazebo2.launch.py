@@ -72,6 +72,14 @@ def generate_launch_description():
         output="screen",
     )
 
+    clamp_position_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["clamp_position_controller"],
+        parameters=[{"use_sim_time": True}],
+        output="screen",
+    )
+
     rotor_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -124,6 +132,7 @@ def generate_launch_description():
     #platform_velocity_controller_spawner,
     #drill_controller_spawner,
     position_controller,
+    clamp_position_controller_spawner,
     rotor_controller_spawner,
     vacuum_rotor_controller_spawner,
     brush_rotor_controller_spawner,

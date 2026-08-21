@@ -101,6 +101,8 @@ class  JointMovement{
             double accel_time = 0.5,
             double dt = 0.02);
         void setTrajectoryStatus(bool status);
+        void open_clamp();
+        void close_clamp();
 
         //ACTION_TUTORIALS_CPP_PUBLIC
         void JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg);
@@ -140,6 +142,7 @@ class  JointMovement{
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr container_client_;
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr clamp_cmd_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr rotor_velocity_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr vacuum_rotor_velocity_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr brush_rotor_velocity_pub_;
@@ -171,7 +174,8 @@ class  JointMovement{
         double prev_platform_pos = 0.0;
         double prev_drill_pos = 0.0;
 
-
+        const double CLAMP_OPEN  = 1.57;
+        const double CLAMP_CLOSED = 0.0;
 
 
         

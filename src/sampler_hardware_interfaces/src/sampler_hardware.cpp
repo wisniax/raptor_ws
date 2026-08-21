@@ -100,7 +100,11 @@ CallbackReturn SamplerHardware::on_configure(
 
         container_cmd_pub_ = 
             get_node()->create_publisher<std_msgs::msg::Float64>(
-                "/container_joint_cmd", 10);                
+                "/container_joint_cmd", 10); 
+
+        clamp_cmd_pub_ = 
+            get_node()->create_publisher<std_msgs::msg::Float64>(
+                "/clamp_joint_cmd", 10);                       
 
         rotor_cmd_pub_ =
              get_node()->create_publisher<std_msgs::msg::Float64>(
@@ -189,6 +193,12 @@ SamplerHardware::export_command_interfaces()
         "container_joint",
         hardware_interface::HW_IF_POSITION,
         &container_cmd_));
+    
+    command_interfaces.emplace_back(
+    hardware_interface::CommandInterface(
+        "clamp_joint",
+        hardware_interface::HW_IF_POSITION,
+        &clamp_cmd_));
 
     return command_interfaces;
 }
@@ -255,6 +265,18 @@ SamplerHardware::export_state_interfaces()
         hardware_interface::HW_IF_VELOCITY,
         &container_vel_));
 
+    state_interfaces.emplace_back(
+    hardware_interface::StateInterface(
+        "clamp_joint",
+        hardware_interface::HW_IF_POSITION,
+        &clamp_pos_));
+
+    state_interfaces.emplace_back(
+    hardware_interface::StateInterface(
+        "clamp_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &clamp_vel_));
+
     return state_interfaces;
 }
 
@@ -308,6 +330,10 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
   {
       container_pos_ = sim_positions_["container_joint"];
   }
+  // if (sim_positions_.find("clamp_joint") != sim_positions_.end())
+  // {
+  //     clamp_pos_ = sim_positions_["clamp_joint"];
+  // }
 
   if (sim_vel_.find("platform_joint") != sim_vel_.end())
   {
@@ -333,6 +359,10 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
   {
     brush_rotor_vel_ = sim_vel_["brush_rotor_joint"];
   }
+  // if (sim_vel_.find("clamp_joint") != sim_positions_.end())
+  // {
+  //     clamp_pos_ = sim_positions_["clamp_joint"];
+  // }
  
 
   return hardware_interface::return_type::OK;
@@ -366,8 +396,8 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
     cmd_.actuator_id[3] = RosCanConstants::VescIds::sampler_drill;
     cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
-    cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a;
-    cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b;
+    cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a; // Brush 
+    cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b; // clamp?
 
     cmd_.command_id[0] = VESC_COMMAND_SET_POS;
     cmd_.command_id[1] = VESC_COMMAND_SET_POS;
@@ -375,7 +405,7 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
-    cmd_.command_id[6] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[6] = VESC_COMMAND_SET_POS;
 
 
     cmd_.set_value[0] = platform_cmd_;
@@ -384,7 +414,7 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.set_value[3] = rotor_cmd_;
     cmd_.set_value[4] = vacuum_rotor_cmd_;
     cmd_.set_value[5] = brush_rotor_cmd_;
-    cmd_.set_value[6] = 0.0;
+    cmd_.set_value[6] = clamp_cmd_;
     
     sampler_can_cmd_pub_->publish(cmd_);
 ///////////////
@@ -406,6 +436,9 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
 
     msg.data = brush_rotor_cmd_;
     brush_rotor_cmd_pub_->publish(msg);
+
+    msg.data = clamp_cmd_;
+    clamp_cmd_pub_->publish(msg);
 
     }
    

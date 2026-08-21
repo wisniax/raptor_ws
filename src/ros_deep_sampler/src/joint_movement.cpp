@@ -24,7 +24,9 @@ JointMovement::JointMovement(rclcpp::Node *node)
     //     rclcpp_action::create_client<FollowJointTrajectory>(
     //         node_,
     //         "/container_controller/follow_joint_trajectory");
-
+    clamp_cmd_pub_ = 
+        node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/clamp_position_controller/commands", 10);
     rotor_velocity_pub_ =
         node_->create_publisher<std_msgs::msg::Float64MultiArray>(
             "/rotor_velocity_controller/commands", 10);
@@ -161,6 +163,17 @@ void JointMovement::stopMotors(){
       
     brush_rotor_velocity_pub_->publish(msg);
     
+}
+
+void JointMovement::open_clamp(){
+    std_msgs::msg::Float64MultiArray msg;
+    msg.data = {CLAMP_OPEN};
+    clamp_cmd_pub_->publish(msg);
+}
+void JointMovement::close_clamp(){
+    std_msgs::msg::Float64MultiArray msg;
+    msg.data = {CLAMP_CLOSED};
+    clamp_cmd_pub_->publish(msg);
 }
 
 JointMovement::MotionProfile JointMovement::createProfile(

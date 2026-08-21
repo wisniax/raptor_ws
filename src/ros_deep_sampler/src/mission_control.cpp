@@ -178,6 +178,13 @@ void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
             brush_cmd_pending_ = true;
         }
 
+        // if (missionCmd.open_vacuum)
+        // {
+        //     missionCmdMsg->open_vacuum = missionCmd.open_vacuum;
+        //     clamp_cmd_pending_ = true;
+        // }
+        missionCmdMsg->open_vacuum = missionCmd.open_vacuum;
+
         missionCmdMsg->mission_cmd = MissionCmd::START;
 
 
@@ -391,6 +398,12 @@ void MissionControl::retranslateSamplerCtrlMsg(
         joints_->send_rotor_velocity(
             JointMovement::JointsIds::BRUSH_ROTOR,
             joints_->get_current_velocity(JointMovement::JointsIds::BRUSH_ROTOR));
+    }
+
+    if(missionCmd->open_vacuum){
+        joints_->open_clamp();
+    }else{
+       joints_->close_clamp();
     }
     
 }
