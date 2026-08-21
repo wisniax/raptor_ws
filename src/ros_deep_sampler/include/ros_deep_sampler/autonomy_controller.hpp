@@ -69,14 +69,14 @@ public:
         HIDE_CONTAINER,
 
         MEASURE_SAMPLES,
-        DONE
+        DONE,
+        ABORT
     };
 
     enum class RecoverState
     {
         LIFT_UP,
-        WAIT,
-        CHECK_ROTATION
+        WAIT
     };
 
 
@@ -136,6 +136,9 @@ private:
         AutonomyStates::IDLE;
 
     AutonomyStates state_to_stop_ =
+        AutonomyStates::IDLE;
+
+    AutonomyStates state_to_recover_ =
         AutonomyStates::IDLE;
 
 
