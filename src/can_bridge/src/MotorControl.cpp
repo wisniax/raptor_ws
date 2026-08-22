@@ -135,11 +135,9 @@ void MotorControl::setCorrectState()
     {
         return;
     }
-    else
-    {
-        if (mNeedsCalibration) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
-        mNeedsCalibration = false;
-    }
+
+	if (mNeedsCalibration) RCLCPP_INFO(this->get_logger(), "Prepping finished.");
+	mNeedsCalibration = false;
 
     int32_t mode = mLastRoverStatus->control_mode;
 

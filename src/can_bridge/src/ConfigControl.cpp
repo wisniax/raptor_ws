@@ -86,20 +86,13 @@ void ConfigControl::stopMotors()
     rover_wheels_velocity_temp.header.stamp = this->now();
 
     rover_wheels_velocity_temp.front_left.turn.command_id = VESC_COMMAND_SET_POS;
-    rover_wheels_velocity_temp.front_left.turn.set_value = 0.0;
-    rover_wheels_velocity_temp.front_left.turn.set_origin_data = 0;
-
     rover_wheels_velocity_temp.front_right.turn.command_id = VESC_COMMAND_SET_POS;
-    rover_wheels_velocity_temp.front_right.turn.set_value = 0.0;
-    rover_wheels_velocity_temp.front_right.turn.set_origin_data = 0;
-
     rover_wheels_velocity_temp.rear_right.turn.command_id = VESC_COMMAND_SET_POS;
-    rover_wheels_velocity_temp.rear_right.turn.set_value = 0.0;
-    rover_wheels_velocity_temp.rear_right.turn.set_origin_data = 0;
-
     rover_wheels_velocity_temp.rear_left.turn.command_id = VESC_COMMAND_SET_POS;
+    rover_wheels_velocity_temp.front_left.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.front_right.turn.set_value = 0.0;
+    rover_wheels_velocity_temp.rear_right.turn.set_value = 0.0;
     rover_wheels_velocity_temp.rear_left.turn.set_value = 0.0;
-    rover_wheels_velocity_temp.rear_left.turn.set_origin_data = 0;
 
     rover_wheels_velocity_temp.front_left.drive.command_id = VESC_COMMAND_SET_CURRENT;
     rover_wheels_velocity_temp.front_right.drive.command_id = VESC_COMMAND_SET_CURRENT;

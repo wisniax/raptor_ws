@@ -88,31 +88,12 @@ void CalibrateAxis::initParams()
 		this->declare_parameter(name, value);
 		mIntParams[name] = this->get_parameter(name).as_int();
 	}
-
-	// Dynamic param updating
-	// mParamCallbackHandle = this->add_post_set_parameters_callback(
-	// 	[this](const std::vector<rclcpp::Parameter> &params)
-	// 	{
-	// 		for (const auto &param : params)
-	// 		{
-	// 			const std::string name = param.get_name();
-	// 			if (mFloatParams.count(name))
-	// 			{
-	// 				mFloatParams[name] = param.as_double();
-	// 			}
-	// 			else if (mIntParams.count(name))
-	// 			{
-	// 				mIntParams[name] = param.as_int();
-	// 			}
-	// 		}
-	// 	});
 }
 
 // ######################### MSG HANDLERS #########################
 
 void CalibrateAxis::handleVescStatus(const rex_interfaces::msg::VescStatus::ConstSharedPtr &msg)
 {
-	// RCLCPP_INFO(this->get_logger(), "%d precise %lf pid %f", msg->vesc_id, msg->precise_pos, msg->pid_pos);
 	if (!isCalibrationAllowedForMotor(msg->vesc_id))
 	{
 		// Only interested in calibratable motors.
