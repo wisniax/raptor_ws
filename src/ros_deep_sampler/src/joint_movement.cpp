@@ -10,20 +10,10 @@ JointMovement::JointMovement(rclcpp::Node *node)
     rclcpp_action::create_client<FollowJointTrajectory>(
         node_,
         "/position_controller/follow_joint_trajectory");
-    // platform_client_ =
-    //     rclcpp_action::create_client<FollowJointTrajectory>(
-    //         node_,
-    //         "/platform_controller/follow_joint_trajectory");
+   
+    joints_vel_pub_ = node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/velocity_command_controller/commands", 10);
 
-    // drill_client_ =
-    //     rclcpp_action::create_client<FollowJointTrajectory>(
-    //         node_,
-    //         "/drill_position_controller/follow_joint_trajectory");
-
-    // container_client_ =
-    //     rclcpp_action::create_client<FollowJointTrajectory>(
-    //         node_,
-    //         "/container_controller/follow_joint_trajectory");
     clamp_cmd_pub_ = 
         node_->create_publisher<std_msgs::msg::Float64MultiArray>(
             "/clamp_position_controller/commands", 10);
@@ -174,6 +164,18 @@ void JointMovement::close_clamp(){
     std_msgs::msg::Float64MultiArray msg;
     msg.data = {CLAMP_CLOSED};
     clamp_cmd_pub_->publish(msg);
+}
+
+void JointMovement::setJointsVel(double platform, double drill, double container){
+    std_msgs::msg::Float64MultiArray msg;
+
+        msg.data = {
+            platform,   // platform [m/s]
+            drill,   // drill [m/s]
+            container    // container [rad/s]
+        };
+
+        joints_vel_pub_->publish(msg);
 }
 
 JointMovement::MotionProfile JointMovement::createProfile(

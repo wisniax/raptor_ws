@@ -103,6 +103,7 @@ class  JointMovement{
         void setTrajectoryStatus(bool status);
         void open_clamp();
         void close_clamp();
+        void setJointsVel(double platform, double drill, double container);
 
         //ACTION_TUTORIALS_CPP_PUBLIC
         void JointStateFeedback(MissionMsg::SharedPtr &feedbackMsg);
@@ -111,7 +112,7 @@ class  JointMovement{
         bool get_end_switch_state(JointsIds id);
 
         double get_distance_to_ground();
-
+        
         // bool isMoving() const;
         bool isTrajectoryFinished();
         //bool goalReached() const;
@@ -142,6 +143,7 @@ class  JointMovement{
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr platform_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr drill_client_;
         rclcpp_action::Client<FollowJointTrajectory>::SharedPtr container_client_;
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr joints_vel_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr clamp_cmd_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr rotor_velocity_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr vacuum_rotor_velocity_pub_;

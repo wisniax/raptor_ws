@@ -28,7 +28,7 @@ using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
 using SamplerFeedbackMsg = rex_interfaces::msg::SamplerFeedback;
 using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
 using MissionCmd = sampler_motion_interfaces::msg::SamplerMissionCmd;
-
+//using SamplerCanCmd = sampler_motion_interfaces::msg::SamplerCanCmd;
 
 class MissionControl : public rclcpp::Node
 {
@@ -260,6 +260,8 @@ private:
 
     MissionMsg::SharedPtr missionFeedbackMsg;
 
+    // Direct publishing for velocity joint contrl
+    // rclcpp::Publisher<SamplerCanCmd>::SharedPtr sampler_can_cmd_pub_;
 
     // =========================================================
     // Timers

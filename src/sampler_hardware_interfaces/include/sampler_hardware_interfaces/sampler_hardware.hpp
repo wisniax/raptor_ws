@@ -7,6 +7,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include "sampler_motion_interfaces/msg/sampler_can_cmd.hpp"
 #include "sampler_motion_interfaces/msg/sampler_can_feedback.hpp"
+#include "sampler_motion_interfaces/msg/sampler_mission_cmd.hpp"
+
 #include <gz/transport/Node.hh>
 #include <gz/msgs/double.pb.h>
 #include <iostream>
@@ -20,7 +22,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 using SamplerCanCmd = sampler_motion_interfaces::msg::SamplerCanCmd;
 using SamplerCanFeedback = sampler_motion_interfaces::msg::SamplerCanFeedback;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
-
+using MissionCmd = sampler_motion_interfaces::msg::SamplerMissionCmd;
 
 class SamplerHardware : public hardware_interface::SystemInterface
 {
@@ -40,6 +42,7 @@ public:
 
   void feedbackCallback(const SamplerCanFeedback &feedback);
   void HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
+  void HandleMissionCmd(const MissionCmd& missionCmd);
 
 
 private:
@@ -56,16 +59,16 @@ private:
 
 
   double platform_cmd_ = 0.0;
-  double platform_vel_cmd_ = 0.0;
   double drill_cmd_ = 0.0;
-  double drill_vel_cmd_ = 0.0;
   double container_cmd_ = 0.0;
   double rotor_cmd_ = 0.0;
   double vacuum_rotor_cmd_ = 0.0;
   double brush_rotor_cmd_ =0.0;
   double clamp_cmd_ = 0.0;
 
-
+  double platform_vel_cmd_ = 0.0;
+  double drill_vel_cmd_ = 0.0;
+  double container_vel_cmd_ = 0.0;
   // double last_platform_cmd_ =0.0;
   // double last_drill_cmd_ = 0.0;
   // double last_rotor_cmd_ =0.0;
@@ -100,6 +103,13 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr clamp_cmd_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
+  
+ rclcpp::Subscription<MissionCmd>::SharedPtr
+        mMissionCmd_;
+
+  bool last_velCtrl = true;
+
+
   rclcpp::TimerBase::SharedPtr timer_;
 
 
@@ -115,6 +125,18 @@ private:
 
   bool sampler_mode = false;
   bool set_pos = false;
+
+  bool manual = true;
+
+  static constexpr unsigned int CONTROL_MODE_DEEP_SAMPLER = 32;
+
+  static constexpr unsigned int CONTROL_MODE_SURFACE_SAMPLER = 64;
+
+  static constexpr unsigned int
+      CONTROL_MODE_DEEP_SAMPLER_AUTONOMY = 512;
+
+  static constexpr unsigned int
+      CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY = 1024;
 
   // gz::transport::Node node;
   // gz::msgs::Double msg;

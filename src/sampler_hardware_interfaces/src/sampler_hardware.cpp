@@ -128,6 +128,9 @@ CallbackReturn SamplerHardware::on_configure(
                   }
               });
 
+        mMissionCmd_ = get_node()->create_subscription<MissionCmd>("/MQTT/MissionCommand", 10,
+                    std::bind(&SamplerHardware::HandleMissionCmd, this, std::placeholders::_1));
+
     }
 
     
@@ -142,12 +145,26 @@ void SamplerHardware::feedbackCallback(const SamplerCanFeedback &feedback){
     }
 }
 
+void SamplerHardware::HandleMissionCmd(const MissionCmd& missionCmd)
+{
+    last_velCtrl = missionCmd.velocity_ctrl;
+}
+
 void SamplerHardware::HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
-
-	LastStatusMsg = roverStatusMsg;
-
+    if(roverStatusMsg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
+		   roverStatusMsg->control_mode == (CONTROL_MODE_DEEP_SAMPLER_AUTONOMY | CONTROL_MODE_SURFACE_SAMPLER_AUTONOMY)){
+        manual = false;
+           }
+    if (roverStatusMsg->communication_state == RoverStatusMsg::COMMUNICATION_STATE_OPENED &&
+		   roverStatusMsg->control_mode == (CONTROL_MODE_DEEP_SAMPLER | CONTROL_MODE_SURFACE_SAMPLER)){
+        manual = true;
+        return;
+        }
+    //ctrlType_ = ControlType::NO_SAMPLER;
+    return;
 }
+
 
 std::vector<hardware_interface::CommandInterface>
 SamplerHardware::export_command_interfaces()
@@ -158,6 +175,19 @@ SamplerHardware::export_command_interfaces()
         "platform_joint",
         hardware_interface::HW_IF_POSITION,
         &platform_cmd_);
+
+    command_interfaces.emplace_back(
+        "platform_vel_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &platform_vel_cmd_);
+    command_interfaces.emplace_back(
+        "drill_vel_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &drill_vel_cmd_);
+     command_interfaces.emplace_back(
+        "container_vel_joint",
+        hardware_interface::HW_IF_VELOCITY,
+        &container_vel_cmd_);
     
     command_interfaces.emplace_back(
         "platform_joint",
@@ -372,25 +402,29 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
                                                              const rclcpp::Duration& /*period*/)
 {
 
-  uint8_t command;
-  if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_AUTONOMY){
-    command = VESC_COMMAND_SET_DUTY;
-    sampler_mode = true;
+//   uint8_t command;
+//   if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_AUTONOMY){
+//     command = VESC_COMMAND_SET_DUTY;
+//     sampler_mode = true;
    
-  }
-  else if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER){
-    command = VESC_COMMAND_SET_POS;
-    sampler_mode = true;
-    //set_pos = true;
-  }else{
-    command = VESC_COMMAND_SET_DUTY;
-    sampler_mode = false;
-  }
+//   }
+//   else if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER){
+//     command = VESC_COMMAND_SET_POS;
+//     sampler_mode = true;
+//     //set_pos = true;
+//   }else{
+//     command = VESC_COMMAND_SET_DUTY;
+//     sampler_mode = false;
+//   }
    
+    
   
 
   if (rclcpp::ok())
   {
+
+    
+
     cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
     cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
     cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
@@ -399,18 +433,30 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
     cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a; // Brush 
     cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b; // clamp?
 
-    cmd_.command_id[0] = VESC_COMMAND_SET_POS;
-    cmd_.command_id[1] = VESC_COMMAND_SET_POS;
-    cmd_.command_id[2] = VESC_COMMAND_SET_POS;
+    if (last_velCtrl && manual){
+        cmd_.command_id[0] = VESC_COMMAND_SET_RPM;
+        cmd_.command_id[1] = VESC_COMMAND_SET_RPM;
+        cmd_.command_id[2] = VESC_COMMAND_SET_RPM;
+
+        cmd_.set_value[0] = platform_vel_cmd_;
+        cmd_.set_value[1] = drill_vel_cmd_;
+        cmd_.set_value[2] = container_vel_cmd_;
+    }else{
+        cmd_.command_id[0] = VESC_COMMAND_SET_POS;
+        cmd_.command_id[1] = VESC_COMMAND_SET_POS;
+        cmd_.command_id[2] = VESC_COMMAND_SET_POS;
+
+        cmd_.set_value[0] = platform_cmd_;
+        cmd_.set_value[1] = drill_cmd_;
+        cmd_.set_value[2] = container_cmd_;
+    }
+    
     cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
     cmd_.command_id[6] = VESC_COMMAND_SET_POS;
 
 
-    cmd_.set_value[0] = platform_cmd_;
-    cmd_.set_value[1] = drill_cmd_;
-    cmd_.set_value[2] = container_cmd_;
     cmd_.set_value[3] = rotor_cmd_;
     cmd_.set_value[4] = vacuum_rotor_cmd_;
     cmd_.set_value[5] = brush_rotor_cmd_;

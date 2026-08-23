@@ -19,7 +19,18 @@ controller_manager:
 
     brush_rotor_velocity_controller:
       type: forward_command_controller/ForwardCommandController
+    
+    velocity_command_controller:
+      type: forward_command_controller/ForwardCommandController
 
+velocity_command_controller:
+  ros__parameters:
+    joints:
+      - platform_vel_joint
+      - drill_vel_joint
+      - container_vel_joint
+
+    interface_name: velocity
 
 position_controller:
   ros__parameters:

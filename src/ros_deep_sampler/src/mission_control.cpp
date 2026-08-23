@@ -35,6 +35,9 @@ namespace ros_deep_sampler{
     missionCmdMsg->mission_cmd = MissionCmd::STOP;
     missionFeedbackMsg->control_type = MissionMsg::NO_SAMPLER;
     missionFeedbackMsg->autonomy_state = MissionMsg::STATE_IDLE;
+
+    // sampler_can_cmd_pub_ = get_node()->create_publisher<SamplerCanCmd>(
+    //         RosCanConstants::RosTopics::can_sampler_cmd,10);
     
     // rex_interfaces::msg::RoverStatus init_msg;
     // init_msg.communication_state = RoverStatusMsg::COMMUNICATION_STATE_CLOSED;
@@ -300,7 +303,6 @@ double MissionControl::getPlatformPosition(){
 }
 
 
-
 void MissionControl::retranslateSamplerCtrlMsg(
     const MissionCmd::SharedPtr& missionCmd)
 {
@@ -312,64 +314,70 @@ void MissionControl::retranslateSamplerCtrlMsg(
 
     //new_mission_cmd = false;
 
-    std::vector<JointMovement::JointCommand> commands;
-
-    if(platform_cmd_pending_){
-    commands.push_back({
-        JointMovement::JointsIds::PLATFORM,
-        joints_->get_current_position(
-            JointMovement::JointsIds::PLATFORM),
-        missionCmd->platform_movement,
-        0.2});
-        platform_cmd_pending_ = false;
+    if (missionCmd->velocity_ctrl){
+        joints_->setJointsVel(missionCmd->platform_movement,  missionCmd->drill_movement,
+                             missionCmd->container_degrees); // degrees as the velocity 
     }else{
+        joints_->setJointsVel(0.0, 0.0, 0.0);
+        std::vector<JointMovement::JointCommand> commands;
+
+        if(platform_cmd_pending_){
         commands.push_back({
             JointMovement::JointsIds::PLATFORM,
             joints_->get_current_position(
                 JointMovement::JointsIds::PLATFORM),
-            joints_->get_current_position(
-                JointMovement::JointsIds::PLATFORM),
+            missionCmd->platform_movement,
             0.2});
-    }
-   
-
-    if(drill_cmd_pending_){
-        commands.push_back({
-            JointMovement::JointsIds::DRILL,
-            joints_->get_current_position(
-                JointMovement::JointsIds::DRILL),
-            missionCmd->drill_movement,
-            0.2});
-        drill_cmd_pending_ = false;
+            platform_cmd_pending_ = false;
         }else{
+            commands.push_back({
+                JointMovement::JointsIds::PLATFORM,
+                joints_->get_current_position(
+                    JointMovement::JointsIds::PLATFORM),
+                joints_->get_current_position(
+                    JointMovement::JointsIds::PLATFORM),
+                0.2});
+        }
+    
+
+        if(drill_cmd_pending_){
             commands.push_back({
                 JointMovement::JointsIds::DRILL,
                 joints_->get_current_position(
                     JointMovement::JointsIds::DRILL),
-                joints_->get_current_position(
-                    JointMovement::JointsIds::DRILL),
+                missionCmd->drill_movement,
                 0.2});
-        }
+            drill_cmd_pending_ = false;
+            }else{
+                commands.push_back({
+                    JointMovement::JointsIds::DRILL,
+                    joints_->get_current_position(
+                        JointMovement::JointsIds::DRILL),
+                    joints_->get_current_position(
+                        JointMovement::JointsIds::DRILL),
+                    0.2});
+            }
 
-   if(container_cmd_pending_){
-        commands.push_back({
-        JointMovement::JointsIds::CONTAINER,
-        joints_->get_current_position(
-            JointMovement::JointsIds::CONTAINER),
-        missionCmd->container_degrees,
-        0.2});
-    container_cmd_pending_ = false;
-    }else{
-        commands.push_back({
+    if(container_cmd_pending_){
+            commands.push_back({
             JointMovement::JointsIds::CONTAINER,
             joints_->get_current_position(
                 JointMovement::JointsIds::CONTAINER),
-            joints_->get_current_position(
-                JointMovement::JointsIds::CONTAINER),
+            missionCmd->container_degrees,
             0.2});
-    }
+        container_cmd_pending_ = false;
+        }else{
+            commands.push_back({
+                JointMovement::JointsIds::CONTAINER,
+                joints_->get_current_position(
+                    JointMovement::JointsIds::CONTAINER),
+                joints_->get_current_position(
+                    JointMovement::JointsIds::CONTAINER),
+                0.2});
+        }
 
-    joints_->moveJoints(commands);
+        joints_->moveJoints(commands);
+    }
 
     // Rotors
     if(drill_rotor_cmd_pending_){

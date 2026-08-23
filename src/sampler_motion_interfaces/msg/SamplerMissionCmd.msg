@@ -6,6 +6,7 @@ float32 container_degrees -999.0
 float32 vacuum_suction -999.0
 float32 brush_rotation -999.0
 bool open_vacuum false
+bool velocity_ctrl true
 
 
 # Mission commands
