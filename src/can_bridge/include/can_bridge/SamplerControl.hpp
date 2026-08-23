@@ -2,13 +2,18 @@
 #define SamplerControl_h_
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 #include <string>
-#include "can_msgs/msg/frame.hpp"
 #include <array>
+
 #include <can_bridge/VescInterop.hpp>
-#include "can_bridge/RosCanConstants.hpp"
+#include "ros_constants/RosCanConstants.hpp"
+
+#include "can_msgs/msg/frame.hpp"
 #include "rex_interfaces/msg/sampler_control.hpp"
 #include "rex_interfaces/msg/rover_status.hpp"
+#include "rex_interfaces/msg/battery_info.hpp"
+
 extern "C"
 {
 #include <libVescCan/VESC.h>
@@ -16,33 +21,37 @@ extern "C"
 
 using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
+using BatteryInfoMsg = rex_interfaces::msg::BatteryInfo;
+using CanFrame = can_msgs::msg::Frame;
 
-class SamplerControl
+class SamplerControl : public rclcpp::Node
 {
 public:
-	SamplerControl(rclcpp::Node::SharedPtr &nh);
+	SamplerControl(const rclcpp::NodeOptions & options);
 
 private:
+    void handleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
+    void handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
+    void handleBatteryInfo(const BatteryInfoMsg::ConstSharedPtr &msg);
+
 	bool isSamplerMode(const RoverStatusMsg::ConstSharedPtr &msg);
 	void stopSampler();
-	void handleSamplerCtl(const SamplerControlMsg::ConstSharedPtr &samplerCtlMsg);
-	void handleRoverStatusClb(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
-	void handleTimerClb();
+
+    void handleTimerClb();
 	void publishSamplerData();
 	void publish(const VESC_CommandFrame *arr, int arr_size);
 
-	rclcpp::Node::SharedPtr mNh;
-
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
+	rclcpp::Publisher<CanFrame>::SharedPtr mRawCanPub;	   /**< ROS publisher for raw CAN messages. */
 	rclcpp::Subscription<SamplerControlMsg>::SharedPtr mSamplerCtlSub; /**< ROS subscriber for SamplerControl messages. */
 	rclcpp::Subscription<RoverStatusMsg>::SharedPtr mRoverStatusSub;   /**< ROS subscriber for SamplerControl messages. */
+    rclcpp::Subscription<BatteryInfoMsg>::SharedPtr mBatteryInfoSub;
+
+    SamplerControlMsg::ConstSharedPtr mLastSamplerCtl;
+    RoverStatusMsg::ConstSharedPtr mLastRoverStatus;
+    BatteryInfoMsg::ConstSharedPtr mLastBatteryInfo;
 
 	rclcpp::TimerBase::SharedPtr mTimer;
-
 	rclcpp::Time mProbeDisableTimestamp;
-
-	SamplerControlMsg::ConstSharedPtr mSamplerCtlMsgLast;
-	RoverStatusMsg::ConstSharedPtr mRoverStatusMsgLast;
 };
 
 #endif // SamplerControl_h_

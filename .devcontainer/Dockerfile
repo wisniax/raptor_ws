@@ -1,5 +1,7 @@
 FROM wisniax/ros-rover-base:latest
 
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libmosquitto-dev
+
 # Dockerfile for ROS-JAZZY
 ARG USERNAME='rex'
 ARG PASSWORD='changeme'
@@ -8,7 +10,6 @@ ARG SSH_PORT=22
 # Default configuration
 ENV ROS_ENABLE_AUTOSTART=0
 ENV ROS_BUILD_ON_STARTUP=on-failure
-ENV ROS_ENABLE_CAN_BRIDGE=0
 
 # Create user
 RUN useradd -m -s /bin/bash -g 1000 ${USERNAME}
@@ -22,7 +23,7 @@ RUN sed -i "/^#\?Port/ { s/^#//; s/Port .*/Port ${SSH_PORT}/; }" /etc/ssh/sshd_c
 RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}/.bashrc
 
 # Add important stuff to bashrc
-RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=0\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=0\nexport ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET\n" >> /home/${USERNAME}/.bashrc
 RUN echo "source ~/raptor_ws/install/setup.bash\n" >> /home/${USERNAME}/.bashrc
 
 # Pass local directory to the container

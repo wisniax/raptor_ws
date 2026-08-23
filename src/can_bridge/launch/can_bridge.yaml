@@ -2,6 +2,51 @@ launch:
 
 - node:
     pkg: "can_bridge"
-    exec: "can_bridge_node"
-    name: "can_bridge_node"
+    exec: "vesc_status_handler"
+    name: "vesc_status_handler"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "status_message"
+    name: "status_message"
+    namespace: "raptor"
+    param:
+    - name: "send_on_update"
+      value: true
+
+- node:
+    pkg: "can_bridge"
+    exec: "motor_control"
+    name: "motor_control"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "manipulator_control"
+    name: "manipulator_control"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "sampler_status_forwarder"
+    name: "sampler_status_forwarder"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "sampler_control"
+    name: "sampler_control"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "battery_info_forwarder"
+    name: "battery_info_forwarder"
+    namespace: "raptor"
+
+- node:
+    pkg: "can_bridge"
+    exec: "config_control"
+    name: "config_control"
     namespace: "raptor"

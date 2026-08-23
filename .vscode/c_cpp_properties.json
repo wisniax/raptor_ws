@@ -11,7 +11,8 @@
                 "${workspaceFolder}/src/rex_interfaces/include/**",
                 "${workspaceFolder}/src/can_bridge/include/**",
                 "${workspaceFolder}/src/libVescCan/include/**",
-                "${workspaceFolder}/src/can_bridge/libVescCan/include/**"
+                "${workspaceFolder}/src/can_bridge/libVescCan/include/**",
+                "${workspaceFolder}/src/calibration_manager/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

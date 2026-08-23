@@ -1,10 +1,14 @@
 launch:
-
-- node:
-    pkg: "mqtt_bridge"
-    exec: "mqtt_bridge_node"
-    name: "mqtt_bridge_node"
-    namespace: "raptor"
-    param:
-    - name: "mqtt_enable_server_cert_auth"
-      value: false
+  - node_container:
+      pkg: rclcpp_components
+      exec: component_container
+      name: mqtt_bridge_container
+      namespace: "raptor"
+      composable_node:
+        - pkg: mqtt_bridge
+          plugin: MqttBridge
+          name: mqtt_bridge
+          namespace: "raptor"
+          param:
+            - name: mqtt_enable_server_cert_auth
+              value: true

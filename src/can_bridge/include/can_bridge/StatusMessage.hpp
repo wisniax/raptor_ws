@@ -2,19 +2,23 @@
 #define STATUSMESSAGE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
+
+#include <can_bridge/VescInterop.hpp>
+#include "ros_constants/RosCanConstants.hpp"
+
 #include <can_msgs/msg/frame.hpp>
 #include <rex_interfaces/msg/rover_status.hpp>
-#include <can_bridge/VescInterop.hpp>
-#include "can_bridge/RosCanConstants.hpp"
+
 extern "C"
 {
 #include <libVescCan/VESC.h>
 }
 
-class StatusMessage
+class StatusMessage : public rclcpp::Node
 {
 public:
-	StatusMessage(rclcpp::Node::SharedPtr &nh, bool sendOnUpdate = true);
+	StatusMessage(const rclcpp::NodeOptions & options);
 
 	void sendStatusMessage(const rex_interfaces::msg::RoverStatus::ConstSharedPtr &msg);
 	void sendStatusMessage();
@@ -24,12 +28,11 @@ private:
 
 	can_msgs::msg::Frame encodeStatusMessage(const rex_interfaces::msg::RoverStatus &msg);
 
-	rclcpp::Node::SharedPtr mNh;
-
-	bool mSendOnUpdate;						  /**< Flag to send messages on update. */
+	bool mSendOnUpdate;					     	  /**< Flag to send messages on update. */
 	rex_interfaces::msg::RoverStatus mLastStatus; /**< Last status message received. */
 
-	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;					 /**< ROS2 publisher for raw CAN messages. */
+    rclcpp::TimerBase::SharedPtr mTimer;
+	rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr mRawCanPub;			    		 /**< ROS2 publisher for raw CAN messages. */
 	rclcpp::Subscription<rex_interfaces::msg::RoverStatus>::SharedPtr mStatusMessageSub; /**< ROS2 subscriber for communication status messages. */
 };
 

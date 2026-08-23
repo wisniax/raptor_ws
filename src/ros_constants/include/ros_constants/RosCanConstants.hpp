@@ -11,19 +11,21 @@ struct RosCanConstants
 {
 	struct RosTopics
 	{
-		static const std::string can_raw_RX;			/**< Topic for all received CAN messages. */
-		static const std::string can_raw_TX;			/**< Topic for all sent CAN messages. */
-		static const std::string can_set_motor_vel;		/**< Topic used for setting the motor velocity. */
-		static const std::string can_get_motor_vel;		/**< Topic used for getting the real motor velocity. */
-		static const std::string can_get_motor_current; /**< Topic used for getting the real motor velocity. */
-		static const std::string can_stm_errors;		/**< Topic used for reporting STM32 errors. */
-		static const std::string can_stm_init;			/**< Topic used for initializing the STM32. */
-		static const std::string can_vesc_status;		/**< Topic with vesc motor status */
-		static const std::string can_manipulator_ctl;	/**< Topic used for manipulator 'manipulation' */
-		static const std::string can_sampler_status;	/**< Topic with sampler status */
-		static const std::string can_battery_info;		/**< Topic with battery (BMS & HOTSWAP) status */
-		static const std::string mqtt_rover_status;		/**< Topic for rover status from MQTT. */
-		static const std::string mqtt_sampler_control;	/**< Topic for sampler control from MQTT. */
+		static const std::string can_raw_RX;					/**< Topic for all received CAN messages. */
+		static const std::string can_raw_TX;					/**< Topic for all sent CAN messages. */
+		static const std::string can_set_motor_vel;				/**< Topic used for setting the motor velocity. */
+		static const std::string can_get_motor_vel;				/**< Topic used for getting the real motor velocity. */
+		static const std::string can_get_motor_current;			/**< Topic used for getting the real motor velocity. */
+		static const std::string can_stm_errors;				/**< Topic used for reporting STM32 errors. */
+		static const std::string can_stm_init;					/**< Topic used for initializing the STM32. */
+		static const std::string can_vesc_status;				/**< Topic with vesc motor status */
+		static const std::string can_manipulator_ctl;			/**< Topic used for manipulator 'manipulation' */
+		static const std::string can_sampler_status;			/**< Topic with sampler status */
+		static const std::string can_battery_info;				/**< Topic with battery (BMS & HOTSWAP) status */
+		static const std::string can_calibration_motor_command; /**< Topic used for VESC commands during calibration */
+		static const std::string mqtt_rover_status;				/**< Topic for rover status from MQTT. */
+		static const std::string mqtt_sampler_control;			/**< Topic for sampler control from MQTT. */
+		static const std::string mqtt_calibrate_axis;			/**< Topic used to calibrate motors (wheels, manipulator) */
 	};
 
 	struct VescIds
