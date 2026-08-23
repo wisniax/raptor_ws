@@ -464,7 +464,7 @@
     <limit
         lower="-1.6"
         upper="1.6"
-        effort="100"
+        effort="1000"
         velocity="10.0"/>
 
   </joint>

@@ -315,8 +315,26 @@ void MissionControl::retranslateSamplerCtrlMsg(
     //new_mission_cmd = false;
 
     if (missionCmd->velocity_ctrl){
+        double platform;
+        double drill;
+        double container;
         joints_->setJointsVel(missionCmd->platform_movement,  missionCmd->drill_movement,
                              missionCmd->container_degrees); // degrees as the velocity 
+
+        if(platform_cmd_pending_){
+            platform = missionCmd->platform_movement;
+            platform_cmd_pending_ = false;
+        }else{platform = 0.0;}
+        if(drill_cmd_pending_){
+            drill = missionCmd->drill_movement;
+            drill_cmd_pending_ = false;
+        }else{drill = 0.0;}
+        if(container_cmd_pending_){
+            container = missionCmd->drill_movement;
+            container_cmd_pending_ = false;
+        }else{container = 0.0;}
+        
+        joints_->setJointsVel(platform, drill, container);
     }else{
         joints_->setJointsVel(0.0, 0.0, 0.0);
         std::vector<JointMovement::JointCommand> commands;
