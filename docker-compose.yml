@@ -14,6 +14,8 @@ services:
     ipc: "host"
     init: true
     network_mode: host
+    extra_hosts:
+      - "ros-core=127.0.0.1"
     environment:
       - TZ=Europe/Warsaw
       - ROS_ENABLE_AUTOSTART=1
