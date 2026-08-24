@@ -1,4 +1,4 @@
-FROM wisniax/ros-rover-base:latest
+FROM wisniax/ros-rover-base:latest@sha256:165e355cb43b4f90348b2af6dd94dbb1b6f45f661b3edceed92221ad3c99e13b
 
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libmosquitto-dev
 
@@ -23,7 +23,7 @@ RUN sed -i "/^#\?Port/ { s/^#//; s/Port .*/Port ${SSH_PORT}/; }" /etc/ssh/sshd_c
 RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /home/${USERNAME}/.bashrc
 
 # Add important stuff to bashrc
-RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=0\nexport ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET\n" >> /home/${USERNAME}/.bashrc
+RUN echo "\nsource /opt/ros/jazzy/setup.bash\nexport ROS_DOMAIN_ID=0\n" >> /home/${USERNAME}/.bashrc
 RUN echo "source ~/raptor_ws/install/setup.bash\n" >> /home/${USERNAME}/.bashrc
 
 # Pass local directory to the container
@@ -48,14 +48,9 @@ RUN git submodule update --init --recursive
 # Build the workspace
 RUN bash -c "source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_start_end+ console_direct+ --executor parallel"
 
-# Manage public ssh keys
+# Prepare .ssh directory for public keys
 RUN rm -rf /home/${USERNAME}/.ssh
 RUN mkdir -m 0700 /home/${USERNAME}/.ssh
-RUN touch /home/${USERNAME}/.ssh/authorized_keys
-RUN chmod 640 /home/${USERNAME}/.ssh/authorized_keys
-ADD --chown=${USERNAME}:${USERNAME} ./.devcontainer/public_keys.d /home/${USERNAME}/.ssh/public_keys.d
-RUN cat /home/${USERNAME}/.ssh/public_keys.d/*.pub >> /home/${USERNAME}/.ssh/authorized_keys || true
-RUN rm -rf /home/${USERNAME}/.ssh/public_keys.d
 
 USER root
 COPY .devcontainer/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
