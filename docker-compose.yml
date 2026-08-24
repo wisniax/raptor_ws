@@ -35,6 +35,12 @@ services:
         read_only: true
         bind:
           create_host_path: false
+      - type: bind
+        source: "${REX_CONTAINER_AUTHORIZED_KEYS:-/dev/null}"
+        target: /run/secrets/authorized_keys
+        read_only: true # Make sure this stays read-only!
+        bind:
+          create_host_path: false
     restart: unless-stopped
 
   mosquitto:

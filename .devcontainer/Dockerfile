@@ -48,14 +48,9 @@ RUN git submodule update --init --recursive
 # Build the workspace
 RUN bash -c "source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_start_end+ console_direct+ --executor parallel"
 
-# Manage public ssh keys
+# Prepare .ssh directory for public keys
 RUN rm -rf /home/${USERNAME}/.ssh
 RUN mkdir -m 0700 /home/${USERNAME}/.ssh
-RUN touch /home/${USERNAME}/.ssh/authorized_keys
-RUN chmod 640 /home/${USERNAME}/.ssh/authorized_keys
-ADD --chown=${USERNAME}:${USERNAME} ./.devcontainer/public_keys.d /home/${USERNAME}/.ssh/public_keys.d
-RUN cat /home/${USERNAME}/.ssh/public_keys.d/*.pub >> /home/${USERNAME}/.ssh/authorized_keys || true
-RUN rm -rf /home/${USERNAME}/.ssh/public_keys.d
 
 USER root
 COPY .devcontainer/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

@@ -77,4 +77,6 @@ qtcreator-*
 .devcontainer/mqtt-server-certs/
 .devcontainer/ca.crt
 .devcontainer/mosquitto_passwd
+
+# Required by rexctl
 .env
