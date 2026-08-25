@@ -279,6 +279,8 @@ void MqttBridge::processMqttMessage(const mqtt::string& messageTopic, const char
                             "RoverStatus control_mode validation failed, discarding MQTT message.");
                     }
                 }
+            } else if (messageTopic == "RappTORS/ArmAutonomy") {
+                rth->publishMessage_ArmAutonomy(createArmAutonomyMsg(d));
             } else {
                 RCLCPP_WARN_STREAM(get_logger(),
                  "Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
@@ -553,6 +555,31 @@ rex_interfaces::msg::RoboticArmControl MqttBridge::createRoboticArmControlMsg(co
     }
 
     if (!d["Reference"].IsNull()) msg.header.frame_id = d["Reference"].GetString();
+
+    msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
+
+    return msg;
+}
+
+rex_interfaces::msg::RoboticArmAutonomy MqttBridge::createArmAutonomyMsg(const rapidjson::Document &d)
+{
+    rex_interfaces::msg::RoboticArmAutonomy msg;
+
+    msg.action = d["action"].GetUint();
+    const auto tasks = d["tasks"].GetArray();
+    msg.tasks.reserve(tasks.Size());
+
+    for (const auto &taskValue : tasks)
+    {
+        const auto taskObject = taskValue.GetObject();
+        rex_interfaces::msg::RoboticArmTask task;
+
+        task.task_type = taskObject["task_type"].GetUint();
+        task.item = taskObject["item"].GetString();
+        task.skip_on_failure = taskObject["skip_on_failure"].GetBool();
+
+        msg.tasks.push_back(std::move(task));
+    }
 
     msg.header.stamp = unixMillisecondsToROSTimestamp(d["Timestamp"].GetUint64());
 

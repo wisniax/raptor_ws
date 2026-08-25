@@ -28,14 +28,17 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
     mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>
      ("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
-     mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>
+    mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>
      ("/rosout", 100, std::bind(&ROSTopicHandler::callback_RosoutLogs, this, std::placeholders::_1));
+    mSub_RoboticArmCheckResult = n->create_subscription<rex_interfaces::msg::RoboticArmCheckResult>
+     ("/MQTT/RoboticArmCheckResult", 100, std::bind(&ROSTopicHandler::callback_RoboticArmCheckResult, this, std::placeholders::_1));
 
     mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
     mPub_SamplerControl = n->create_publisher<rex_interfaces::msg::SamplerControl>("/MQTT/SamplerControl", 1000);
     mPub_RoverStatus = n->create_publisher<rex_interfaces::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
     mPub_RoboticArmControl = n->create_publisher<rex_interfaces::msg::RoboticArmControl>("/MQTT/RoboticArmControl", 1000);
     mPub_CalibrateAxis = n->create_publisher<rex_interfaces::msg::CalibrateAxis>("/MQTT/CalibrateAxis", 1000);
+    mPub_ArmAutonomy = n->create_publisher<rex_interfaces::msg::RoboticArmAutonomy>("/MQTT/RoboticArmAutonomy", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string& topicName, const char* message)
@@ -247,6 +250,31 @@ void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstS
     publishMqttMessage(topic, getStringFromJSON(d).c_str());
 }
 
+// ###### RoboticArmCheckResult ######
+
+void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg)
+{
+    rapidjson::Document d;
+    d.SetObject();
+
+    auto& allocator = d.GetAllocator();
+    rapidjson::Value possibility(rapidjson::kArrayType);
+    possibility.Reserve(msg.possibility.size(), allocator);
+
+    for (bool possible : msg.possibility)
+    {
+        possibility.PushBack(possible, allocator);
+    }
+
+    d.AddMember("possibility", possibility, allocator);
+    addTimestampToJSON(d, msg.header.stamp);
+
+    std::string topic = "RappTORS/ArmAutonomyCheckResult";
+
+    publishMqttMessage(topic, getStringFromJSON(d).c_str());
+}
+
+
 // ###### RoverControl ######
 
 void ROSTopicHandler::publishMessage_RoverControl(const rex_interfaces::msg::RoverControl& message)
@@ -280,4 +308,11 @@ void ROSTopicHandler::publishMessage_RoboticArmControl(const rex_interfaces::msg
 void ROSTopicHandler::publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message)
 {
     mPub_CalibrateAxis->publish(message);
+}
+
+// ##### ArmAutonomy ######
+
+void ROSTopicHandler::publishMessage_ArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message)
+{
+    mPub_ArmAutonomy->publish(message);
 }

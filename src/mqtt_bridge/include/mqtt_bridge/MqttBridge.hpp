@@ -56,11 +56,16 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
     const std::chrono::seconds RECONNECT_MIN_RETRY_INTERVAL{1};
     const std::chrono::seconds RECONNECT_MAX_RETRY_INTERVAL{16};
     const bool CLEAN_START = false;
-    inline static const mqtt::string_collection::ptr_t SUBSCRIBED_TOPICS_NAMES
-     = mqtt::string_collection::create(
-        {"RappTORS/RoverControl", "RappTORS/RoboticArmControl",
-             "RappTORS/SamplerControl", "RappTORS/RoverStatus", "RappTORS/CalibrateAxis"});
-    const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0};
+    inline static const mqtt::string_collection::ptr_t SUBSCRIBED_TOPICS_NAMES =
+        mqtt::string_collection::create({
+            "RappTORS/RoverControl",
+            "RappTORS/RoboticArmControl",
+            "RappTORS/SamplerControl",
+            "RappTORS/RoverStatus",
+            "RappTORS/CalibrateAxis",
+            "RappTORS/ArmAutonomy"
+        });
+    const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0, 0};
 
     public:
     explicit MqttBridge(const rclcpp::NodeOptions& options);
@@ -82,7 +87,8 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
         {"SamplerControl", "samplercontrol.json"},
         {"SamplerFeedback", "samplerfeedback.json"},
         {"VescStatus", "vescstatus.json"},
-        {"CalibrateAxis", "calibrateaxis.json"}
+        {"CalibrateAxis", "calibrateaxis.json"},
+        {"ArmAutonomy", "armautonomy.json"}
     };
     std::map<std::string,
      std::tuple<std::shared_ptr<rapidjson::SchemaDocument>, std::shared_ptr<rapidjson::SchemaValidator>,
@@ -105,6 +111,7 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
     rex_interfaces::msg::SamplerControl createSamplerControlMsg(const rapidjson::Document& d);
     rex_interfaces::msg::RoverStatus createRoverStatusMsg(const rapidjson::Document& d);
     rex_interfaces::msg::CalibrateAxis createCalibrateAxisMsg(const rapidjson::Document& d);
+    rex_interfaces::msg::RoboticArmAutonomy createArmAutonomyMsg(const rapidjson::Document& d);
 };
 
 #endif  // MQTT_BRIDGE__MQTTBRIDGE_HPP_
