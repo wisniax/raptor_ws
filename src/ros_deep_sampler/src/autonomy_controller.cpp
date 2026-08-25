@@ -57,6 +57,7 @@ void AutonomyController::resetStateVariables(){
 
 void AutonomyController::stop(JointMovement& joints_){
   
+   
     if(goal_sent){
         joints_.stopMotors();
         //move_client_->cancel_goal();

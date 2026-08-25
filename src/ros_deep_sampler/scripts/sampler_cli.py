@@ -6,7 +6,7 @@ import rclpy
 from sampler_motion_interfaces.msg import SamplerMissionCmd
 
 
-TOPIC = "/MQTT/MissionCommand"
+TOPIC = "/MQTT/SamplerCommand"
 
 
 def print_usage():
@@ -234,16 +234,21 @@ def main():
     # ---------------------------------------------------------
 
     # Give ROS a moment to establish the publisher connection.
-    for _ in range(10):
-        rclpy.spin_once(node, timeout_sec=0.05)
+    for _ in range(20):
+        if publisher.get_subscription_count() > 0:
+            break
+        rclpy.spin_once(node, timeout_sec=0.1)
+
+    print(f"Subscribers: {publisher.get_subscription_count()}")
 
     publisher.publish(msg)
 
     print("Command sent:")
     print(msg)
 
-    # Allow the message to be transmitted.
-    rclpy.spin_once(node, timeout_sec=0.1)
+    # Give DDS time to transmit
+    for _ in range(10):
+        rclpy.spin_once(node, timeout_sec=0.1)
 
     node.destroy_node()
     rclpy.shutdown()

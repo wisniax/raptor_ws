@@ -27,7 +27,7 @@ namespace ros_deep_sampler{
     //   RosCanConstants::RosTopics::can_sampler_status, 10,
     //   std::bind(&MissionControl::HandleMeasurementFeedback, this, std::placeholders::_1));
 
-    mMissionCmd_ = this->create_subscription<MissionCmd>("/MQTT/MissionCommand", 10,
+    mMissionCmd_ = this->create_subscription<MissionCmd>("/MQTT/SamplerCommand", 10,
                     std::bind(&MissionControl::HandleMissionCmd, this, std::placeholders::_1));
     
     missionCmdMsg = std::make_shared<MissionCmd>();
@@ -107,7 +107,8 @@ namespace ros_deep_sampler{
     // Control mode
     if (ctrlType_ == ControlType::MANUAL)
     {
-        executeManual();
+        //autonomy_stopped = true;
+        autonomy_.stop(*joints_);
         autonomy_.resetStateVariables();
         autonomy_.setState(AutonomyController::AutonomyStates::IDLE);
         return;
@@ -115,7 +116,12 @@ namespace ros_deep_sampler{
 
     if (ctrlType_ == ControlType::AUTONOMY)
     {
-        new_mission_cmd = false;
+        // if(autonomy_stopped){
+        //     autonomy_stopped = false;
+        //     missionCmdMsg->mission_cmd = MissionCmd::STOP;
+        //     return;
+        // }
+        //new_mission_cmd = false;
         executeAutonomy();
         return;
     }
@@ -268,7 +274,7 @@ void MissionControl::calibrateSampler(){
 }
 
 void MissionControl::executeManual(){
-    autonomy_.stop(*joints_);
+    
     //retranslateSamplerCtrlMsg(missionCmdMsg);
     return;
 }

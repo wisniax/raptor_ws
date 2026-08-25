@@ -441,6 +441,7 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
         cmd_.set_value[0] = platform_vel_cmd_;
         cmd_.set_value[1] = drill_vel_cmd_;
         cmd_.set_value[2] = container_vel_cmd_;
+
     }else{
         cmd_.command_id[0] = VESC_COMMAND_SET_POS;
         cmd_.command_id[1] = VESC_COMMAND_SET_POS;

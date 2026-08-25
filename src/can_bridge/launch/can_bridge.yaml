@@ -1,7 +1,0 @@
-launch:
-
-- node:
-    pkg: "can_bridge"
-    exec: "can_bridge_node"
-    name: "can_bridge_node"
-    namespace: "raptor"
