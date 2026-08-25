@@ -32,6 +32,8 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
      ("/rosout", 100, std::bind(&ROSTopicHandler::callback_RosoutLogs, this, std::placeholders::_1));
     mSub_RoboticArmCheckResult = n->create_subscription<rex_interfaces::msg::RoboticArmCheckResult>
      ("/MQTT/RoboticArmCheckResult", 100, std::bind(&ROSTopicHandler::callback_RoboticArmCheckResult, this, std::placeholders::_1));
+    mSub_RoboticArmMissionFeedback = n->create_subscription<rex_interfaces::msg::RoboticArmMissionFeedback>
+     ("/MQTT/RoboticArmMissionFeedback", 100, std::bind(&ROSTopicHandler::callback_RoboticArmMissionFeedback, this, std::placeholders::_1));
 
     mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
     mPub_SamplerControl = n->create_publisher<rex_interfaces::msg::SamplerControl>("/MQTT/SamplerControl", 1000);
@@ -267,11 +269,49 @@ void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::
     }
 
     d.AddMember("possibility", possibility, allocator);
+    d.AddMember("mission_id", msg.mission_id, allocator);
     addTimestampToJSON(d, msg.header.stamp);
 
     std::string topic = "RappTORS/ArmAutonomyCheckResult";
 
     publishMqttMessage(topic, getStringFromJSON(d).c_str());
+}
+
+// ###### RoboticArmMissionFeedback ######
+
+void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg)
+{
+    rapidjson::Document d;
+    d.SetObject();
+
+    auto& allocator = d.GetAllocator();
+    rapidjson::Value tasks(rapidjson::kArrayType);
+    tasks.Reserve(msg.tasks.size(), allocator);
+
+    for (const auto& task : msg.tasks)
+    {
+        rapidjson::Value taskObject(rapidjson::kObjectType);
+        taskObject.AddMember("task_type", task.task_type, allocator);
+        taskObject.AddMember("item", rapidjson::Value(task.item, allocator), allocator);
+        taskObject.AddMember("skip_on_failure", task.skip_on_failure, allocator);
+        tasks.PushBack(taskObject, allocator);
+    }
+
+    rapidjson::Value completedTasks(rapidjson::kArrayType);
+    completedTasks.Reserve(msg.completed_tasks.size(), allocator);
+
+    for (bool completed : msg.completed_tasks)
+    {
+        completedTasks.PushBack(completed, allocator);
+    }
+
+    d.AddMember("status", msg.status, allocator);
+    d.AddMember("tasks", tasks, allocator);
+    d.AddMember("completed_tasks", completedTasks, allocator);
+    d.AddMember("mission_id", msg.mission_id, allocator);
+    addTimestampToJSON(d, msg.header.stamp);
+
+    publishMqttMessage("RappTORS/ArmAutonomyMissionFeedback", getStringFromJSON(d).c_str());
 }
 
 

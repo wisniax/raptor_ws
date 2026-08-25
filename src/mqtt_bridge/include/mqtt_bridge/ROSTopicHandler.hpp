@@ -68,6 +68,7 @@ private:
 
   void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& receivedMsg);
   void callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg);
+  void callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg);
 
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
@@ -81,6 +82,7 @@ private:
   rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr mSub_SamplerFeedback;
   rclcpp::Subscription<rcl_interfaces::msg::Log>::SharedPtr mSub_RosoutLogs;
   rclcpp::Subscription<rex_interfaces::msg::RoboticArmCheckResult>::SharedPtr mSub_RoboticArmCheckResult;
+  rclcpp::Subscription<rex_interfaces::msg::RoboticArmMissionFeedback>::SharedPtr mSub_RoboticArmMissionFeedback;
 
   rclcpp::Publisher<rex_interfaces::msg::RoverControl>::SharedPtr mPub_RoverControl;
   rclcpp::Publisher<rex_interfaces::msg::RoboticArmControl>::SharedPtr mPub_RoboticArmControl;
