@@ -8,7 +8,7 @@ namespace ros_deep_sampler{
   : Node("Mission_control_node", options)
   {
 
-    missionTimer_ = this->create_timer(std::chrono::milliseconds(10), std::bind(&MissionControl::MissionUpdate, this));
+    missionTimer_ = this->create_timer(std::chrono::milliseconds(50), std::bind(&MissionControl::MissionUpdate, this));
  
     joints_ = std::make_unique<JointMovement>(this);
     
@@ -111,6 +111,7 @@ namespace ros_deep_sampler{
         autonomy_.stop(*joints_);
         autonomy_.resetStateVariables();
         autonomy_.setState(AutonomyController::AutonomyStates::IDLE);
+        was_manual = true;
         return;
     }
 
@@ -122,6 +123,11 @@ namespace ros_deep_sampler{
         //     return;
         // }
         //new_mission_cmd = false;
+        if(was_manual){
+            was_manual = false;
+            missionCmdMsg->mission_cmd = MissionCmd::STOP;
+        }
+        
         executeAutonomy();
         return;
     }

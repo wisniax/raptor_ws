@@ -91,7 +91,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
         
         if(joints_.isTrajectoryFinished() == 1){
           time_between_states++;
-          if(time_between_states > 100){
+          if(time_between_states > 50){
             RCLCPP_INFO(logger, "Finishing moving down");
             time_between_states = 0;
             goal_sent = false;
@@ -112,7 +112,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
             goal_sent = true;
         }
         rotation_time ++;
-        if(rotation_time > 500 && goal_sent){
+        if(rotation_time > 200 && goal_sent){
             joints_.send_rotor_velocity(JointMovement::JointsIds::VACUUM_ROTOR, 0.0);
             joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
             state_ = AutonomyStates::DRILLING;
@@ -168,7 +168,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
         
         if(joints_.isTrajectoryFinished() ==1){
           time_between_states++;
-          if(time_between_states > 100){
+          if(time_between_states > 50){
             RCLCPP_INFO(logger, "Finishing moving down during drillling");
             time_between_states = 0;
             goal_sent = false;
@@ -212,7 +212,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
           
           if(joints_.isTrajectoryFinished() == 1){
             time_between_states++;
-            if(time_between_states > 100){
+            if(time_between_states > 50){
                 RCLCPP_INFO(logger, "Finish moving drill up");
                 time_between_states =0;
                 goal_sent = false;
@@ -251,7 +251,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
             
             if(joints_.isTrajectoryFinished()  ==1){
               time_between_states++;
-              if(time_between_states > 100){
+              if(time_between_states > 50){
                   RCLCPP_INFO(logger, "Finish moving Platform up");
                   time_between_states =0;
                   goal_sent = false;
@@ -290,7 +290,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
 
            if(joints_.isTrajectoryFinished() ==1){
             time_between_states++;
-            if(time_between_states > 100){
+            if(time_between_states > 50){
               time_between_states = 0;
               goal_sent = false;
               joints_.setTrajectoryStatus(false);
@@ -328,7 +328,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               }
             if(joints_.isTrajectoryFinished() ==1){
               time_between_states++;
-              if(time_between_states > 100){
+              if(time_between_states > 50){
                 time_between_states = 0;
                 goal_sent = false;
                 joints_.setTrajectoryStatus(false);
@@ -345,7 +345,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               goal_sent = true;
             }
             rotation_time ++;
-            if(rotation_time > 300 && goal_sent){
+            if(rotation_time > 70 && goal_sent){
               joints_.send_rotor_velocity(JointMovement::JointsIds::DRILL_ROTOR, 0.0);
               JointMovement::JointCommand cmd;
               state_ = AutonomyStates::HIDE_DRILL;
@@ -383,7 +383,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               }
             if(joints_.isTrajectoryFinished() ==1){
               time_between_states++;
-              if(time_between_states > 100){
+              if(time_between_states > 50){
                 time_between_states = 0;
                 goal_sent = false;
                 joints_.setTrajectoryStatus(false);
@@ -420,7 +420,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               }
             if(joints_.isTrajectoryFinished() ==1){
               time_between_states++;
-              if(time_between_states > 100){
+              if(time_between_states > 50){
                 time_between_states = 0;
                 goal_sent = false;
                 joints_.setTrajectoryStatus(false);
@@ -438,7 +438,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               goal_sent = true;
             }
             rotation_time ++;
-            if(rotation_time > 300 && goal_sent){
+            if(rotation_time > 100 && goal_sent){
               //joints_.send_rotor_velocity(JointMovement::JointsIds::BRUSH_ROTOR, 0.0);
               joints_.close_clamp();
               JointMovement::JointCommand cmd;
@@ -477,7 +477,7 @@ void AutonomyController::executeAutonomy(SamplerState& sampler, const MissionCmd
               }
             if(joints_.isTrajectoryFinished() ==1){
               time_between_states++;
-              if(time_between_states > 100){
+              if(time_between_states > 50){
                 time_between_states = 0;
                 goal_sent = false;
                 joints_.setTrajectoryStatus(false);

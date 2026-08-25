@@ -198,6 +198,7 @@ private:
     bool autonomy_stopped = false;
     bool new_mission_cmd = false;
 
+    bool was_manual = false;
     const float NO_CMD = -999.0f;
 
    
