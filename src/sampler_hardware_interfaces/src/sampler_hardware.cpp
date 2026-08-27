@@ -128,7 +128,7 @@ CallbackReturn SamplerHardware::on_configure(
                   }
               });
 
-        mMissionCmd_ = get_node()->create_subscription<MissionCmd>("/MQTT/MissionCommand", 10,
+        mMissionCmd_ = get_node()->create_subscription<MissionCmd>("/MQTT/SamplerControl", 10,
                     std::bind(&SamplerHardware::HandleMissionCmd, this, std::placeholders::_1));
 
     }

@@ -2,11 +2,12 @@
 
 import sys
 import rclpy
+import time
+from rex_interfaces.msg import SamplerControl
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
-from sampler_motion_interfaces.msg import SamplerMissionCmd
 
-
-TOPIC = "/MQTT/SamplerCommand"
+TOPIC = "/MQTT/SamplerControl"
 
 
 def print_usage():
@@ -61,13 +62,11 @@ def main():
     # ---------------------------------------------------------
 
     mission_commands = {
-        "start": SamplerMissionCmd.START,
-        "stop": SamplerMissionCmd.STOP,
-        "abort": SamplerMissionCmd.ABORT,
-        "restart": SamplerMissionCmd.RESTART,
-        "restart_deep": SamplerMissionCmd.RESTART_DEEP,
-        "restart_surface": SamplerMissionCmd.RESTART_SURFACE,
-        "calibrate": SamplerMissionCmd.CALIBRATE,
+        "start": SamplerControl.START,
+        "stop": SamplerControl.STOP,
+        "abort": SamplerControl.ABORT,
+        "restart": SamplerControl.RESTART,
+        "calibrate": SamplerControl.CALIBRATE,
     }
 
     # ---------------------------------------------------------
@@ -77,14 +76,19 @@ def main():
     rclpy.init()
 
     node = rclpy.create_node("sampler_cli")
-
-    publisher = node.create_publisher(
-        SamplerMissionCmd,
-        TOPIC,
-        10
+    qos = QoSProfile(
+    depth=10,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.VOLATILE,
     )
 
-    msg = SamplerMissionCmd()
+    publisher = node.create_publisher(
+        SamplerControl,
+        TOPIC,
+        qos
+    )
+
+    msg = SamplerControl()
 
     # ---------------------------------------------------------
     # Mission command
@@ -240,8 +244,11 @@ def main():
         rclpy.spin_once(node, timeout_sec=0.1)
 
     print(f"Subscribers: {publisher.get_subscription_count()}")
-
+    # for _ in range():
     publisher.publish(msg)
+    
+    rclpy.spin_once(node, timeout_sec=0.1)
+
 
     print("Command sent:")
     print(msg)
@@ -249,7 +256,7 @@ def main():
     # Give DDS time to transmit
     for _ in range(10):
         rclpy.spin_once(node, timeout_sec=0.1)
-
+    time.sleep(1.0)
     node.destroy_node()
     rclpy.shutdown()
 

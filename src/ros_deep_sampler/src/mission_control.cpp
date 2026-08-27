@@ -26,8 +26,11 @@ namespace ros_deep_sampler{
     // MeasurementFeedback_ = this->create_subscription<rex_interfaces::msg::SamplerFeedback>(
     //   RosCanConstants::RosTopics::can_sampler_status, 10,
     //   std::bind(&MissionControl::HandleMeasurementFeedback, this, std::placeholders::_1));
+    auto qos = rclcpp::QoS(10)
+    .reliable()
+    .durability_volatile();
 
-    mMissionCmd_ = this->create_subscription<MissionCmd>("/MQTT/SamplerCommand", 10,
+    mMissionCmd_ = this->create_subscription<MissionCmd>("/MQTT/SamplerControl", qos,
                     std::bind(&MissionControl::HandleMissionCmd, this, std::placeholders::_1));
     
     missionCmdMsg = std::make_shared<MissionCmd>();
@@ -151,7 +154,7 @@ void MissionControl::setControlType(const RoverStatusMsg::ConstSharedPtr &msg){
 void MissionControl::HandleMissionCmd(const MissionCmd& missionCmd)
 {
     missionCmdMsg->mission_cmd = missionCmd.mission_cmd;
-
+    RCLCPP_INFO(this->get_logger(), "inside missionCmd callback");
     if (missionCmdMsg->mission_cmd == MissionCmd::CALIBRATE){
         return;
     } 

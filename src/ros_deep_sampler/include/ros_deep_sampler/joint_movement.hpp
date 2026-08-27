@@ -12,14 +12,16 @@
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/float64.hpp"
-#include "sampler_motion_interfaces/msg/sampler_mission.hpp"
-#include "sampler_motion_interfaces/msg/sampler_can_feedback.hpp"
+
+#include "rex_interfaces/msg/sampler_control.hpp"
+#include "rex_interfaces/msg/sampler_feedback.hpp"
+#include "rex_interfaces/msg/sampler_can_status.hpp"
 
 
 
 namespace ros_deep_sampler{
-using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
-using SamplerCanFeedback = sampler_motion_interfaces::msg::SamplerCanFeedback;
+using MissionMsg = rex_interfaces::msg::SamplerFeedback;
+using SamplerCanFeedback = rex_interfaces::msg::SamplerCanStatus;
 class  JointMovement{
     public:
         

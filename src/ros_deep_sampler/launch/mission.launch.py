@@ -3,11 +3,10 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-
     mission_node = Node(
-        package='ros_deep_sampler',      
-        executable='ros_deep_sampler_node',      
-        #name='mission_node',
+        package='ros_deep_sampler',
+        executable='ros_deep_sampler_node',
+        name='sampler_mission_node',
         output='screen',
         parameters=[
             {"use_sim_time": True}

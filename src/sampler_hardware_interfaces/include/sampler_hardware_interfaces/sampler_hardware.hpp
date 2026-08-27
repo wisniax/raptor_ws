@@ -5,9 +5,13 @@
 #include <rclcpp/subscription.hpp>
 #include "rex_interfaces/msg/rover_status.hpp"
 #include <sensor_msgs/msg/joint_state.hpp>
-#include "sampler_motion_interfaces/msg/sampler_can_cmd.hpp"
-#include "sampler_motion_interfaces/msg/sampler_can_feedback.hpp"
-#include "sampler_motion_interfaces/msg/sampler_mission_cmd.hpp"
+// #include "sampler_motion_interfaces/msg/sampler_can_cmd.hpp"
+// #include "sampler_motion_interfaces/msg/sampler_can_feedback.hpp"
+// #include "sampler_motion_interfaces/msg/sampler_mission_cmd.hpp"
+
+#include "rex_interfaces/msg/sampler_can_cmd.hpp"
+#include "rex_interfaces/msg/sampler_can_status.hpp"
+#include "rex_interfaces/msg/sampler_control.hpp"
 
 #include <gz/transport/Node.hh>
 #include <gz/msgs/double.pb.h>
@@ -19,10 +23,10 @@
 namespace sampler_hardware_interfaces
 {
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
-using SamplerCanCmd = sampler_motion_interfaces::msg::SamplerCanCmd;
-using SamplerCanFeedback = sampler_motion_interfaces::msg::SamplerCanFeedback;
+using SamplerCanCmd = rex_interfaces::msg::SamplerCanCmd;
+using SamplerCanFeedback = rex_interfaces::msg::SamplerCanStatus;
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
-using MissionCmd = sampler_motion_interfaces::msg::SamplerMissionCmd;
+using MissionCmd = rex_interfaces::msg::SamplerControl;
 
 class SamplerHardware : public hardware_interface::SystemInterface
 {

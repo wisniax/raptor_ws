@@ -8,17 +8,15 @@
 
 #include "rex_interfaces/msg/rover_status.hpp"
 #include "rex_interfaces/msg/sampler_control.hpp"
-
+#include "rex_interfaces/msg/sampler_feedback.hpp"
 #include "ros_deep_sampler/joint_movement.hpp"
-#include "sampler_motion_interfaces/msg/sampler_mission.hpp"
-#include "sampler_motion_interfaces/msg/sampler_mission_cmd.hpp"
 
 namespace ros_deep_sampler{
 
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
 using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
-using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
-using MissionCmd = sampler_motion_interfaces::msg::SamplerMissionCmd;
+using MissionMsg = rex_interfaces::msg::SamplerFeedback;
+using MissionCmd = rex_interfaces::msg::SamplerControl;
 
 struct SamplerState
 {

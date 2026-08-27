@@ -24,10 +24,9 @@
 namespace ros_deep_sampler{
 
 using RoverStatusMsg = rex_interfaces::msg::RoverStatus;
-using SamplerControlMsg = rex_interfaces::msg::SamplerControl;
-using SamplerFeedbackMsg = rex_interfaces::msg::SamplerFeedback;
-using MissionMsg = sampler_motion_interfaces::msg::SamplerMission;
-using MissionCmd = sampler_motion_interfaces::msg::SamplerMissionCmd;
+
+using MissionMsg = rex_interfaces::msg::SamplerFeedback;
+using MissionCmd = rex_interfaces::msg::SamplerControl;
 //using SamplerCanCmd = sampler_motion_interfaces::msg::SamplerCanCmd;
 
 class MissionControl : public rclcpp::Node
@@ -117,10 +116,6 @@ private:
 
     // void HandleMeasurementFeedback(
     //     const MeasurementMsg::ConstSharedPtr& measurementMsg);
-
-    void HandleSamplerCtl(
-        const SamplerControlMsg::ConstSharedPtr& samplerCtlMsg);
-
 
     // =========================================================
     // Manual control
@@ -240,10 +235,6 @@ private:
     rclcpp::Subscription<SamplerControlMsg>::SharedPtr
         mSamplerCtrl_;
 
-    rclcpp::Subscription<SamplerFeedbackMsg>::SharedPtr
-        MeasurementFeedback_;
-
-
     // =========================================================
     // ROS publishers
     // =========================================================
@@ -256,8 +247,6 @@ private:
     // =========================================================
 
     std_msgs::msg::String::SharedPtr SubStatus;
-
-    SamplerFeedbackMsg mPubFeedback;
 
     MissionMsg::SharedPtr missionFeedbackMsg;
 
