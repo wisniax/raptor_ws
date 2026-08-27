@@ -156,6 +156,15 @@ def main():
 
                 msg.open_vacuum = bool(value)
 
+            elif command == "velocity_ctrl":
+
+                if value not in (0.0, 1.0):
+                    print("velocity_ctrl must be 0 or 1")
+                    rclpy.shutdown()
+                    return 1
+
+                msg.velocity_ctrl = bool(value)
+
             else:
                 print(f"Unknown command: {command}")
                 print_usage()

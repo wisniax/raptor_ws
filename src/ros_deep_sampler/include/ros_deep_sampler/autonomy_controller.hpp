@@ -155,6 +155,20 @@ private:
     static constexpr double STALL_TIME = 1.0;               // seconds
 
     static constexpr int MAX_RECOVERY_ATTEMPT = 5;
+    
+    static constexpr int VACUUM_SUCTION_TIME = 200;               // seconds
+    static constexpr int WAIT_TIME_BEETWEN_STATES = 20; 
+    static constexpr int POUR_TIME = 100;
+    static constexpr double JOINT_CALIBRATION_SPEED = 0.02;
+    static constexpr double HOME_POS = 0.01;
+    static constexpr double PRECISION_THRESHOLD = 0.01;
+    static constexpr double MAX_UNDEGROUND_POS = -0.35;
+    static constexpr double DEEP_SAMPLER_COLLECT_POS = -1.57;
+    static constexpr double SURFACE_SAMPLER_COLLECT_POS = -1.35;
+    static constexpr double DRILL_TO_CONTAINER = -0.15;
+    static constexpr double PLATFORM_TO_CONTAINER = -0.2;
+
+
 
 
     bool goal_sent = false;
