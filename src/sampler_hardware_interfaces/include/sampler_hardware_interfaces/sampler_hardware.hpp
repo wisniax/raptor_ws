@@ -47,6 +47,7 @@ public:
   void feedbackCallback(const SamplerCanFeedback &feedback);
   void HandleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg);
   void HandleMissionCmd(const MissionCmd& missionCmd);
+  void calibratejoints();
 
 
 private:
@@ -124,6 +125,7 @@ private:
   std::unordered_map<std::string, double> sim_vel_;
 
   SamplerCanCmd cmd_;
+
   SamplerCanFeedback::SharedPtr feedback_; 
   RoverStatusMsg::ConstSharedPtr LastStatusMsg;
 
@@ -131,6 +133,10 @@ private:
   bool set_pos = false;
 
   bool manual = true;
+
+  bool platform_calibrated = false;
+  bool drill_calibrated = false;
+  bool container_calibrated = false;
 
   static constexpr unsigned int CONTROL_MODE_DEEP_SAMPLER = 32;
 

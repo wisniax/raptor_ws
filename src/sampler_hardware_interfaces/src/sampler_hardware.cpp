@@ -130,6 +130,14 @@ CallbackReturn SamplerHardware::on_configure(
 
         mMissionCmd_ = get_node()->create_subscription<MissionCmd>("/MQTT/SamplerControl", 10,
                     std::bind(&SamplerHardware::HandleMissionCmd, this, std::placeholders::_1));
+        
+        cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
+        cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
+        cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
+        cmd_.actuator_id[3] = RosCanConstants::VescIds::sampler_drill;
+        cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
+        cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a; // Brush 
+        cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b; // clamp?
 
     }
 
@@ -398,42 +406,52 @@ hardware_interface::return_type SamplerHardware::read(const rclcpp::Time& /*time
   return hardware_interface::return_type::OK;
 }
 
+void SamplerHardware::calibratejoints(){
+    cmd_.command_id[0] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[1] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[2] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
+    cmd_.command_id[6] = VESC_COMMAND_SET_POS;
+  
+    if(platform_pos_ < 0.001){
+         cmd_.set_value[0] = 0.0;
+         platform_calibrated = true;
+    }else{
+        cmd_.set_value[0] = 0.5;
+    }
+    if(drill_pos_ < 0.001){
+         cmd_.set_value[1] = 0.0;
+         drill_calibrated = true;
+    }else{
+        cmd_.set_value[1] = 0.5;
+    }
+    if(container_pos_ < 0.001){
+         cmd_.set_value[0] = 0.0;
+         container_calibrated = true;
+    }else{
+        cmd_.set_value[0] = 0.5;
+    }
+
+    cmd_.set_value[3] = 0.0;
+    cmd_.set_value[4] = 0.0;
+    cmd_.set_value[5] = 0.0;
+    cmd_.set_value[6] = 0.0;
+    
+    sampler_can_cmd_pub_->publish(cmd_);
+}
+
 hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*time*/,
                                                              const rclcpp::Duration& /*period*/)
 {
 
-//   uint8_t command;
-//   if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_AUTONOMY){
-//     command = VESC_COMMAND_SET_DUTY;
-//     sampler_mode = true;
-   
-//   }
-//   else if(LastStatusMsg->control_mode == RoverStatusMsg::CONTROL_MODE_SAMPLER){
-//     command = VESC_COMMAND_SET_POS;
-//     sampler_mode = true;
-//     //set_pos = true;
-//   }else{
-//     command = VESC_COMMAND_SET_DUTY;
-//     sampler_mode = false;
-//   }
-   
-    
-  
 
   if (rclcpp::ok())
   {
 
-    
 
-    cmd_.actuator_id[0] = RosCanConstants::VescIds::sampler_platform;
-    cmd_.actuator_id[1] = RosCanConstants::VescIds::sampler_drill_mov;
-    cmd_.actuator_id[2] = RosCanConstants::VescIds::sampler_container_a;
-    cmd_.actuator_id[3] = RosCanConstants::VescIds::sampler_drill;
-    cmd_.actuator_id[4] = RosCanConstants::VescIds::sampler_vacuum_suction;
-    cmd_.actuator_id[5] = RosCanConstants::VescIds::sampler_vacuum_a; // Brush 
-    cmd_.actuator_id[6] = RosCanConstants::VescIds::sampler_vacuum_b; // clamp?
-
-    if (last_velCtrl && manual){
+    if (manual && last_velCtrl){
         cmd_.command_id[0] = VESC_COMMAND_SET_RPM;
         cmd_.command_id[1] = VESC_COMMAND_SET_RPM;
         cmd_.command_id[2] = VESC_COMMAND_SET_RPM;
@@ -443,6 +461,11 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
         cmd_.set_value[2] = container_vel_cmd_;
 
     }else{
+        
+        //   if(!(platform_calibrated, drill_calibrated, container_calibrated)){ //// FOR REAL HARDWARE
+        //     calibratejoints();
+        //     return hardware_interface::return_type::OK;
+        //   }
         cmd_.command_id[0] = VESC_COMMAND_SET_POS;
         cmd_.command_id[1] = VESC_COMMAND_SET_POS;
         cmd_.command_id[2] = VESC_COMMAND_SET_POS;
@@ -450,12 +473,12 @@ hardware_interface::return_type SamplerHardware::write(const rclcpp::Time& /*tim
         cmd_.set_value[0] = platform_cmd_;
         cmd_.set_value[1] = drill_cmd_;
         cmd_.set_value[2] = container_cmd_;
+
+      
+
     }
     
-    cmd_.command_id[3] = VESC_COMMAND_SET_RPM;
-    cmd_.command_id[4] = VESC_COMMAND_SET_RPM;
-    cmd_.command_id[5] = VESC_COMMAND_SET_RPM;
-    cmd_.command_id[6] = VESC_COMMAND_SET_POS;
+  
 
 
     cmd_.set_value[3] = rotor_cmd_;
