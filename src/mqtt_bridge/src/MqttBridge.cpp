@@ -566,7 +566,7 @@ rex_interfaces::msg::RoboticArmAutonomy MqttBridge::createArmAutonomyMsg(const r
     rex_interfaces::msg::RoboticArmAutonomy msg;
 
     msg.action = d["action"].GetUint();
-    msg.mission_id = d["mission_id"].GetInt();
+    msg.mission_id = d["mission_id"].GetString();
     const auto tasks = d["tasks"].GetArray();
     msg.tasks.reserve(tasks.Size());
 

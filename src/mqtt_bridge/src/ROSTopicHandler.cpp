@@ -269,7 +269,7 @@ void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::
     }
 
     d.AddMember("possibility", possibility, allocator);
-    d.AddMember("mission_id", msg.mission_id, allocator);
+    d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
     addTimestampToJSON(d, msg.header.stamp);
 
     std::string topic = "RappTORS/ArmAutonomyCheckResult";
@@ -308,7 +308,7 @@ void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::m
     d.AddMember("status", msg.status, allocator);
     d.AddMember("tasks", tasks, allocator);
     d.AddMember("completed_tasks", completedTasks, allocator);
-    d.AddMember("mission_id", msg.mission_id, allocator);
+    d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
     addTimestampToJSON(d, msg.header.stamp);
 
     publishMqttMessage("RappTORS/ArmAutonomyMissionFeedback", getStringFromJSON(d).c_str());
