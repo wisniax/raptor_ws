@@ -11,6 +11,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(moveit_msgs REQUIRED)
 find_package(rex_interfaces REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcl_interfaces REQUIRED)
@@ -36,6 +37,7 @@ target_link_libraries(${PROJECT_NAME}_component PUBLIC
   ${rex_interfaces_TARGETS}
   ${rclcpp_components_TARGETS}
   ${std_msgs_TARGETS}
+  ${moveit_msgs_TARGETS}
   ${PahoMqttC_LIBRARY}
   ${PahoMqttCpp_LIBRARY}
   "${cpp_typesupport_target}"
