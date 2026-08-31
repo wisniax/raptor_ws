@@ -15,9 +15,10 @@
 
 ## Build the container
 `docker compose build`
-> To enable passwordless ssh into rex: \
-> Copy your public ssh files to .devcontainer/public_keys.d \
-> **Note!** Do this step before building the container or rebuild after!
+> To enable passwordless ssh into rex:
+> Set $REX_CONTAINER_AUTHORIZED_KEYS to the path of a file with your public keys
+> (or set it to ~/.ssh/authorized_keys to use the same keys as the host)
+> **Note!** If you want to change the filepath used by the container, you have to recreate it.
 
 ## Generate TLS keys, certificates and credentials for Mosquitto
 A helper script is included, which allows to easily generate a CA, server certificate, server keys, and an MQTT credentials file for Mosquitto; it also automatically sets the correct file permissions and ownership, and copies the files into the right locations. `openssl` package, Docker, sudo access, and belonging to the `docker` group are required to run this script. The syntax is as follows:

@@ -27,7 +27,7 @@ void MqttBridge::setupJsonSchemaValidators() {
         std::ifstream ifs(jsonSchemaDir + pair.second);
         if (!ifs.is_open()) {
             // if file cannot be opened, just skip it
-            RCLCPP_ERROR_STREAM(get_logger(), "Error opening JSON schema file " << pair.second);
+            RCLCPP_WARN_STREAM(get_logger(), "Error opening JSON schema file " << pair.second);
             continue;
         }
         rapidjson::IStreamWrapper isw(ifs);

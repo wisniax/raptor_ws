@@ -31,6 +31,14 @@ echo "--------------------------------------------------------------------"
 
 rm -f /tmp/rexlaunch.pgid # remove old PGID file
 
+# Copy host authorized keys for use with user rex
+if [ -s /run/secrets/authorized_keys ]; then
+    install -o rex -g "$(id -g rex)" -m 0600 /run/secrets/authorized_keys /home/rex/.ssh/authorized_keys \
+    || echo "Couldn't copy authorized_keys file"
+else
+    echo "No authorized keys copied into the container"
+fi
+
 if service ssh start; then
     # Get the SSH port from the configuration file
     SSH_PORT_CONFIGURED=$(grep -oP '^Port\s+\K\d+' /etc/ssh/sshd_config)

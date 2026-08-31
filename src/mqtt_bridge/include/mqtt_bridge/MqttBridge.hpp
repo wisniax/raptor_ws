@@ -82,6 +82,7 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
 
     const std::map<std::string, std::string> jsonSchemaFiles = {
         {"BatteryInfo", "batteryinfo.json"},
+        {"ServoStatus", "servostatus.json"},
         {"RoverControl", "rovercontrol.json"},
         {"RoverStatus", "roverstatus.json"},
         {"SamplerControl", "samplercontrol.json"},

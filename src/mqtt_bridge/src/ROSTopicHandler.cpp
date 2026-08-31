@@ -25,6 +25,8 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
     mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>
      ("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+    mSub_ServoStatus = n->create_subscription<moveit_msgs::msg::ServoStatus>
+     ("/servo_node/status", 100, std::bind(&ROSTopicHandler::callback_ServoStatus, this, std::placeholders::_1));
     mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>
      ("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
@@ -191,6 +193,37 @@ void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInf
     if (!jsonValidator->validateJSON(d, "BatteryInfo")) return;
 
     publishMqttMessage("RappTORS/BatteryInfo", getStringFromJSON(d).c_str());
+}
+
+
+// ###### ServoStatus ######
+void ROSTopicHandler::callback_ServoStatus(const moveit_msgs::msg::ServoStatus::ConstSharedPtr& msg)
+{
+    const rclcpp::Time currentTime = n->get_clock()->now();
+    if (mHasLastMessageTime_ServoStatus &&
+        currentTime - mLastMessageTime_ServoStatus < rclcpp::Duration::from_nanoseconds(mInterval_ServoStatus * 1000000)) return;
+
+    rapidjson::Document d;
+    d.SetObject();
+
+    std::map<std::string, int> jsonIntFieldsMap{
+        {"Code", msg->code}};
+
+    addMembersFromMapToJSON(d, jsonIntFieldsMap);
+
+    addMemberToJSON(d, "Message", rapidjson::StringRef(msg->message.c_str()));
+
+    const int64_t currentTimeNanoseconds = currentTime.nanoseconds();
+    builtin_interfaces::msg::Time currentTimeMessage;
+    currentTimeMessage.sec = static_cast<int32_t>(currentTimeNanoseconds / 1000000000);
+    currentTimeMessage.nanosec = static_cast<uint32_t>(currentTimeNanoseconds % 1000000000);
+    addTimestampToJSON(d, currentTimeMessage);
+
+    if (!jsonValidator->validateJSON(d, "ServoStatus")) return;
+
+    mLastMessageTime_ServoStatus = currentTime;
+    mHasLastMessageTime_ServoStatus = true;
+    publishMqttMessage("RappTORS/ServoStatus", getStringFromJSON(d).c_str());
 }
 
 // ###### SamplerFeedback ######

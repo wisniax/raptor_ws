@@ -18,6 +18,7 @@ Licensed under the MIT License.
 #include "rex_interfaces/msg/sampler_control.hpp"
 #include "rex_interfaces/msg/robotic_arm_control.hpp"
 #include "rex_interfaces/msg/battery_info.hpp"
+#include "moveit_msgs/msg/servo_status.hpp"
 #include "rex_interfaces/msg/sampler_feedback.hpp"
 #include "rex_interfaces/msg/calibrate_axis.hpp"
 #include "rex_interfaces/msg/robotic_arm_autonomy.hpp"
@@ -64,6 +65,9 @@ private:
   void publishMqttMessage_VescStatus(const rex_interfaces::msg::VescStatus::SharedPtr& msg);
 
   void callback_BatteryInfo(const rex_interfaces::msg::BatteryInfo::ConstSharedPtr& receivedMsg);
+
+  void callback_ServoStatus(const moveit_msgs::msg::ServoStatus::ConstSharedPtr& receivedMsg);
+
   void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& receivedMsg);
 
   void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& receivedMsg);
@@ -79,6 +83,10 @@ private:
   std::map<int, rex_interfaces::msg::VescStatus::SharedPtr> mMsgMap_VescStatus;
 
   rclcpp::Subscription<rex_interfaces::msg::BatteryInfo>::SharedPtr mSub_BatteryInfo;
+  const int32_t mInterval_ServoStatus = 200;
+  rclcpp::Subscription<moveit_msgs::msg::ServoStatus>::SharedPtr mSub_ServoStatus;
+  rclcpp::Time mLastMessageTime_ServoStatus;
+  bool mHasLastMessageTime_ServoStatus = false;
   rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr mSub_SamplerFeedback;
   rclcpp::Subscription<rcl_interfaces::msg::Log>::SharedPtr mSub_RosoutLogs;
   rclcpp::Subscription<rex_interfaces::msg::RoboticArmCheckResult>::SharedPtr mSub_RoboticArmCheckResult;

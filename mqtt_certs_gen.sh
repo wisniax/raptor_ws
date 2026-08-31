@@ -46,3 +46,11 @@ sudo rm .devcontainer/mosquitto_passwd
 docker run --rm eclipse-mosquitto sh -c "mosquitto_passwd -b -c /tmp/mosquitto_passwd ${MQTT_USERNAME} ${MQTT_PASSWORD} && cat /tmp/mosquitto_passwd" > .devcontainer/mosquitto_passwd
 sudo chown 1883:1883 .devcontainer/mosquitto_passwd
 sudo chmod 0700 .devcontainer/mosquitto_passwd
+
+# Note that compose volume long syntax is incompatible with SELinux labels (https://github.com/docker/compose/issues/13396)
+if sudo command -v selinuxenabled >/dev/null && sudo selinuxenabled; then
+    sudo chcon -R -t container_file_t \
+        .devcontainer/ca.crt \
+        .devcontainer/mosquitto_passwd \
+        .devcontainer/mqtt-server-certs
+fi

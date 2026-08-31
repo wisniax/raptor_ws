@@ -20,6 +20,8 @@ Licensed under the MIT License.
 
 using namespace std::chrono_literals;
 
+// TODO: Test for ServoStatus
+
 // MQTT parameters
 constexpr const char* MQTT_HOST = "localhost";
 const int MQTT_PORT = 8883;
