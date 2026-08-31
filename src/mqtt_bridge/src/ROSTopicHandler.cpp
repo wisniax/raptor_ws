@@ -42,7 +42,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
     mPub_RoverStatus = n->create_publisher<rex_interfaces::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
     mPub_RoboticArmControl = n->create_publisher<rex_interfaces::msg::RoboticArmControl>("/MQTT/RoboticArmControl", 1000);
     mPub_CalibrateAxis = n->create_publisher<rex_interfaces::msg::CalibrateAxis>("/MQTT/CalibrateAxis", 1000);
-    mPub_ArmAutonomy = n->create_publisher<rex_interfaces::msg::RoboticArmAutonomy>("/MQTT/RoboticArmAutonomy", 1000);
+    mPub_RoboticArmAutonomy = n->create_publisher<rex_interfaces::msg::RoboticArmAutonomy>("/MQTT/RoboticArmAutonomy", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string& topicName, const char* message)
@@ -305,7 +305,7 @@ void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::
     d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
     addTimestampToJSON(d, msg.header.stamp);
 
-    std::string topic = "RappTORS/ArmAutonomyCheckResult";
+    std::string topic = "RappTORS/RoboticArmCheckResult";
 
     publishMqttMessage(topic, getStringFromJSON(d).c_str());
 }
@@ -344,7 +344,7 @@ void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::m
     d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
     addTimestampToJSON(d, msg.header.stamp);
 
-    publishMqttMessage("RappTORS/ArmAutonomyMissionFeedback", getStringFromJSON(d).c_str());
+    publishMqttMessage("RappTORS/RoboticArmMissionFeedback", getStringFromJSON(d).c_str());
 }
 
 
@@ -383,9 +383,9 @@ void ROSTopicHandler::publishMessage_CalibrateAxis(const rex_interfaces::msg::Ca
     mPub_CalibrateAxis->publish(message);
 }
 
-// ##### ArmAutonomy ######
+// ##### RoboticArmAutonomy ######
 
-void ROSTopicHandler::publishMessage_ArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message)
+void ROSTopicHandler::publishMessage_RoboticArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message)
 {
-    mPub_ArmAutonomy->publish(message);
+    mPub_RoboticArmAutonomy->publish(message);
 }

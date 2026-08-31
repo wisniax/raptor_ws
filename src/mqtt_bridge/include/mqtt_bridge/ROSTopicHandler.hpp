@@ -47,7 +47,7 @@ public:
   void publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl& message);
   void publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus& message);
   void publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message);
-  void publishMessage_ArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message);
+  void publishMessage_RoboticArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message);
 
 private:
   void publishMqttMessage(const std::string& topicName, const char* message);
@@ -97,7 +97,7 @@ private:
   rclcpp::Publisher<rex_interfaces::msg::SamplerControl>::SharedPtr mPub_SamplerControl;
   rclcpp::Publisher<rex_interfaces::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
   rclcpp::Publisher<rex_interfaces::msg::CalibrateAxis>::SharedPtr mPub_CalibrateAxis;
-  rclcpp::Publisher<rex_interfaces::msg::RoboticArmAutonomy>::SharedPtr mPub_ArmAutonomy;
+  rclcpp::Publisher<rex_interfaces::msg::RoboticArmAutonomy>::SharedPtr mPub_RoboticArmAutonomy;
 
   rclcpp::Node* n;
   IJSONValidator* jsonValidator;

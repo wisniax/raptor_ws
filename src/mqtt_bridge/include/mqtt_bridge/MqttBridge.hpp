@@ -63,7 +63,7 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
             "RappTORS/SamplerControl",
             "RappTORS/RoverStatus",
             "RappTORS/CalibrateAxis",
-            "RappTORS/ArmAutonomy"
+            "RappTORS/RoboticArmAutonomy"
         });
     const std::vector<int> SUBSCRIBED_TOPICS_QOS{0, 0, 0, 0, 0, 0};
 
@@ -89,7 +89,7 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
         {"SamplerFeedback", "samplerfeedback.json"},
         {"VescStatus", "vescstatus.json"},
         {"CalibrateAxis", "calibrateaxis.json"},
-        {"ArmAutonomy", "armautonomy.json"}
+        {"RoboticArmAutonomy", "roboticarmautonomy.json"}
     };
     std::map<std::string,
      std::tuple<std::shared_ptr<rapidjson::SchemaDocument>, std::shared_ptr<rapidjson::SchemaValidator>,
@@ -112,7 +112,7 @@ class MqttBridge : public rclcpp::Node, public mqtt::iaction_listener, public IJ
     rex_interfaces::msg::SamplerControl createSamplerControlMsg(const rapidjson::Document& d);
     rex_interfaces::msg::RoverStatus createRoverStatusMsg(const rapidjson::Document& d);
     rex_interfaces::msg::CalibrateAxis createCalibrateAxisMsg(const rapidjson::Document& d);
-    rex_interfaces::msg::RoboticArmAutonomy createArmAutonomyMsg(const rapidjson::Document& d);
+    rex_interfaces::msg::RoboticArmAutonomy createRoboticArmAutonomyMsg(const rapidjson::Document& d);
 };
 
 #endif  // MQTT_BRIDGE__MQTTBRIDGE_HPP_

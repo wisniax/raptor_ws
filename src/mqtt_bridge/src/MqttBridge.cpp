@@ -279,8 +279,8 @@ void MqttBridge::processMqttMessage(const mqtt::string& messageTopic, const char
                             "RoverStatus control_mode validation failed, discarding MQTT message.");
                     }
                 }
-            } else if (messageTopic == "RappTORS/ArmAutonomy") {
-                rth->publishMessage_ArmAutonomy(createArmAutonomyMsg(d));
+            } else if (messageTopic == "RappTORS/RoboticArmAutonomy") {
+                rth->publishMessage_RoboticArmAutonomy(createRoboticArmAutonomyMsg(d));
             } else {
                 RCLCPP_WARN_STREAM(get_logger(),
                  "Unknown MQTT topic: " << messageTopic << ", discarding MQTT message.");
@@ -561,7 +561,7 @@ rex_interfaces::msg::RoboticArmControl MqttBridge::createRoboticArmControlMsg(co
     return msg;
 }
 
-rex_interfaces::msg::RoboticArmAutonomy MqttBridge::createArmAutonomyMsg(const rapidjson::Document &d)
+rex_interfaces::msg::RoboticArmAutonomy MqttBridge::createRoboticArmAutonomyMsg(const rapidjson::Document &d)
 {
     rex_interfaces::msg::RoboticArmAutonomy msg;
 
