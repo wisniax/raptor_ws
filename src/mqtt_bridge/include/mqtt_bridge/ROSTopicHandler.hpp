@@ -21,6 +21,9 @@ Licensed under the MIT License.
 #include "moveit_msgs/msg/servo_status.hpp"
 #include "rex_interfaces/msg/sampler_feedback.hpp"
 #include "rex_interfaces/msg/calibrate_axis.hpp"
+#include "rex_interfaces/msg/robotic_arm_autonomy.hpp"
+#include "rex_interfaces/msg/robotic_arm_check_result.hpp"
+#include "rex_interfaces/msg/robotic_arm_mission_feedback.hpp"
 #include "rcl_interfaces/msg/log.hpp"
 
 #include "RapidJsonConfig.hpp"
@@ -44,6 +47,7 @@ public:
   void publishMessage_SamplerControl(const rex_interfaces::msg::SamplerControl& message);
   void publishMessage_RoverStatus(const rex_interfaces::msg::RoverStatus& message);
   void publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message);
+  void publishMessage_RoboticArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message);
 
 private:
   void publishMqttMessage(const std::string& topicName, const char* message);
@@ -67,6 +71,8 @@ private:
   void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& receivedMsg);
 
   void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& receivedMsg);
+  void callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg);
+  void callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg);
 
   std::shared_ptr<mqtt::async_client> mCli;
   int mQOS;
@@ -83,12 +89,15 @@ private:
   bool mHasLastMessageTime_ServoStatus = false;
   rclcpp::Subscription<rex_interfaces::msg::SamplerFeedback>::SharedPtr mSub_SamplerFeedback;
   rclcpp::Subscription<rcl_interfaces::msg::Log>::SharedPtr mSub_RosoutLogs;
+  rclcpp::Subscription<rex_interfaces::msg::RoboticArmCheckResult>::SharedPtr mSub_RoboticArmCheckResult;
+  rclcpp::Subscription<rex_interfaces::msg::RoboticArmMissionFeedback>::SharedPtr mSub_RoboticArmMissionFeedback;
 
   rclcpp::Publisher<rex_interfaces::msg::RoverControl>::SharedPtr mPub_RoverControl;
   rclcpp::Publisher<rex_interfaces::msg::RoboticArmControl>::SharedPtr mPub_RoboticArmControl;
   rclcpp::Publisher<rex_interfaces::msg::SamplerControl>::SharedPtr mPub_SamplerControl;
   rclcpp::Publisher<rex_interfaces::msg::RoverStatus>::SharedPtr mPub_RoverStatus;
   rclcpp::Publisher<rex_interfaces::msg::CalibrateAxis>::SharedPtr mPub_CalibrateAxis;
+  rclcpp::Publisher<rex_interfaces::msg::RoboticArmAutonomy>::SharedPtr mPub_RoboticArmAutonomy;
 
   rclcpp::Node* n;
   IJSONValidator* jsonValidator;
