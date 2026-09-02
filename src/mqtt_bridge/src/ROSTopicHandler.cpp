@@ -26,7 +26,7 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
     mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>
      ("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
     mSub_ServoStatus = n->create_subscription<moveit_msgs::msg::ServoStatus>
-     ("/servo_node/status", 100, std::bind(&ROSTopicHandler::callback_ServoStatus, this, std::placeholders::_1));
+     ("/arm/servo_node/status", 100, std::bind(&ROSTopicHandler::callback_ServoStatus, this, std::placeholders::_1));
     mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>
      ("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
