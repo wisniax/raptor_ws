@@ -1,0 +1,53 @@
+.\" Manpage for rosbag_record
+.TH ROSBAG_RECORD 1 "September 2026" "v1.0" "User Commands"
+.SH NAME
+rosbag_record \- automated ROS 2 bag recording wrapper with dynamic topic management
+.SH SYNOPSIS
+.B rosbag_record
+[\fB\-t\fR \fItopic_file\fR | \fB?\fR]...
+[\fB\-o\fR \fIbag_name\fR]
+[\fB\-h\fR]
+.SH DESCRIPTION
+.B rosbag_record
+is a wrapper script around \fBros2 bag record\fR. It parses topic list files from a designated directory, strips comments and whitespace, removes duplicates, and records the unique topics into an MCAP container with Zstandard (zstd) compression.
+
+If no \fB\-t\fR option is specified, the script reads and aggregates all topic definition files located in \fI$TOPICS_DIR\fR.
+.SH OPTIONS
+.TP
+.BR \-t " " \fItopic_file\fR | \fB?\fR
+Specify a topic file to include. This option can be supplied multiple times to merge topics from multiple files. 
+.RS
+.IP \(bu 2
+If a file name is provided (e.g., \fIsensors.txt\fR), the script checks \fI$TOPICS_DIR\fR first, then falls back to direct relative or absolute paths.
+.IP \(bu 2
+If passed as \fB\-t '?'\fR or \fB\-t \\?\fR, the script lists all available topic files in \fI$TOPICS_DIR\fR and exits immediately.
+.RE
+.TP
+.BI \-o " bag_name"
+Base prefix for the output rosbag directory. If omitted, defaults to \fBrosbag2\fR. The final directory name automatically appends a timestamp in the format \fI<bag_name>_YYYY_MM_DD-HH_MM_SS\fR.
+.TP
+.B \-h
+Display command-line help and exit.
+.SH ENVIRONMENT VARIABLES
+.TP
+.B BLACKBOX_DIR
+Root storage directory for output bags and configuration. Defaults to \fI$HOME/rosbag_blackbox\fR.
+.TP
+.B TOPICS_DIR
+Directory containing topic list files. Defaults to \fI$BLACKBOX_DIR/topics.d\fR.
+.SH TOPIC FILE FORMAT
+Topic files contain one ROS 2 topic name per line. Leading and trailing whitespace is stripped automatically. Lines beginning with \fB#\fR as well as empty lines are ignored.
+.SH EXAMPLES
+.TP
+Record all topics from every file in \fItopics.d\fR:
+.B ./record.sh
+.TP
+List all available topic configuration files:
+.B ./record.sh -t '?'
+.TP
+Record topics aggregated from multiple specific files with a custom name:
+.B ./record.sh -t sensors.txt -t cameras.txt -o test_drive
+.SH AUTHORS & CREDITS
+Artificial Intelligence \(en Gemini with Real Idiot guidance \(en Marcin Walczyk
+.SH DISCLAIMER / NO WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
