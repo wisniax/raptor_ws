@@ -233,15 +233,15 @@ void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::Sample
     d.SetObject();
 
     std::map<std::string, double> jsonDoubleFieldsMap{
-        {"WeightA", msg->weight_a}, {"WeightB", msg->weight_b}, {"WeightC", msg->weight_c}, {"Ph", msg->ph}, {"Distance", msg->distance}};
+        {"weight1", msg->weight_a}, {"weight2", msg->weight_b}, {"weight3", msg->weight_c}};
 
     addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
 
     addTimestampToJSON(d, msg->header.stamp);
 
-    if (!jsonValidator->validateJSON(d, "SamplerFeedback")) return;
+    //if (!jsonValidator->validateJSON(d, "SamplerFeedback")) return;
 
-    publishMqttMessage("RappTORS/SamplerFeedback", getStringFromJSON(d).c_str());
+    publishMqttMessage("RappTORS/RotaryFeedback", getStringFromJSON(d).c_str());
 }
 
 // ##### RosoutLogs #######
