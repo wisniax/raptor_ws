@@ -58,6 +58,14 @@ CanHotplug::CanHotplug(const rclcpp::NodeOptions &options) : Node("can_hotplug",
 
     setup_netlink();
 
+    if (if_nametoindex(interface_name_.c_str()) == 0)
+    {
+        // If the CAN interface doesn't exist at startup, mark it as destroyed to allow later recovery
+        interface_destroyed_ = true;
+
+        RCLCPP_INFO(this->get_logger(), "CAN interface %s doesn't exist at startup", interface_name_.c_str());
+    }
+
     watcher_thread_ = std::thread(&CanHotplug::watch_loop, this);
 }
 
