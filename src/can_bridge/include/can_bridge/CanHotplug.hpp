@@ -12,6 +12,19 @@
 #include <lifecycle_msgs/srv/change_state.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+/**
+ * @brief Restarts SocketCAN bridge nodes when a CAN interface is recreated (typically due to adapter unplug & replug)
+ *
+ * Listens for Linux rtnetlink notifications for events regarding the specified interface.
+ * If an interface destruction followed by a re-creation is detected, SocketCAN nodes are restarted
+ * via the lifecycle mechanism.
+ * Also handles the case of the interface being absent at node startup.
+ *
+ * @par ROS parameters
+ * - `interface` (string, default: `can0`): the CAN interface to monitor
+ * - `socketcan_namespace` (string, default: empty): allows a different ROS namespace to be specified for the SocketCAN nodes
+ *   by default inherits this node's namespace.
+ */
 class CanHotplug : public rclcpp::Node
 {
 public:
@@ -29,13 +42,37 @@ private:
     };
     std::vector<RestartStep> restart_sequence_;
 
+    /**
+     * @brief Setup the socket to listen for rtnelink interface updates.
+     * @throws std::runtime_error If cannot create or bind to socket
+     */
     void setup_netlink();
+
+    /**
+     * @brief Main watch loop. Listens to Linux kernel rtnetlink for interface events.
+     */
     void watch_loop();
 
+    /**
+     * @brief Handles interface creation/update event sent by rtnetlink.
+     *
+     * Only triggers the restart sequence if interface had been destroyed/missing
+     * and the interface is being brought up.
+     *
+     * @param interface_info Interface info from rtnetlink
+     */
     void handle_newlink(const ifinfomsg *interface_info);
+
+    /**
+     * @brief Handles the interface destruction event sent by rtnetlink
+     */
     void handle_dellink();
 
-    void run_next_step(size_t step);
+    /**
+     * @brief Performs one asynchronous step of the restart sequence and enqueues the next one.
+     * @param step_index Index of the step in the restart sequence.
+     */
+    void run_next_step(size_t step_index);
 
     std::string interface_name_;
 
