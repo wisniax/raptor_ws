@@ -199,7 +199,7 @@ void CanHotplug::run_next_step(size_t step_index)
     auto step = restart_sequence_[step_index];
     auto request = std::make_shared<lifecycle_msgs::srv::ChangeState::Request>();
     request->transition.id = step.transition;
-    RCLCPP_DEBUG(this->get_logger(), "Running step %d", step_index);
+    RCLCPP_DEBUG(this->get_logger(), "Running step %ld", step_index);
 
     step.client->async_send_request(
         request,
@@ -207,7 +207,7 @@ void CanHotplug::run_next_step(size_t step_index)
         {
             RCLCPP_DEBUG(
                 this->get_logger(),
-                "Response for step %d, success=%d",
+                "Response for step %ld, success=%d",
                 step_index,
                 future.get()->success);
             run_next_step(step_index + 1);

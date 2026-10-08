@@ -1,4 +1,4 @@
-FROM wisniax/ros-rover-base:latest@sha256:165e355cb43b4f90348b2af6dd94dbb1b6f45f661b3edceed92221ad3c99e13b
+FROM wisniax/ros-rover-base:latest@sha256:93483629dbe87581971885a0170a4851084f6159a57c3480fc36af6ce70d3319
 
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y libmosquitto-dev
 
