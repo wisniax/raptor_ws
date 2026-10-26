@@ -15,6 +15,7 @@ SamplerStatusForwarder::SamplerStatusForwarder(const rclcpp::NodeOptions & optio
 void SamplerStatusForwarder::samplerStatusGrabber(const can_msgs::msg::Frame::ConstSharedPtr &frame)
 {
 	auto rf = VescInterop::rosToVesc(*frame);
+	if (frame->id != 0x1E83) return;
 
 	switch (rf.command)
 	{

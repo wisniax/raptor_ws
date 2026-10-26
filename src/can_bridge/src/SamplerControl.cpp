@@ -128,8 +128,8 @@ void SamplerControl::publishSamplerData()
 	vesc_container[1].commandData = mLastSamplerCtl->drill_movement;
 
 	vesc_container[2].vescID = RosCanConstants::VescIds::sampler_drill;
-	vesc_container[2].command = VESC_COMMAND_SET_DUTY;
-	vesc_container[2].commandData = mLastSamplerCtl->drill_action;
+	vesc_container[2].command = VESC_COMMAND_SET_RPM;
+	vesc_container[2].commandData = mLastSamplerCtl->drill_action * 30000; // rzezba ERC 26 - skalowanie [-1; 1] z APP
 
 	vesc_container[3].vescID = RosCanConstants::VescIds::sampler_container_a;
 	vesc_container[3].command = VESC_COMMAND_SET_POS;
@@ -140,8 +140,8 @@ void SamplerControl::publishSamplerData()
 	vesc_container[4].commandData = mLastSamplerCtl->container_degrees_b;
 
 	vesc_container[5].vescID = RosCanConstants::VescIds::sampler_vacuum_suction;
-	vesc_container[5].command = VESC_COMMAND_SET_DUTY;
-	vesc_container[5].commandData = mLastSamplerCtl->vacuum_suction;
+	vesc_container[5].command = VESC_COMMAND_SET_RPM;
+	vesc_container[5].commandData = mLastSamplerCtl->vacuum_suction * 140000; // rzezba ERC 26 - skalowanie [-1; 1] z APP
 
 	vesc_container[6].vescID = RosCanConstants::VescIds::sampler_vacuum_a;
 	vesc_container[6].command = VESC_COMMAND_SET_DUTY;

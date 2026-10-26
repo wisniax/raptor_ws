@@ -25,17 +25,24 @@ ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient,
 
     mSub_BatteryInfo = n->create_subscription<rex_interfaces::msg::BatteryInfo>
      ("/CAN/RX/battery_info", 100, std::bind(&ROSTopicHandler::callback_BatteryInfo, this, std::placeholders::_1));
+    mSub_ServoStatus = n->create_subscription<moveit_msgs::msg::ServoStatus>
+     ("/arm/servo_node/status", 100, std::bind(&ROSTopicHandler::callback_ServoStatus, this, std::placeholders::_1));
     mSub_SamplerFeedback = n->create_subscription<rex_interfaces::msg::SamplerFeedback>
      ("/CAN/RX/sampler_status", 100, std::bind(&ROSTopicHandler::callback_SamplerFeedback, this, std::placeholders::_1));
 
-     mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>
+    mSub_RosoutLogs = n->create_subscription<rcl_interfaces::msg::Log>
      ("/rosout", 100, std::bind(&ROSTopicHandler::callback_RosoutLogs, this, std::placeholders::_1));
+    mSub_RoboticArmCheckResult = n->create_subscription<rex_interfaces::msg::RoboticArmCheckResult>
+     ("/MQTT/RoboticArmCheckResult", 100, std::bind(&ROSTopicHandler::callback_RoboticArmCheckResult, this, std::placeholders::_1));
+    mSub_RoboticArmMissionFeedback = n->create_subscription<rex_interfaces::msg::RoboticArmMissionFeedback>
+     ("/MQTT/RoboticArmMissionFeedback", 100, std::bind(&ROSTopicHandler::callback_RoboticArmMissionFeedback, this, std::placeholders::_1));
 
     mPub_RoverControl = n->create_publisher<rex_interfaces::msg::RoverControl>("/MQTT/RoverControl", 1000);
     mPub_SamplerControl = n->create_publisher<rex_interfaces::msg::SamplerControl>("/MQTT/SamplerControl", 1000);
     mPub_RoverStatus = n->create_publisher<rex_interfaces::msg::RoverStatus>("/MQTT/RoverStatus", 1000);
     mPub_RoboticArmControl = n->create_publisher<rex_interfaces::msg::RoboticArmControl>("/MQTT/RoboticArmControl", 1000);
     mPub_CalibrateAxis = n->create_publisher<rex_interfaces::msg::CalibrateAxis>("/MQTT/CalibrateAxis", 1000);
+    mPub_RoboticArmAutonomy = n->create_publisher<rex_interfaces::msg::RoboticArmAutonomy>("/MQTT/RoboticArmAutonomy", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string& topicName, const char* message)
@@ -188,6 +195,37 @@ void ROSTopicHandler::callback_BatteryInfo(const rex_interfaces::msg::BatteryInf
     publishMqttMessage("RappTORS/BatteryInfo", getStringFromJSON(d).c_str());
 }
 
+
+// ###### ServoStatus ######
+void ROSTopicHandler::callback_ServoStatus(const moveit_msgs::msg::ServoStatus::ConstSharedPtr& msg)
+{
+    const rclcpp::Time currentTime = n->get_clock()->now();
+    if (mHasLastMessageTime_ServoStatus &&
+        currentTime - mLastMessageTime_ServoStatus < rclcpp::Duration::from_nanoseconds(mInterval_ServoStatus * 1000000)) return;
+
+    rapidjson::Document d;
+    d.SetObject();
+
+    std::map<std::string, int> jsonIntFieldsMap{
+        {"Code", msg->code}};
+
+    addMembersFromMapToJSON(d, jsonIntFieldsMap);
+
+    addMemberToJSON(d, "Message", rapidjson::StringRef(msg->message.c_str()));
+
+    const int64_t currentTimeNanoseconds = currentTime.nanoseconds();
+    builtin_interfaces::msg::Time currentTimeMessage;
+    currentTimeMessage.sec = static_cast<int32_t>(currentTimeNanoseconds / 1000000000);
+    currentTimeMessage.nanosec = static_cast<uint32_t>(currentTimeNanoseconds % 1000000000);
+    addTimestampToJSON(d, currentTimeMessage);
+
+    if (!jsonValidator->validateJSON(d, "ServoStatus")) return;
+
+    mLastMessageTime_ServoStatus = currentTime;
+    mHasLastMessageTime_ServoStatus = true;
+    publishMqttMessage("RappTORS/ServoStatus", getStringFromJSON(d).c_str());
+}
+
 // ###### SamplerFeedback ######
 void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& msg)
 {
@@ -195,15 +233,15 @@ void ROSTopicHandler::callback_SamplerFeedback(const rex_interfaces::msg::Sample
     d.SetObject();
 
     std::map<std::string, double> jsonDoubleFieldsMap{
-        {"WeightA", msg->weight_a}, {"WeightB", msg->weight_b}, {"WeightC", msg->weight_c}, {"Ph", msg->ph}, {"Distance", msg->distance}};
+        {"weight1", msg->weight_a}, {"weight2", msg->weight_b}, {"weight3", msg->weight_c}};
 
     addMembersFromMapToJSON(d, jsonDoubleFieldsMap);
 
     addTimestampToJSON(d, msg->header.stamp);
 
-    if (!jsonValidator->validateJSON(d, "SamplerFeedback")) return;
+    //if (!jsonValidator->validateJSON(d, "SamplerFeedback")) return;
 
-    publishMqttMessage("RappTORS/SamplerFeedback", getStringFromJSON(d).c_str());
+    publishMqttMessage("RappTORS/RotaryFeedback", getStringFromJSON(d).c_str());
 }
 
 // ##### RosoutLogs #######
@@ -247,6 +285,75 @@ void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstS
     publishMqttMessage(topic, getStringFromJSON(d).c_str());
 }
 
+// ###### RoboticArmCheckResult ######
+
+void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg)
+{
+    // TODO: rename JSON fields to PascalCase
+    rapidjson::Document d;
+    d.SetObject();
+
+    auto& allocator = d.GetAllocator();
+    rapidjson::Value possibility(rapidjson::kArrayType);
+    possibility.Reserve(msg.possibility.size(), allocator);
+
+    for (bool possible : msg.possibility)
+    {
+        possibility.PushBack(possible, allocator);
+    }
+
+    d.AddMember("possibility", possibility, allocator);
+    d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
+    addTimestampToJSON(d, msg.header.stamp);
+
+    std::string topic = "RappTORS/RoboticArmCheckResult";
+
+    // TODO: add JSON schema validation
+
+    publishMqttMessage(topic, getStringFromJSON(d).c_str());
+}
+
+// ###### RoboticArmMissionFeedback ######
+
+void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg)
+{
+    // TODO: rename JSON fields to PascalCase
+    rapidjson::Document d;
+    d.SetObject();
+
+    auto& allocator = d.GetAllocator();
+    rapidjson::Value tasks(rapidjson::kArrayType);
+    tasks.Reserve(msg.tasks.size(), allocator);
+
+    for (const auto& task : msg.tasks)
+    {
+        rapidjson::Value taskObject(rapidjson::kObjectType);
+        taskObject.AddMember("task_type", task.task_type, allocator);
+        taskObject.AddMember("item", rapidjson::Value(task.item, allocator), allocator);
+        taskObject.AddMember("skip_on_failure", task.skip_on_failure, allocator);
+        tasks.PushBack(taskObject, allocator);
+    }
+
+    rapidjson::Value completedTasks(rapidjson::kArrayType);
+    completedTasks.Reserve(msg.completed_tasks.size(), allocator);
+
+    for (bool completed : msg.completed_tasks)
+    {
+        completedTasks.PushBack(completed, allocator);
+    }
+
+    d.AddMember("status", msg.status, allocator);
+    d.AddMember("tasks", tasks, allocator);
+    d.AddMember("completed_tasks", completedTasks, allocator);
+    d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
+    addTimestampToJSON(d, msg.header.stamp);
+
+    // TODO: add JSON schema validation
+
+    publishMqttMessage("RappTORS/RoboticArmMissionFeedback", getStringFromJSON(d).c_str());
+}
+
+
 // ###### RoverControl ######
 
 void ROSTopicHandler::publishMessage_RoverControl(const rex_interfaces::msg::RoverControl& message)
@@ -280,4 +387,11 @@ void ROSTopicHandler::publishMessage_RoboticArmControl(const rex_interfaces::msg
 void ROSTopicHandler::publishMessage_CalibrateAxis(const rex_interfaces::msg::CalibrateAxis& message)
 {
     mPub_CalibrateAxis->publish(message);
+}
+
+// ##### RoboticArmAutonomy ######
+
+void ROSTopicHandler::publishMessage_RoboticArmAutonomy(const rex_interfaces::msg::RoboticArmAutonomy& message)
+{
+    mPub_RoboticArmAutonomy->publish(message);
 }

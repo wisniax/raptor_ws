@@ -43,6 +43,11 @@ services:
         read_only: true # Make sure this stays read-only!
         bind:
           create_host_path: false
+      - type: bind
+        source: ${HOME}/rosbag_blackbox
+        target: /home/rex/rosbag_blackbox
+        bind:
+          create_host_path: true
     restart: unless-stopped
 
   mosquitto:

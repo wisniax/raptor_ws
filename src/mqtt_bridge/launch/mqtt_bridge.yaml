@@ -11,4 +11,4 @@ launch:
           namespace: "raptor"
           param:
             - name: mqtt_enable_server_cert_auth
-              value: true
+              value: false
