@@ -16,6 +16,7 @@
   <depend>rclcpp_components</depend>
   <depend>std_srvs</depend>
   <depend>can_msgs</depend>
+  <depend>lifecycle_msgs</depend>
   <build_depend>libVescCan</build_depend>
   <build_depend>rex_interfaces</build_depend>
   <build_depend>ros_constants</build_depend>
