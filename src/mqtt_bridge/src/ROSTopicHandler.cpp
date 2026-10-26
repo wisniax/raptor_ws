@@ -289,6 +289,7 @@ void ROSTopicHandler::callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstS
 
 void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg)
 {
+    // TODO: rename JSON fields to PascalCase
     rapidjson::Document d;
     d.SetObject();
 
@@ -307,6 +308,8 @@ void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::
 
     std::string topic = "RappTORS/RoboticArmCheckResult";
 
+    // TODO: add JSON schema validation
+
     publishMqttMessage(topic, getStringFromJSON(d).c_str());
 }
 
@@ -314,6 +317,7 @@ void ROSTopicHandler::callback_RoboticArmCheckResult(const rex_interfaces::msg::
 
 void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg)
 {
+    // TODO: rename JSON fields to PascalCase
     rapidjson::Document d;
     d.SetObject();
 
@@ -343,6 +347,8 @@ void ROSTopicHandler::callback_RoboticArmMissionFeedback(const rex_interfaces::m
     d.AddMember("completed_tasks", completedTasks, allocator);
     d.AddMember("mission_id", rapidjson::Value(msg.mission_id, allocator), allocator);
     addTimestampToJSON(d, msg.header.stamp);
+
+    // TODO: add JSON schema validation
 
     publishMqttMessage("RappTORS/RoboticArmMissionFeedback", getStringFromJSON(d).c_str());
 }

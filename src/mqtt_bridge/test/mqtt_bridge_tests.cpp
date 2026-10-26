@@ -21,6 +21,9 @@ Licensed under the MIT License.
 using namespace std::chrono_literals;
 
 // TODO: Test for ServoStatus
+// TODO: Test for RoboticArmAutonomy
+// TODO: Test for RoboticArmCheckResult
+// TODO: Test for RoboticArmMissionFeedback
 
 // MQTT parameters
 constexpr const char* MQTT_HOST = "localhost";

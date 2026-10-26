@@ -71,6 +71,8 @@ private:
   void callback_SamplerFeedback(const rex_interfaces::msg::SamplerFeedback::ConstSharedPtr& receivedMsg);
 
   void callback_RosoutLogs(const rcl_interfaces::msg::Log::ConstSharedPtr& receivedMsg);
+  
+  // TODO: Use msg::...::ConstSharedPtr& (similar to other callbacks above)
   void callback_RoboticArmCheckResult(const rex_interfaces::msg::RoboticArmCheckResult& msg);
   void callback_RoboticArmMissionFeedback(const rex_interfaces::msg::RoboticArmMissionFeedback& msg);
 

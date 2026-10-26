@@ -280,6 +280,7 @@ void MqttBridge::processMqttMessage(const mqtt::string& messageTopic, const char
                     }
                 }
             } else if (messageTopic == "RappTORS/RoboticArmAutonomy") {
+                // TODO: add validateJSON() (similar to the other else if branches)
                 rth->publishMessage_RoboticArmAutonomy(createRoboticArmAutonomyMsg(d));
             } else {
                 RCLCPP_WARN_STREAM(get_logger(),
@@ -563,6 +564,7 @@ rex_interfaces::msg::RoboticArmControl MqttBridge::createRoboticArmControlMsg(co
 
 rex_interfaces::msg::RoboticArmAutonomy MqttBridge::createRoboticArmAutonomyMsg(const rapidjson::Document &d)
 {
+    // TODO: rename JSON fields to PascalCase
     rex_interfaces::msg::RoboticArmAutonomy msg;
 
     msg.action = d["action"].GetUint();
