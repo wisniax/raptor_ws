@@ -20,6 +20,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(can_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
 find_package(libVescCan REQUIRED)
 find_package(rex_interfaces REQUIRED)
 find_package(ros_constants REQUIRED)
@@ -58,6 +59,7 @@ add_library(sampler_status_forwarder_component SHARED src/SamplerStatusForwarder
 add_library(sampler_control_component SHARED src/SamplerControl.cpp)
 add_library(battery_info_forwarder_component SHARED src/BatteryInfoForwarder.cpp)
 add_library(config_control_component SHARED src/ConfigControl.cpp)
+add_library(can_hotplug_component SHARED src/CanHotplug.cpp)
 
 target_link_libraries(vesc_status_handler_component can_bridge_common)
 target_link_libraries(status_message_component can_bridge_common)
@@ -67,6 +69,8 @@ target_link_libraries(sampler_status_forwarder_component can_bridge_common)
 target_link_libraries(sampler_control_component can_bridge_common)
 target_link_libraries(battery_info_forwarder_component can_bridge_common)
 target_link_libraries(config_control_component can_bridge_common)
+target_link_libraries(can_hotplug_component can_bridge_common)
+
 
 ament_target_dependencies(vesc_status_handler_component
         rclcpp
@@ -140,6 +144,11 @@ ament_target_dependencies(config_control_component
         rex_interfaces
         ros_constants
         )
+ament_target_dependencies(can_hotplug_component
+        rclcpp
+        rclcpp_components
+        lifecycle_msgs
+        )
 
 rclcpp_components_register_node(
         vesc_status_handler_component
@@ -180,6 +189,11 @@ rclcpp_components_register_node(
         config_control_component
         PLUGIN "ConfigControl"
         EXECUTABLE config_control
+)
+rclcpp_components_register_node(
+        can_hotplug_component
+        PLUGIN "CanHotplug"
+        EXECUTABLE can_hotplug
 )
 
 ament_export_targets(export_vesc_status_handler_component)
@@ -234,6 +248,13 @@ install(TARGETS battery_info_forwarder_component
 ament_export_targets(export_config_control_component)
 install(TARGETS config_control_component
         EXPORT export_config_control_component
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        )
+ament_export_targets(export_can_hotplug_component)
+install(TARGETS can_hotplug_component
+        EXPORT export_can_hotplug_component
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
