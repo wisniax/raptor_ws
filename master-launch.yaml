@@ -26,6 +26,9 @@ launch:
       -
         name: "to_can_bus_topic"
         value: "/CAN/TX/raw"
+      -
+        name: "enable_frame_loopback"
+        value: "true"
  - node:
     pkg: "can_bridge"
     exec: "can_hotplug"
