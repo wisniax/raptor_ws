@@ -49,9 +49,11 @@ void ManipulatorControl::handleManipulatorCtl(const ManipulatorControlMsg::Const
 
 void ManipulatorControl::handleRoverStatus(const RoverStatusMsg::ConstSharedPtr &roverStatusMsg)
 {
+    bool wasManipulatorMode = isManipulatorMode(mLastRoverStatus);
+
     mLastRoverStatus = roverStatusMsg;
 
-    if (!isManipulatorMode(roverStatusMsg) && isManipulatorMode(mLastRoverStatus))
+    if (wasManipulatorMode && !isManipulatorMode(mLastRoverStatus))
         stopManipulator();
 }
 
